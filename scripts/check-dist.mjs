@@ -52,7 +52,7 @@ for (const [path, page] of pages) {
     if (!html.includes(`property="${tag}"`)) fail(path, `missing ${tag}`);
   }
   if (!html.includes('name="twitter:card"')) fail(path, 'missing twitter:card');
-  if (/localhost|127\.0\.0\.1|\.pages\.dev/.test(html)) fail(path, 'contains a localhost or pages.dev URL');
+  if (/localhost|127\.0\.0\.1|\.pages\.dev|\.vercel\.app/.test(html)) fail(path, 'contains a localhost or preview-host URL');
   for (const img of html.match(/<img\b[^>]*>/g) ?? []) if (!/\balt="/.test(img)) fail(path, `img without alt: ${img}`);
 
   // Heading hierarchy: never skip a level going down.

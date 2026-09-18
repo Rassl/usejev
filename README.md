@@ -1,7 +1,7 @@
 # usejev.dev
 
 An unofficial, community catalog of practical use cases for **Jev**, TypeSafe AI's System One
-model. Static site built with [Astro](https://astro.build), deployed to Cloudflare Pages at
+model. Static site built with [Astro](https://astro.build), deployed to Vercel at
 **https://usejev.dev**.
 
 > Unofficial community resource. Not affiliated with TypeSafe AI.
@@ -31,7 +31,7 @@ Other scripts:
 ```
 astro.config.mjs            site: https://usejev.dev, static output, trailing slashes
 docs/jev-api-notes.md       the verified Jev API shape; every code sample must stay inside it
-public/_headers             noindex for *.pages.dev previews, cache headers
+vercel.json                 build settings, noindex for *.vercel.app, www redirect, cache headers
 public/robots.txt           allows all crawlers, points to the sitemap
 public/<key>.txt            IndexNow key file
 scripts/indexnow.mjs        IndexNow submission
@@ -75,35 +75,37 @@ src/lib/site.ts             site constants, official doc links, Jev price
 
 If TypeSafe changes its price, update `PRICE_PER_MTOK` in `src/lib/site.ts`.
 
-## Deploy to Cloudflare Pages
+## Deploy to Vercel
+
+The site is a static Astro build, so no adapter is needed. `vercel.json` sets the build command
+(`npm run build`), the output directory (`dist`), trailing slashes, cache headers, the preview
+`noindex` header, and the www redirect.
 
 1. Push this repo to GitHub.
-2. Cloudflare dashboard → Workers & Pages → Create → Pages → Connect to Git → pick the repo.
-3. Build settings:
-   - Framework preset: **Astro**
-   - Build command: **`npm run build`**
-   - Build output directory: **`dist`**
-   - Environment variable: `NODE_VERSION` = `22` (any version ≥ 20)
-4. Save and deploy. Every push to `main` deploys to production; other branches get preview URLs.
+2. Vercel dashboard → Add New → Project → import the repo. The Astro preset is detected; keep
+   build command **`npm run build`** and output directory **`dist`**. Or from the CLI:
+   `npx vercel link`, `npx vercel git connect`, then `npx vercel --prod`.
+3. Every push to `main` deploys to production; other branches and PRs get preview URLs.
 
-Preview and `*.pages.dev` URLs send `X-Robots-Tag: noindex` via `public/_headers`, so they never
-compete with usejev.dev in search. After the first deploy, verify:
+Every `*.vercel.app` host (production alias and previews) sends `X-Robots-Tag: noindex` via
+`vercel.json`, so those URLs never compete with usejev.dev in search. After the first deploy,
+verify:
 
 ```sh
-curl -sI https://<project>.pages.dev/ | grep -i x-robots-tag   # expect: noindex
-curl -sI https://usejev.dev/ | grep -i x-robots-tag            # expect: no output
+curl -sI https://<project>.vercel.app/ | grep -i x-robots-tag   # expect: noindex
+curl -sI https://usejev.dev/ | grep -i x-robots-tag             # expect: no output
 ```
 
 ### Connect usejev.dev
 
-1. Add `usejev.dev` to your Cloudflare account (Add a site), or move its nameservers to the two
-   Cloudflare nameservers shown there, and wait for the zone to become Active.
-2. Pages project → **Custom domains** → Set up a custom domain → add **`usejev.dev`**, then repeat
-   for **`www.usejev.dev`**. Cloudflare creates the DNS records and certificates.
-3. Redirect www to the apex: in the `usejev.dev` zone → Rules → **Redirect Rules** → Create rule:
-   - When incoming requests match: Hostname equals `www.usejev.dev`
-   - Then: Dynamic redirect, expression
-     `concat("https://usejev.dev", http.request.uri.path)`, status **301**, preserve query string.
+1. Project → Settings → **Domains** → add **`usejev.dev`** and **`www.usejev.dev`**
+   (CLI: `npx vercel domains add usejev.dev` and `npx vercel domains add www.usejev.dev`).
+2. At your DNS provider, create the records Vercel shows: an `A` record for the apex
+   (`76.76.21.21` unless Vercel shows a different value) and a `CNAME` for `www` pointing to
+   `cname.vercel-dns.com`. Alternatively move the nameservers to Vercel.
+3. www → apex: `vercel.json` already 301-redirects `www.usejev.dev/*` to `https://usejev.dev/*`.
+   In the Domains screen, keep `usejev.dev` as the primary domain. If Vercel offers to redirect
+   the apex to www, decline.
 4. Check it: `curl -sI https://www.usejev.dev/use-cases/` should return `301` with
    `location: https://usejev.dev/use-cases/`.
 
@@ -129,7 +131,7 @@ update `KEY` in `scripts/indexnow.mjs`.
 ## Post-launch SEO checklist
 
 - [ ] **Google Search Console:** add usejev.dev as a **Domain property** and verify it with the
-      DNS TXT record (add it in Cloudflare DNS). Submit `https://usejev.dev/sitemap-index.xml`.
+      DNS TXT record (add it at your DNS provider). Submit `https://usejev.dev/sitemap-index.xml`.
       Use URL Inspection → Request indexing for `/`, `/use-cases/`, `/guides/what-is-jev/`,
       `/guides/jev-vs-llm-classification/`, and two or three of the strongest use cases.
 - [ ] **Bing Webmaster Tools:** sign in and **import from GSC**, confirm the sitemap came across,
