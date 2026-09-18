@@ -1,0 +1,64 @@
+---
+import Base from '../layouts/Base.astro';
+import { DOCS } from '../lib/site';
+import { breadcrumbs } from '../lib/jsonld';
+---
+
+<Base
+  title="About: an Unofficial Jev Community Site"
+  description="usejev.dev is an unofficial, community-run catalog of Jev use cases. It is not affiliated with, endorsed by, or sponsored by TypeSafe AI in any way."
+  jsonLd={[breadcrumbs([{ name: 'Home', path: '/' }, { name: 'About', path: '/about/' }])]}
+>
+  <div class="prose">
+    <h1>About usejev.dev</h1>
+    <div class="note">
+      <p>
+        <strong>This is an unofficial, community site. It is not affiliated with, endorsed by, or sponsored by TypeSafe
+        AI.</strong> "Jev" and "TypeSafe" are names of their owner and are used here only to describe the product the
+        examples are written for.
+      </p>
+    </div>
+
+    <h2>What this site is</h2>
+    <p>
+      A catalog of practical patterns for <a href={DOCS.vendor}>Jev</a>, the System One model that TypeSafe AI opened
+      for early access on September 15, 2026
+      (<a href={DOCS.launchPost}>launch announcement</a>). Each <a href="/use-cases/">use case</a> shows a question
+      design, Python and TypeScript code, decision logic, and a cost estimate.
+    </p>
+
+    <h2>How the content is checked</h2>
+    <ul>
+      <li>
+        Code samples use only endpoints, fields, and SDK methods documented in the
+        <a href={DOCS.api}>HTTP API reference</a>, the <a href={DOCS.python}>Python SDK docs</a>, and the
+        <a href={DOCS.javascript}>JavaScript SDK docs</a>. Anything that could not be verified is labelled
+        "illustrative" in the sample.
+      </li>
+      <li>
+        Example responses are illustrative. They show the documented response shape with made-up probabilities, not
+        measured output. There are no benchmarks, testimonials, or quotes on this site.
+      </li>
+      <li>
+        Prices and limits are taken from the <a href={DOCS.models}>official models page</a> and can change. Check the
+        source before you budget.
+      </li>
+    </ul>
+
+    <h2>Official sources</h2>
+    <ul>
+      <li><a href={DOCS.vendor}>TypeSafe AI website</a></li>
+      <li><a href={DOCS.home}>Official TypeSafe documentation</a></li>
+      <li><a href={DOCS.api}>HTTP API reference</a></li>
+      <li><a href={DOCS.confidence}>Official confidence guide</a></li>
+      <li><a href={DOCS.jaggedness}>Known limitations of jev-1.13</a></li>
+      <li><a href={DOCS.launchPost}>Launch post: Introducing System One Models and Jev</a></li>
+    </ul>
+
+    <h2>Corrections</h2>
+    <p>
+      If a sample is out of date or a claim is wrong, open an issue or pull request on the site's repository. Accuracy
+      matters more here than coverage.
+    </p>
+  </div>
+</Base>

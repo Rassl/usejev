@@ -1,0 +1,50 @@
+---
+import Article from './Article.astro';
+import { faqPage } from '../lib/jsonld';
+
+interface Faq { q: string; a: string }
+interface Props {
+  frontmatter: {
+    title: string;
+    description: string;
+    path: string;
+    publishedAt: string;
+    updatedAt: string;
+    faqs?: Faq[];
+  };
+}
+const { frontmatter: f } = Astro.props;
+const faqs = f.faqs ?? [];
+---
+
+<Article
+  title={f.title}
+  description={f.description}
+  path={f.path}
+  section={{ name: 'Guides', path: '/guides/' }}
+  publishedAt={new Date(f.publishedAt)}
+  updatedAt={new Date(f.updatedAt)}
+  extraJsonLd={faqs.length ? [faqPage(faqs)] : []}
+>
+  <slot />
+  {faqs.length > 0 && (
+    <section aria-labelledby="faq-heading">
+      <h2 id="faq-heading">Frequently asked questions</h2>
+      {faqs.map((faq) => (
+        <>
+          <h3>{faq.q}</h3>
+          <p>{faq.a}</p>
+        </>
+      ))}
+    </section>
+  )}
+  <section class="related" slot="after" aria-labelledby="next-heading">
+    <h2 id="next-heading">Keep reading</h2>
+    <ul>
+      <li><a href="/use-cases/">Browse all Jev use cases with code</a></li>
+      {f.path !== '/guides/what-is-jev/' && <li><a href="/guides/what-is-jev/">What is Jev? A neutral explainer</a></li>}
+      {f.path !== '/guides/jev-vs-llm-classification/' && <li><a href="/guides/jev-vs-llm-classification/">Jev vs LLMs for classification: cost and latency math</a></li>}
+      {f.path !== '/guides/confidence-thresholds/' && <li><a href="/guides/confidence-thresholds/">How to gate actions on Jev confidence</a></li>}
+    </ul>
+  </section>
+</Article>

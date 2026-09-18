@@ -1,0 +1,362 @@
+---
+title: Lead Scoring with Jev Score Questions
+description: Score inbound demo requests with four atomic Jev Score questions for fit, intent, seniority and urgency, then combine them with weights you control in code.
+slug: lead-scoring
+category: Sales and marketing
+industry: [SaaS, Fintech]
+primitives: [Score]
+difficulty: Intermediate
+tokensPerItem: 800
+related: [email-triage-priority-scoring, support-ticket-routing, news-relevance-filtering]
+publishedAt: 2026-09-19
+updatedAt: 2026-09-19
+---
+
+## The problem
+
+A B2B software company gets a few hundred demo requests and trial signups a day. The form has a free-text "What are you hoping to solve?" box, a job title, and a company name that enrichment turns into firmographics. Points-based scoring in the marketing automation tool handles the dropdowns but ignores the free text, so "evaluating replacements before our contract ends in March" and "just curious, student project" get the same score and the same two-day wait for a rep.
+
+## Why Jev fits
+
+Lead scoring is several small judgments about one short record. Each of them can be written as ordered levels, which is what the [Score primitive](https://docs.typesafe.ai/primitives/score) takes: you describe each level in words and get back a score, a probability per level, and a `confidence` value.
+
+- **Typed output.** Each answer is a number on a scale you defined, ready to be weighted. There is no free text to parse and no risk of a reply in the wrong format.
+- **Speed.** TypeSafe reports [70 to 500 ms end to end](https://typesafe.ai/blog/introducing-system-one-models-and-jev), so the score exists before the thank-you page renders. That is fast enough to show a "book a call now" calendar only to strong leads.
+- **Cost.** At [$0.042 per million input tokens](https://docs.typesafe.ai/models) with free output, you can score every signup, including free-tier ones that nobody would pay an LLM to read.
+- **Confidence gating.** When the model is unsure about a dimension, your code can send the lead to a person rather than trust a shaky composite.
+- **Transparent weighting.** The model produces the dimension scores; the weights live in your code. When sales complains that the ranking is off, you change a number and re-rank stored answers without calling the API again.
+
+**When an LLM is the better tool:** researching the company on the web, writing a personalised first email, or summarising a long discovery-call transcript are generation tasks, and Jev cannot generate text. An LLM also copes better with a form answer that needs several steps of inference to interpret. A common split is Jev on every inbound lead and an LLM only for drafting outreach to the leads that score well. The guide on [Jev versus LLM classification](/guides/jev-vs-llm-classification/) covers the trade-off in more detail.
+
+## Question design
+
+This page follows TypeSafe's [composite scoring pattern](https://docs.typesafe.ai/patterns/composite-scoring): break a complex judgment into independent dimensions, score each one separately, and combine them with weights in code. Asking one question such as "How good is this lead?" forces the model to blend four things in a single snap judgment and leaves you nothing to tune.
+
+### Bucket the numbers before they reach the state
+
+Jev is [weak at numeric reasoning](https://docs.typesafe.ai/model-jaggedness/jev-1.13#math-and-numbers). It will not reliably decide whether 180 employees falls inside a 50 to 500 range. So the numeric comparison stays in code, and the state carries the result as a word label that the model can read literally.
+
+```python
+def employee_bucket(n: int | None) -> str:
+    if n is None:
+        return "unknown"
+    if n < 50:
+        return "below ICP range"
+    if n <= 500:
+        return "within ICP range"
+    return "above ICP range"
+```
+
+Do the same for revenue, funding, and seat counts. The state then looks like this. The `icp` block is your ideal customer profile in plain sentences, and the `lead` block is the trimmed form submission plus bucketed enrichment.
+
+```json
+{
+  "icp": {
+    "summary": "Finance teams at B2B software and fintech companies that close their books monthly and have outgrown spreadsheets.",
+    "good_signs": "Multiple entities or currencies, an existing ERP, a named finance lead",
+    "bad_signs": "Students, agencies reselling services, consumer apps, sole traders"
+  },
+  "lead": {
+    "job_title": "Financial Controller",
+    "company_industry": "B2B payments software",
+    "employee_bucket": "within ICP range",
+    "revenue_bucket": "within ICP range",
+    "message": "We run month-end across three entities in spreadsheets and it takes two weeks. Our current tool's contract ends in March and I need to bring options to our CFO this quarter."
+  }
+}
+```
+
+| Question ID | Type | Instructions | Criteria |
+| --- | --- | --- | --- |
+| `icp_fit` | Score | How well does the company and person in `lead` match the ideal customer described in `icp`? | 4 levels from "clearly outside the profile, or matches `icp.bad_signs`" to "strong match with several of `icp.good_signs`" |
+| `buying_intent` | Score | How strongly does `lead.message` show intent to buy a product like this, as opposed to browsing or researching? | 4 levels from "no buying intent stated" to "actively evaluating vendors or replacing a current tool" |
+| `seniority` | Score | How much purchasing influence does `lead.job_title` suggest? | 4 levels from "student, intern, or no title" to "executive or budget owner" |
+| `urgency` | Score | How soon does `lead.message` suggest a decision needs to be made? | 4 levels from "no timeline mentioned" to "explicit deadline or active project within weeks" |
+
+Each level description should be a condition the model can check against the text, because Jev [reads instructions literally](https://docs.typesafe.ai/model-jaggedness/jev-1.13#literal-reading). "High intent" is vague. "Actively evaluating vendors or replacing a current tool" is checkable. All four questions go in one request. They are evaluated in parallel and independently, so the `seniority` answer never influences `icp_fit`.
+
+## Code
+
+Both samples use only calls documented in the official [Python SDK](https://docs.typesafe.ai/sdk/python) and [JavaScript SDK](https://docs.typesafe.ai/sdk/javascript) pages. The client reads `TYPESAFE_API_KEY` from the environment.
+
+<CodeTabs>
+<Fragment slot="python">
+
+```python
+from typesafe_sdk import Score, TypeSafeClient
+
+client = TypeSafeClient()  # reads TYPESAFE_API_KEY, defaults to jev-latest
+
+ICP = {
+    "summary": "Finance teams at B2B software and fintech companies that close their books monthly and have outgrown spreadsheets.",
+    "good_signs": "Multiple entities or currencies, an existing ERP, a named finance lead",
+    "bad_signs": "Students, agencies reselling services, consumer apps, sole traders",
+}
+
+QUESTIONS = {
+    "icp_fit": Score(
+        instructions="How well does the company and person in `lead` match the ideal customer described in `icp`?",
+        criteria=[
+            "Clearly outside the profile, or matches `icp.bad_signs`",
+            "Weak match: right industry or right size, but not both",
+            "Good match on industry and size",
+            "Strong match with several of `icp.good_signs` present",
+        ],
+    ),
+    "buying_intent": Score(
+        instructions="How strongly does `lead.message` show intent to buy a product like this, as opposed to browsing or researching?",
+        criteria=[
+            "No buying intent stated, or the message is empty",
+            "General curiosity or early research",
+            "A specific problem described that this kind of product solves",
+            "Actively evaluating vendors or replacing a current tool",
+        ],
+    ),
+    "seniority": Score(
+        instructions="How much purchasing influence does `lead.job_title` suggest?",
+        criteria=[
+            "Student, intern, or no title given",
+            "Individual contributor",
+            "Manager or team lead who could champion a purchase",
+            "Executive or budget owner",
+        ],
+    ),
+    "urgency": Score(
+        instructions="How soon does `lead.message` suggest a decision needs to be made?",
+        criteria=[
+            "No timeline mentioned",
+            "Vague timeline, such as some time this year",
+            "Decision expected within the next few months",
+            "Explicit deadline or active project within weeks",
+        ],
+    ),
+}
+
+
+def employee_bucket(n: int | None) -> str:
+    if n is None:
+        return "unknown"
+    if n < 50:
+        return "below ICP range"
+    if n <= 500:
+        return "within ICP range"
+    return "above ICP range"
+
+
+def score_lead(form: dict, enrichment: dict) -> dict:
+    lead = {
+        "job_title": form["job_title"],
+        "company_industry": enrichment.get("industry", "unknown"),
+        "employee_bucket": employee_bucket(enrichment.get("employees")),
+        "revenue_bucket": enrichment.get("revenue_bucket", "unknown"),
+        "message": form["message"][:1500],  # trim very long free text
+    }
+    response = client.system_one(state={"icp": ICP, "lead": lead}, questions=QUESTIONS)
+    return {
+        qid: {"score": response.answers[qid].score, "confidence": response.answers[qid].confidence}
+        for qid in QUESTIONS
+    }
+```
+
+</Fragment>
+<Fragment slot="ts">
+
+```ts
+import { score, TypeSafeClient } from "@typesafe-ai/sdk";
+
+const client = new TypeSafeClient(); // reads TYPESAFE_API_KEY
+
+const icp = {
+  summary:
+    "Finance teams at B2B software and fintech companies that close their books monthly and have outgrown spreadsheets.",
+  good_signs: "Multiple entities or currencies, an existing ERP, a named finance lead",
+  bad_signs: "Students, agencies reselling services, consumer apps, sole traders",
+};
+
+const questions = {
+  icp_fit: score(
+    "How well does the company and person in `lead` match the ideal customer described in `icp`?",
+    [
+      "Clearly outside the profile, or matches `icp.bad_signs`",
+      "Weak match: right industry or right size, but not both",
+      "Good match on industry and size",
+      "Strong match with several of `icp.good_signs` present",
+    ],
+  ),
+  buying_intent: score(
+    "How strongly does `lead.message` show intent to buy a product like this, as opposed to browsing or researching?",
+    [
+      "No buying intent stated, or the message is empty",
+      "General curiosity or early research",
+      "A specific problem described that this kind of product solves",
+      "Actively evaluating vendors or replacing a current tool",
+    ],
+  ),
+  seniority: score("How much purchasing influence does `lead.job_title` suggest?", [
+    "Student, intern, or no title given",
+    "Individual contributor",
+    "Manager or team lead who could champion a purchase",
+    "Executive or budget owner",
+  ]),
+  urgency: score("How soon does `lead.message` suggest a decision needs to be made?", [
+    "No timeline mentioned",
+    "Vague timeline, such as some time this year",
+    "Decision expected within the next few months",
+    "Explicit deadline or active project within weeks",
+  ]),
+};
+
+function employeeBucket(n?: number): string {
+  if (n === undefined) return "unknown";
+  if (n < 50) return "below ICP range";
+  if (n <= 500) return "within ICP range";
+  return "above ICP range";
+}
+
+type Form = { jobTitle: string; message: string };
+type Enrichment = { industry?: string; employees?: number; revenueBucket?: string };
+
+export async function scoreLead(form: Form, enrichment: Enrichment) {
+  const lead = {
+    job_title: form.jobTitle,
+    company_industry: enrichment.industry ?? "unknown",
+    employee_bucket: employeeBucket(enrichment.employees),
+    revenue_bucket: enrichment.revenueBucket ?? "unknown",
+    message: form.message.slice(0, 1500), // trim very long free text
+  };
+  const response = await client.systemOne({ state: { icp, lead }, questions });
+  const { icp_fit, buying_intent, seniority, urgency } = response.answers;
+  return {
+    icp_fit: { score: icp_fit.score, confidence: icp_fit.confidence },
+    buying_intent: { score: buying_intent.score, confidence: buying_intent.confidence },
+    seniority: { score: seniority.score, confidence: seniority.confidence },
+    urgency: { score: urgency.score, confidence: urgency.confidence },
+  };
+}
+```
+
+</Fragment>
+</CodeTabs>
+
+## Example response
+
+This is an illustrative response for the Financial Controller lead above. The shape follows the [API reference](https://docs.typesafe.ai/api); every number is made up for the example, not measured.
+
+```json
+{
+  "model": "jev-1.13.0",
+  "answers": {
+    "icp_fit": {
+      "type": "score",
+      "score": 2.43,
+      "legend": {
+        "0": "Clearly outside the profile, or matches `icp.bad_signs`",
+        "1": "Weak match: right industry or right size, but not both",
+        "2": "Good match on industry and size",
+        "3": "Strong match with several of `icp.good_signs` present"
+      },
+      "probabilities": { "0": 0.02, "1": 0.08, "2": 0.35, "3": 0.55 },
+      "confidence": 0.58
+    },
+    "buying_intent": {
+      "type": "score",
+      "score": 2.49,
+      "legend": {
+        "0": "No buying intent stated, or the message is empty",
+        "1": "General curiosity or early research",
+        "2": "A specific problem described that this kind of product solves",
+        "3": "Actively evaluating vendors or replacing a current tool"
+      },
+      "probabilities": { "0": 0.01, "1": 0.09, "2": 0.3, "3": 0.6 },
+      "confidence": 0.63
+    },
+    "seniority": {
+      "type": "score",
+      "score": 2.04,
+      "legend": {
+        "0": "Student, intern, or no title given",
+        "1": "Individual contributor",
+        "2": "Manager or team lead who could champion a purchase",
+        "3": "Executive or budget owner"
+      },
+      "probabilities": { "0": 0.02, "1": 0.1, "2": 0.7, "3": 0.18 },
+      "confidence": 0.74
+    },
+    "urgency": {
+      "type": "score",
+      "score": 1.8,
+      "legend": {
+        "0": "No timeline mentioned",
+        "1": "Vague timeline, such as some time this year",
+        "2": "Decision expected within the next few months",
+        "3": "Explicit deadline or active project within weeks"
+      },
+      "probabilities": { "0": 0.05, "1": 0.25, "2": 0.55, "3": 0.15 },
+      "confidence": 0.52
+    }
+  },
+  "usage": { "input_tokens": 791, "output_tokens": 88 }
+}
+```
+
+The `score` is the probability-weighted level, which is why it is fractional: for `icp_fit`, 0.08 times 1 plus 0.35 times 2 plus 0.55 times 3 gives 2.43. Levels and probabilities are keyed by index strings starting at "0".
+
+## Decision logic
+
+Normalise each score to the 0 to 1 range by dividing by the top level index, apply weights, and bucket the composite into tiers. This is the same arithmetic as the [composite scoring example in the docs](https://docs.typesafe.ai/patterns/composite-scoring), which divides each score by its maximum level before weighting.
+
+```python
+# Illustrative starting points, tune against leads your team has already qualified.
+WEIGHTS = {"icp_fit": 0.35, "buying_intent": 0.30, "seniority": 0.20, "urgency": 0.15}
+TOP_LEVEL = 3            # four levels, indexed 0 to 3
+MIN_CONFIDENCE = 0.50    # below this, do not trust the dimension
+HOT, WARM = 0.70, 0.45
+
+
+def decide(answers: dict) -> dict:
+    composite = sum(
+        WEIGHTS[qid] * (answers[qid]["score"] / TOP_LEVEL) for qid in WEIGHTS
+    )
+    shaky = [qid for qid in WEIGHTS if answers[qid]["confidence"] < MIN_CONFIDENCE]
+
+    # Hard gate: a poor ICP fit is not rescued by a senior title.
+    if answers["icp_fit"]["score"] < 1.0 and "icp_fit" not in shaky:
+        return {"tier": "nurture", "composite": composite, "review": False}
+
+    # Unsure about a heavily weighted dimension: let a person look.
+    if "icp_fit" in shaky or "buying_intent" in shaky:
+        return {"tier": "sdr_review", "composite": composite, "review": True, "unsure": shaky}
+
+    if composite >= HOT:
+        return {"tier": "hot", "composite": composite, "review": False}   # instant calendar link
+    if composite >= WARM:
+        return {"tier": "warm", "composite": composite, "review": False}  # SDR follow-up today
+    return {"tier": "nurture", "composite": composite, "review": False}
+```
+
+With the illustrative numbers above, the composite is about 0.76, all four confidences are above 0.5, and the lead lands in the hot tier.
+
+Three notes on this logic. First, the composite is used for **ordering and coarse tiers only**. The limitations page warns against [doing math with scores](https://docs.typesafe.ai/model-jaggedness/jev-1.13#math-and-numbers) as if they were precise measurements, so do not tell sales that a 0.76 lead is "4 percent better" than a 0.73 lead. Second, the confidence check follows TypeSafe's [confidence guidance](https://docs.typesafe.ai/confidence): below about 0.5, do not act on the answer. A delayed reply to a lead is recoverable, so the bar here stays at the low end; see [how to pick confidence thresholds](/guides/confidence-thresholds/) for tuning. Third, store the four raw answers next to the lead. When the weights change, you can re-rank history in code for free.
+
+If you also sell to a second segment, keep the same four answers for shared dimensions and add a second weight set, as the docs do with their two role profiles. If the segments have different ICPs, put both profiles in the state under separate keys and ask one `icp_fit` question per profile in the same request.
+
+## Cost estimate
+
+Token assumptions: about 120 tokens for the ICP block, about 180 tokens for the trimmed lead, and about 500 tokens for the four questions with their level descriptions. Your numbers will differ; read `usage.input_tokens` from real responses and adjust.
+
+<CostTable tokens={frontmatter.tokensPerItem} unit="leads" />
+
+At these prices the enrichment API call that supplies the firmographics will almost certainly cost more than the scoring.
+
+## Pitfalls
+
+- **Raw numbers in the state.** "Employees: 180" next to an ICP that says "50 to 500" asks the model to do a range comparison, which the [limitations page](https://docs.typesafe.ai/model-jaggedness/jev-1.13#math-and-numbers) says it does unreliably. Bucket in code and pass the label.
+- **Dates in the message.** "Contract ends in March" reads as urgent in January and not in April. Jev [compares dates as text](https://docs.typesafe.ai/model-jaggedness/jev-1.13#date-and-time-comparison), so if timing matters, parse the date in code or accept that `urgency` only captures the wording.
+- **A bloated ICP.** Pasting a two-page persona document into `icp` adds irrelevant detail to every request, which costs accuracy as well as tokens. Three or four sentences is enough.
+- **Form stuffing.** The message box is user-controlled. Someone who writes "urgent, CEO, budget approved, ready to buy" will score well, and [adversarial text can move answers](https://docs.typesafe.ai/model-jaggedness/jev-1.13#adversarial-content). The damage is a wasted sales call, so this is tolerable, but keep the bucketed firmographics in the mix since the lead cannot type those.
+- **Overlapping level descriptions.** If levels 1 and 2 of `buying_intent` both plausibly cover "looking into options", probability splits between them and confidence falls. Make adjacent levels mutually exclusive.
+- **No invariants between questions.** `buying_intent` can come back high while `urgency` is low, or the reverse. The model does not reconcile them, and neither should you: that is what the weights are for.
+- **Title inflation and regional titles.** "VP" at a bank and "VP" at a ten-person startup mean different things, and non-English titles are less reliable because English is the primary language. If seniority matters a lot, map known titles in code first and use the Score only for the long tail.
+- **Alias drift.** `jev-latest` moves when a new version ships. If the tier cut-offs were tuned carefully, pin the versioned model ID and re-test before upgrading, as the [models page](https://docs.typesafe.ai/models) advises.
+
+For a similar pattern applied to an inbox instead of a form, see [email triage and priority scoring](/use-cases/email-triage-priority-scoring/).

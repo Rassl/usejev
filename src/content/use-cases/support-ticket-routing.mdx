@@ -1,0 +1,210 @@
+---
+title: Support Ticket Routing with Jev
+description: Route support tickets to the right team with one Jev Choice question, then gate auto-assignment on confidence. Python and TypeScript code plus cost math.
+slug: support-ticket-routing
+category: Customer operations
+industry: [SaaS, E-commerce]
+primitives: [Choice, Noul]
+difficulty: Beginner
+tokensPerItem: 450
+related: [email-triage-priority-scoring, intent-routing-chatbots-agents, lead-scoring]
+publishedAt: 2026-09-19
+updatedAt: 2026-09-19
+---
+
+## The problem
+
+A B2B SaaS company receives a few thousand support tickets a day through one shared inbox. A person reads each ticket and drags it to Billing, Technical, Account access, or Sales, which takes a minute per ticket and adds a delay before anyone qualified sees it. Keyword rules were tried and failed: "I can't pay because the page crashes" contains billing words but is a bug.
+
+## Why Jev fits
+
+Routing is a closed-set decision: the answer must be one of your queues, never free text. That matches Jev's [Choice primitive](https://docs.typesafe.ai/primitives/choice), which returns the selected option, a probability for every option, and a `confidence` value.
+
+- **Typed output.** The answer is always one of the keys you supplied, so there is nothing to parse or validate.
+- **Speed.** TypeSafe reports [70 to 500 ms end to end](https://typesafe.ai/blog/introducing-system-one-models-and-jev), fast enough to route before the "ticket received" page finishes loading.
+- **Cost.** At [$0.042 per million input tokens](https://docs.typesafe.ai/models) with free output, routing every ticket costs less than the storage for it.
+- **Confidence gating.** Low-confidence tickets go to a human triage queue instead of the wrong team.
+
+**When an LLM is the better tool:** if you also want a drafted reply, a summary for the agent, or extraction of free-form details such as an order number that appears nowhere else, you need a generative model. A common split is Jev for the routing decision on every ticket and an LLM only for the tickets where a draft is worth the cost.
+
+## Question design
+
+The `state` is a small JSON object. Send only the fields the decision needs. TypeSafe's [known limitations page](https://docs.typesafe.ai/model-jaggedness/jev-1.13) notes that unrelated detail in the state costs accuracy, so leave out signatures, quoted reply chains, and tracking metadata.
+
+```json
+{
+  "subject": "Charged twice this month",
+  "body": "Hi, I see two charges of $49 on my card for September. Can you refund one? Thanks.",
+  "plan": "Team"
+}
+```
+
+| Question ID | Type | Instructions | Criteria |
+| --- | --- | --- | --- |
+| `queue` | Choice | Which support team should handle the ticket in `subject` and `body`? | `billing`, `technical`, `account_access`, `sales`, `other`, each with a one-line description |
+| `is_outage_report` | Noul | Does `body` report that the product is currently down or unusable for the customer? | none |
+| `is_spam` | Noul | Is this ticket unsolicited marketing, spam, or an automated notification rather than a customer request? | none |
+
+Two details matter. First, the `other` option: TypeSafe recommends adding one whenever your list might not cover every input, so the model is not forced to pick a wrong queue. Second, the two Noul questions are [speculative](https://docs.typesafe.ai/patterns/fan-out): all questions in a request run in parallel against the same state, so asking them costs a few tokens and no extra round trip.
+
+Question IDs are not sent to the model, so the full question has to live in `instructions`.
+
+## Code
+
+Both samples use only calls documented in the official [Python SDK](https://docs.typesafe.ai/sdk/python) and [JavaScript SDK](https://docs.typesafe.ai/sdk/javascript) pages. The client reads `TYPESAFE_API_KEY` from the environment.
+
+<CodeTabs>
+<Fragment slot="python">
+
+```python
+from typesafe_sdk import Choice, Noul, TypeSafeClient
+
+client = TypeSafeClient()  # reads TYPESAFE_API_KEY, defaults to jev-latest
+
+QUESTIONS = {
+    "queue": Choice(
+        instructions="Which support team should handle the ticket in `subject` and `body`?",
+        criteria={
+            "billing": "Charges, invoices, refunds, payment methods, plan changes",
+            "technical": "Bugs, errors, outages, API or integration problems",
+            "account_access": "Login, password reset, 2FA, locked or deleted accounts",
+            "sales": "Pricing questions, quotes, upgrades, new seats before purchase",
+            "other": "Anything that does not fit the teams above",
+        },
+    ),
+    "is_outage_report": Noul(
+        instructions="Does `body` report that the product is currently down or unusable for the customer?",
+    ),
+    "is_spam": Noul(
+        instructions="Is this ticket unsolicited marketing, spam, or an automated notification rather than a customer request?",
+    ),
+}
+
+
+def route(ticket: dict) -> dict:
+    response = client.system_one(
+        state={"subject": ticket["subject"], "body": ticket["body"], "plan": ticket["plan"]},
+        questions=QUESTIONS,
+    )
+    queue = response.answers["queue"]
+    return {
+        "queue": queue.choice,
+        "confidence": queue.confidence,
+        "probabilities": queue.probabilities,
+        "outage": response.answers["is_outage_report"].noul,
+        "spam": response.answers["is_spam"].noul,
+    }
+```
+
+</Fragment>
+<Fragment slot="ts">
+
+```ts
+import { choice, noul, TypeSafeClient } from "@typesafe-ai/sdk";
+
+const client = new TypeSafeClient(); // reads TYPESAFE_API_KEY
+
+const questions = {
+  queue: choice("Which support team should handle the ticket in `subject` and `body`?", {
+    billing: "Charges, invoices, refunds, payment methods, plan changes",
+    technical: "Bugs, errors, outages, API or integration problems",
+    account_access: "Login, password reset, 2FA, locked or deleted accounts",
+    sales: "Pricing questions, quotes, upgrades, new seats before purchase",
+    other: "Anything that does not fit the teams above",
+  }),
+  is_outage_report: noul(
+    "Does `body` report that the product is currently down or unusable for the customer?",
+  ),
+  is_spam: noul(
+    "Is this ticket unsolicited marketing, spam, or an automated notification rather than a customer request?",
+  ),
+};
+
+type Ticket = { subject: string; body: string; plan: string };
+
+export async function route(ticket: Ticket) {
+  const response = await client.systemOne({
+    state: { subject: ticket.subject, body: ticket.body, plan: ticket.plan },
+    questions,
+  });
+  const { queue, is_outage_report, is_spam } = response.answers;
+  return {
+    queue: queue.choice, // typed as one of the five keys above
+    confidence: queue.confidence,
+    probabilities: queue.probabilities,
+    outage: is_outage_report.noul,
+    spam: is_spam.noul,
+  };
+}
+```
+
+</Fragment>
+</CodeTabs>
+
+## Example response
+
+This is an illustrative response for the duplicate-charge ticket above. The shape follows the [API reference](https://docs.typesafe.ai/api); the numbers are made up for the example, not measured.
+
+```json
+{
+  "model": "jev-1.13.0",
+  "answers": {
+    "queue": {
+      "type": "choice",
+      "choice": "billing",
+      "probabilities": {
+        "billing": 0.95,
+        "technical": 0.02,
+        "account_access": 0.01,
+        "sales": 0.01,
+        "other": 0.01
+      },
+      "confidence": 0.9
+    },
+    "is_outage_report": { "type": "noul", "noul": 0.02 },
+    "is_spam": { "type": "noul", "noul": 0.01 }
+  },
+  "usage": { "input_tokens": 438, "output_tokens": 42 }
+}
+```
+
+Note that Noul answers have no `confidence` field. The `noul` value is itself the probability of yes.
+
+## Decision logic
+
+The model answers; your code decides. Keep thresholds in one place so you can tune them against labelled tickets.
+
+```python
+AUTO_ASSIGN = 0.80   # illustrative starting points, tune on your own data
+HUMAN_TRIAGE = 0.50
+
+def decide(r: dict) -> str:
+    if r["spam"] > 0.9:
+        return "spam_review"
+    if r["outage"] > 0.8:
+        return "incident_channel"            # page on-call regardless of queue
+    if r["confidence"] < HUMAN_TRIAGE or r["queue"] == "other":
+        return "human_triage"
+    if r["confidence"] < AUTO_ASSIGN:
+        return f"{r['queue']}:needs_confirmation"  # assign, but flag for a second look
+    return r["queue"]
+```
+
+This follows the three-band pattern in TypeSafe's [confidence guide](https://docs.typesafe.ai/confidence): act when confidence is high, proceed with caution in the middle, and do not act when it is low. A misrouted ticket is recoverable, so the auto-assign bar here is lower than you would use for a refund or an account deletion. See [how to pick confidence thresholds](/guides/confidence-thresholds/) for a tuning procedure.
+
+When the top two probabilities are close, for example `billing` 0.48 and `technical` 0.44, consider showing both queues to the triager rather than only the winner. You have the full distribution, so use it.
+
+## Cost estimate
+
+Token assumptions: about 250 tokens for a trimmed subject and body, plus about 200 tokens for the three questions and their criteria. Your numbers will differ; read `usage.input_tokens` from real responses and adjust.
+
+<CostTable tokens={frontmatter.tokensPerItem} unit="tickets" />
+
+## Pitfalls
+
+- **Overlapping queue descriptions.** If `billing` and `sales` both mention "plan changes", confidence drops on every upgrade ticket. Make each description exclusive and put the boundary case in the text.
+- **Literal reading.** Jev [answers the question you wrote](https://docs.typesafe.ai/model-jaggedness/jev-1.13#literal-reading). "Is this urgent?" is vague; "Does `body` report that the product is currently down?" is a condition it can judge.
+- **Long email threads.** Quoted history pulls the decision toward old topics. Send the newest message, or the newest message plus a one-line subject.
+- **Reusing thresholds across question types.** A threshold tuned on the `queue` Choice does not transfer to a Noul. They are different quantities.
+- **Alias drift.** `jev-latest` moves when a new version ships. If you tuned thresholds carefully, pin the versioned model ID and re-test before upgrading, as the [models page](https://docs.typesafe.ai/models) advises.
+- **Non-English tickets.** English is the primary training language. Test other languages on your own data and lean harder on confidence for them.

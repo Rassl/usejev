@@ -1,0 +1,31 @@
+---
+import { costFor, PRICE_PER_MTOK, DOCS } from '../lib/site';
+
+interface Props {
+  tokens: number;
+  unit?: string;
+}
+const { tokens, unit = 'items' } = Astro.props;
+const rows = [1_000, 100_000, 1_000_000];
+---
+
+<div class="table-scroll">
+  <table>
+    <caption class="meta">
+      Assumes {tokens.toLocaleString('en-US')} input tokens per request at ${PRICE_PER_MTOK} per million input tokens
+      (<a href={DOCS.models}>official pricing</a>; output is free).
+    </caption>
+    <thead>
+      <tr><th scope="col">Volume</th><th scope="col">Input tokens</th><th scope="col">Estimated cost</th></tr>
+    </thead>
+    <tbody>
+      {rows.map((n) => (
+        <tr>
+          <th scope="row">{n.toLocaleString('en-US')} {unit}</th>
+          <td>{(n * tokens).toLocaleString('en-US')}</td>
+          <td>{costFor(tokens, n)}</td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>

@@ -1,0 +1,335 @@
+---
+title: Email Triage and Priority Scoring with Jev
+description: Sort a shared inbox with one Jev request. A Choice sets the category, three Score questions rate urgency, sender signals and effort, and code weights them.
+slug: email-triage-priority-scoring
+category: Customer operations
+industry: [SaaS, E-commerce, Logistics]
+primitives: [Choice, Score]
+difficulty: Intermediate
+tokensPerItem: 750
+related: [support-ticket-routing, lead-scoring, news-relevance-filtering]
+publishedAt: 2026-09-19
+updatedAt: 2026-09-19
+---
+
+## The problem
+
+A 30-person company runs `ops@` and `founders@` as shared inboxes. On a normal day they receive customer escalations, vendor invoices, a contract redline from outside counsel, recruiting replies, and a long tail of newsletters and cold outreach, all in one list sorted by arrival time. Whoever opens the inbox first decides what matters, and the contract with a signing deadline sits under forty unread newsletters until someone happens to scroll.
+
+Mail filters do not fix this. A rule can match a sender domain, but it cannot tell a vendor's routine statement from the same vendor saying the service will be suspended.
+
+## Why Jev fits
+
+"How important is this email?" is not one judgment. It is several small ones: what kind of email it is, how much time pressure it states, who the sender says they are, and how much work a reply needs. TypeSafe's [composite scoring pattern](https://docs.typesafe.ai/patterns/composite-scoring) recommends exactly that split: score each dimension independently, then combine them with weights you control in code. If the ranking looks wrong, you change a weight, not a prompt.
+
+- **Typed output.** The category comes back as one of your keys through the [Choice primitive](https://docs.typesafe.ai/primitives/choice), and each [Score](https://docs.typesafe.ai/primitives) comes back as a number on the scale you wrote. There is no free text to parse.
+- **Speed.** TypeSafe reports [70 to 500 ms end to end](https://typesafe.ai/blog/introducing-system-one-models-and-jev), so the priority label can be attached in the same webhook that receives the message.
+- **Cost.** At [$0.042 per million input tokens](https://docs.typesafe.ai/models) with free output, scoring every message, including the newsletters, is cheaper than deciding which messages deserve scoring.
+- **Confidence gating.** Choice and Score answers carry a `confidence` value. When it is low, the email stays in an unsorted view instead of being buried under a wrong label.
+
+**When an LLM is the better tool:** if you want a one-line summary of each thread, a drafted reply, or extraction of a free-form detail such as the contract name, you need a generative model. Jev [does not generate text](https://docs.typesafe.ai/model-jaggedness/jev-1.13). A reasonable split is Jev on every message for sorting and an LLM only on the handful that reach the top of the priority list. The guide on [Jev versus LLM classification](/guides/jev-vs-llm-classification/) covers that trade in more detail.
+
+## Question design
+
+Send the newest message only, with the quoted reply chain, signature block, and legal footer removed. TypeSafe's [known limitations page](https://docs.typesafe.ai/model-jaggedness/jev-1.13) says large irrelevant state costs accuracy, and an email footer is about as irrelevant as state gets.
+
+```json
+{
+  "from_name": "Dana Whitfield",
+  "from_domain": "northgate-logistics.example",
+  "subject": "Renewal terms - need signature before quarter end",
+  "body": "Hi, I'm the VP of Procurement at Northgate. We are ready to renew the annual contract but legal needs the signed order form back by Friday or the PO lapses and we have to restart approval. Can you turn the attached around? One open point on the liability cap, otherwise we're aligned."
+}
+```
+
+| Question ID | Type | Instructions | Criteria |
+| --- | --- | --- | --- |
+| `category` | Choice | What kind of email is the message in `subject` and `body`? | `customer`, `vendor`, `legal`, `recruiting`, `newsletter`, `other`, each with a one-line description |
+| `urgency` | Score | How much time pressure does `body` state? | 4 levels, from no time pressure to something blocked or due now |
+| `sender_signals` | Score | What does the email itself say about who the sender is, in `from_name`, `subject` and `body`? | 4 levels, from bulk mail to a stated senior, legal or regulatory role |
+| `effort` | Score | How much work would a complete reply to `body` take? | 3 levels, from a one-line acknowledgement to work that needs other people or documents |
+
+Three design choices are worth explaining.
+
+**Each Score level is a condition, not an adjective.** "Urgent" is vague, and Jev reads instructions literally. "States an explicit deadline or says the matter is time-sensitive" is something it can check against the text.
+
+**`sender_signals` only covers what the email says.** Jev sees the state and nothing else. It cannot know that Northgate is your second-largest account. That fact lives in your CRM, so look up `from_domain` in code and add the result to the composite as its own term. Asking the model to guess account value from a name would be asking for a fact it does not have.
+
+**`urgency` does not compare dates.** The limitations page notes that dates are compared as text. The question asks whether a deadline is stated, not whether Friday is close. If you need "due within 48 hours", parse the date in code.
+
+All four questions go in one request. They run [in parallel against the same state](https://docs.typesafe.ai/patterns/fan-out), and one answer is never context for another, so `urgency` cannot lean on `category`. That independence is the point: you can inspect each dimension on its own when a ranking looks off.
+
+## Code
+
+Both samples use only calls documented in the official [Python SDK](https://docs.typesafe.ai/sdk/python) and [JavaScript SDK](https://docs.typesafe.ai/sdk/javascript) pages. The client reads `TYPESAFE_API_KEY` from the environment.
+
+<CodeTabs>
+<Fragment slot="python">
+
+```python
+from typesafe_sdk import Choice, Score, TypeSafeClient
+
+client = TypeSafeClient()  # reads TYPESAFE_API_KEY, defaults to jev-latest
+
+URGENCY_LEVELS = [
+    "No time pressure is stated",
+    "Asks for a reply or action but gives no deadline",
+    "States an explicit deadline or says the matter is time-sensitive",
+    "Says something is broken, blocked, overdue, or due today",
+]
+SENDER_LEVELS = [
+    "Bulk or automated mail with no individual sender",
+    "An individual who states no relationship with the company",
+    "States an existing relationship: customer, vendor, candidate, or partner",
+    "States a senior decision-making role, or writes as a lawyer, regulator, or auditor",
+]
+EFFORT_LEVELS = [
+    "No reply needed, or a one-line acknowledgement",
+    "A short reply one person can write from memory",
+    "A reply that needs documents, approvals, or input from other people",
+]
+
+QUESTIONS = {
+    "category": Choice(
+        instructions="What kind of email is the message in `subject` and `body`?",
+        criteria={
+            "customer": "A current or prospective customer asking, complaining, or negotiating",
+            "vendor": "A supplier or service provider: invoices, renewals, account notices",
+            "legal": "Contracts under review, legal notices, compliance or regulator requests",
+            "recruiting": "Job applicants, recruiters, interview scheduling, references",
+            "newsletter": "Newsletters, product updates, marketing, cold sales outreach",
+            "other": "Anything that does not fit the categories above",
+        },
+    ),
+    "urgency": Score(
+        instructions="How much time pressure does `body` state?",
+        criteria=URGENCY_LEVELS,
+    ),
+    "sender_signals": Score(
+        instructions="What does the email itself say about who the sender is, in `from_name`, `subject` and `body`?",
+        criteria=SENDER_LEVELS,
+    ),
+    "effort": Score(
+        instructions="How much work would a complete reply to `body` take?",
+        criteria=EFFORT_LEVELS,
+    ),
+}
+
+
+def triage(email: dict) -> dict:
+    response = client.system_one(
+        state={
+            "from_name": email["from_name"],
+            "from_domain": email["from_domain"],
+            "subject": email["subject"],
+            "body": email["body"],  # newest message only, footer stripped
+        },
+        questions=QUESTIONS,
+    )
+    a = response.answers
+    return {
+        "category": a["category"].choice,
+        "category_confidence": a["category"].confidence,
+        # normalize each score to 0-1 by dividing by its top level index
+        "urgency": a["urgency"].score / (len(URGENCY_LEVELS) - 1),
+        "urgency_confidence": a["urgency"].confidence,
+        "sender": a["sender_signals"].score / (len(SENDER_LEVELS) - 1),
+        "effort": a["effort"].score / (len(EFFORT_LEVELS) - 1),
+    }
+```
+
+</Fragment>
+<Fragment slot="ts">
+
+```ts
+import { choice, score, TypeSafeClient } from "@typesafe-ai/sdk";
+
+const client = new TypeSafeClient(); // reads TYPESAFE_API_KEY
+
+const URGENCY_LEVELS = [
+  "No time pressure is stated",
+  "Asks for a reply or action but gives no deadline",
+  "States an explicit deadline or says the matter is time-sensitive",
+  "Says something is broken, blocked, overdue, or due today",
+];
+const SENDER_LEVELS = [
+  "Bulk or automated mail with no individual sender",
+  "An individual who states no relationship with the company",
+  "States an existing relationship: customer, vendor, candidate, or partner",
+  "States a senior decision-making role, or writes as a lawyer, regulator, or auditor",
+];
+const EFFORT_LEVELS = [
+  "No reply needed, or a one-line acknowledgement",
+  "A short reply one person can write from memory",
+  "A reply that needs documents, approvals, or input from other people",
+];
+
+const questions = {
+  category: choice("What kind of email is the message in `subject` and `body`?", {
+    customer: "A current or prospective customer asking, complaining, or negotiating",
+    vendor: "A supplier or service provider: invoices, renewals, account notices",
+    legal: "Contracts under review, legal notices, compliance or regulator requests",
+    recruiting: "Job applicants, recruiters, interview scheduling, references",
+    newsletter: "Newsletters, product updates, marketing, cold sales outreach",
+    other: "Anything that does not fit the categories above",
+  }),
+  urgency: score("How much time pressure does `body` state?", URGENCY_LEVELS),
+  sender_signals: score(
+    "What does the email itself say about who the sender is, in `from_name`, `subject` and `body`?",
+    SENDER_LEVELS,
+  ),
+  effort: score("How much work would a complete reply to `body` take?", EFFORT_LEVELS),
+};
+
+type Email = { from_name: string; from_domain: string; subject: string; body: string };
+
+export async function triage(email: Email) {
+  const response = await client.systemOne({
+    state: {
+      from_name: email.from_name,
+      from_domain: email.from_domain,
+      subject: email.subject,
+      body: email.body, // newest message only, footer stripped
+    },
+    questions,
+  });
+  const { category, urgency, sender_signals, effort } = response.answers;
+  return {
+    category: category.choice,
+    categoryConfidence: category.confidence,
+    // normalize each score to 0-1 by dividing by its top level index
+    urgency: urgency.score / (URGENCY_LEVELS.length - 1),
+    urgencyConfidence: urgency.confidence,
+    sender: sender_signals.score / (SENDER_LEVELS.length - 1),
+    effort: effort.score / (EFFORT_LEVELS.length - 1),
+  };
+}
+```
+
+</Fragment>
+</CodeTabs>
+
+## Example response
+
+This is an illustrative response for the renewal email above. The shape follows the [API reference](https://docs.typesafe.ai/api); the numbers are made up for the example, not measured. The `legend` on Score answers is shortened here for readability.
+
+```json
+{
+  "model": "jev-1.13.0",
+  "answers": {
+    "category": {
+      "type": "choice",
+      "choice": "customer",
+      "probabilities": {
+        "customer": 0.71,
+        "vendor": 0.03,
+        "legal": 0.23,
+        "recruiting": 0.01,
+        "newsletter": 0.01,
+        "other": 0.01
+      },
+      "confidence": 0.62
+    },
+    "urgency": {
+      "type": "score",
+      "score": 2.18,
+      "legend": {
+        "0": "No time pressure is stated",
+        "1": "Asks for a reply or action but gives no deadline",
+        "2": "States an explicit deadline or says the matter is time-sensitive",
+        "3": "Says something is broken, blocked, overdue, or due today"
+      },
+      "probabilities": { "0": 0.02, "1": 0.08, "2": 0.6, "3": 0.3 },
+      "confidence": 0.58
+    },
+    "sender_signals": {
+      "type": "score",
+      "score": 2.85,
+      "legend": {
+        "0": "Bulk or automated mail with no individual sender",
+        "1": "An individual who states no relationship with the company",
+        "2": "States an existing relationship...",
+        "3": "States a senior decision-making role..."
+      },
+      "probabilities": { "0": 0.01, "1": 0.01, "2": 0.1, "3": 0.88 },
+      "confidence": 0.84
+    },
+    "effort": {
+      "type": "score",
+      "score": 1.7,
+      "legend": {
+        "0": "No reply needed, or a one-line acknowledgement",
+        "1": "A short reply one person can write from memory",
+        "2": "A reply that needs documents, approvals, or input..."
+      },
+      "probabilities": { "0": 0.02, "1": 0.26, "2": 0.72 },
+      "confidence": 0.66
+    }
+  },
+  "usage": { "input_tokens": 742, "output_tokens": 96 }
+}
+```
+
+Two things to read from this. The `score` value is probability-weighted, so 2.18 means most of the mass sits on level 2 with some on level 3. It is not a measurement of "2.18 units of urgency". And the `category` split between `customer` and `legal` is real information: a renewal with an open liability point is both, and the decision logic below uses the runner-up.
+
+## Decision logic
+
+The weights are yours. Keep them and the thresholds in one place so that a change of policy is a reviewed constant edit, not a reworded question.
+
+```python
+# Illustrative starting points. Tune on a labelled sample of your own inbox.
+WEIGHTS = {"urgency": 0.45, "sender": 0.25, "account": 0.20, "effort": 0.10}
+CATEGORY_FLOOR = 0.50      # below this, do not trust the category label
+URGENCY_FLOOR = 0.50       # below this, do not let urgency alone escalate
+TOP_BAND, MIDDLE_BAND = 0.70, 0.40
+CC_RUNNER_UP = 0.20        # second category above this gets a cc
+
+def prioritize(t: dict, account_tier: float, probabilities: dict) -> dict:
+    """account_tier is 0-1 from your CRM lookup on from_domain, not from Jev."""
+    if t["category"] == "newsletter" and t["category_confidence"] >= 0.80:
+        return {"band": "digest", "owner": None}
+
+    urgency = t["urgency"] if t["urgency_confidence"] >= URGENCY_FLOOR else 0.5
+    composite = (
+        WEIGHTS["urgency"] * urgency
+        + WEIGHTS["sender"] * t["sender"]
+        + WEIGHTS["account"] * account_tier
+        + WEIGHTS["effort"] * t["effort"]
+    )
+
+    if t["category_confidence"] < CATEGORY_FLOOR or t["category"] == "other":
+        owner = "unsorted"                      # a person picks the owner
+    else:
+        owner = t["category"]
+
+    ranked = sorted(probabilities.items(), key=lambda kv: kv[1], reverse=True)
+    cc = ranked[1][0] if ranked[1][1] >= CC_RUNNER_UP else None
+
+    band = "top" if composite >= TOP_BAND else "middle" if composite >= MIDDLE_BAND else "low"
+    return {"band": band, "owner": owner, "cc": cc, "composite": round(composite, 2)}
+```
+
+The logic follows the three ranges in TypeSafe's [confidence guide](https://docs.typesafe.ai/confidence): act when confidence is high, be careful in the middle, and do not act when it is low. Here "do not act" means the email keeps a neutral urgency of 0.5 and lands in an unsorted view, which is no worse than the inbox you have today. Archiving newsletters into a digest is the one action that hides mail from people, so it has the highest bar. See [how to pick confidence thresholds](/guides/confidence-thresholds/) for a tuning procedure.
+
+Use the composite to sort and to cut into bands. Do not present it as a precise quantity. The limitations page warns against reading exact magnitudes out of a Score, and a weighted sum of three of them inherits that caveat. Whether an email is 0.74 or 0.71 means nothing; whether it is above 0.70 decides which list it appears in.
+
+Effort carries a small positive weight here on the theory that work needing other people should start early. Some teams prefer the opposite and surface quick wins first. That is a one-line change in `WEIGHTS`, which is the benefit of keeping the combination in code.
+
+## Cost estimate
+
+Token assumptions: about 350 tokens for a trimmed sender, subject and newest message body, plus about 400 tokens for the four questions with their criteria and level descriptions. Long emails will push this up, so cap the body length before sending and read `usage.input_tokens` from real responses to correct the estimate.
+
+<CostTable tokens={frontmatter.tokensPerItem} unit="emails" />
+
+## Pitfalls
+
+- **Asking for importance in one question.** A single "How important is this email?" Score mixes urgency, sender, and effort into one opaque number, and you cannot tell which part was wrong. The [composite scoring pattern](https://docs.typesafe.ai/patterns/composite-scoring) exists to avoid that.
+- **Senders who write "URGENT" on everything.** Jev [reads the text literally](https://docs.typesafe.ai/model-jaggedness/jev-1.13#literal-reading), and a cold sales email that claims a deadline will score as stating one. This is why the category check runs first and why the CRM lookup has its own weight. Text in the email can also be written to move the answers on purpose, so never let the score trigger anything irreversible.
+- **Deadlines as dates.** "Please reply by 09/22" states a deadline, and that is all the model should be asked. Whether 09/22 is tomorrow or passed last week is a date comparison, which belongs in code.
+- **Counting in the state.** Do not ask how many people are on the thread or how many times the sender has followed up. Counting is unreliable. Compute those numbers from headers and, if they matter, add them as terms in the composite.
+- **Quoted reply chains.** A two-line "thanks, got it" on top of a long escalation thread will score as urgent if you send the whole thread. Strip quoted history before building the state.
+- **Reusing thresholds across answers.** A confidence floor tuned on the `category` Choice does not transfer to the `urgency` Score, and neither transfers to a Noul if you add one later. They are different quantities.
+- **Alias drift.** `jev-latest` moves when a new version ships. Weights and bands tuned on one version should be re-tested before an upgrade; the [models page](https://docs.typesafe.ai/models) lists the pinned IDs.
+- **Non-English mail.** English is the primary language. If a share of your inbox is in other languages, test on it separately and expect to lean harder on the unsorted view.
+
+If your shared inbox is really a support queue, the simpler [support ticket routing](/use-cases/support-ticket-routing/) page is a better starting point. For a primer on the model itself, see [what Jev is](/guides/what-is-jev/).

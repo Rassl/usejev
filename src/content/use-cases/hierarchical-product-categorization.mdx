@@ -1,0 +1,327 @@
+---
+title: Hierarchical Product Categorization with Jev
+description: Place marketplace listings in a taxonomy with thousands of leaves using cascading Jev Choice questions, a small beam, and confidence-based parent back-off.
+slug: hierarchical-product-categorization
+category: Search and commerce
+industry: [E-commerce, Marketplaces]
+primitives: [Choice]
+difficulty: Advanced
+tokensPerItem: 3700
+related: [invoice-document-classification, search-result-reranking, intent-routing-chatbots-agents]
+publishedAt: 2026-09-19
+updatedAt: 2026-09-19
+---
+
+## The problem
+
+A marketplace accepts listings from thousands of sellers and files each one in a category tree with several thousand leaf categories, five or six levels deep. Sellers pick the category themselves, often badly: a cast iron skillet ends up under "Camping" because the seller sells outdoor gear, and then it is missing from the Cookware filters where buyers look for it. Search facets, attribute forms, fee schedules, and restricted-item rules all hang off the category, so a wrong leaf is expensive.
+
+A single classification question cannot hold the whole tree. A Jev Choice question accepts [up to 255 options](https://docs.typesafe.ai/primitives/choice), and the taxonomy has many times that number of leaves.
+
+## Why Jev fits
+
+A tree turns one impossible question into a short series of easy ones. At each node you ask "which direct child fits this product?" with that node's children as the options, then move to the winner and ask again. TypeSafe documents this approach in its [hierarchical classification cookbook](https://docs.typesafe.ai/cookbooks/hierarchical_classification), which walks several real hierarchies, including a public retail product taxonomy.
+
+- **Typed output.** Every answer is one of the child keys you supplied, so the result is always a real path in your tree. The model cannot invent a category. It can still pick the wrong child, which is what the beam and the back-off below are for.
+- **Full probability distribution.** Each Choice returns a probability for every option, not only the winner. That is what makes a beam search possible: you can keep the second and third most likely branches alive for one more level.
+- **Speed.** TypeSafe reports [70 to 500 ms end to end](https://typesafe.ai/blog/introducing-system-one-models-and-jev) per request. A five-level cascade is five sequential requests, so expect a wall-clock time of several request latencies per product. That suits listing ingestion and catalog backfills. It is a poor fit for anything that must answer inside a single keystroke.
+- **Cost.** At [$0.042 per million input tokens](https://docs.typesafe.ai/models) with free output, even a multi-request cascade stays cheap enough to run on every new and edited listing.
+- **Confidence gating.** A Choice answer includes `confidence`. TypeSafe's cookbook on [classification using confidence](https://docs.typesafe.ai/cookbooks/classification_using_confidence) shows the move this page borrows: when the model is unsure of the narrow label, report the broader parent instead of guessing.
+
+This is one of the cases where a second request is the right design. TypeSafe's general advice is to send every question that shares a state in one request. The exception is when your code needs the first answer in order to build the next request, and the [primitives guide](https://docs.typesafe.ai/primitives) names hierarchical classification as an example. The level-two options do not exist until level one has been answered.
+
+**When an LLM is the better tool:** if you also need to extract attributes as free text (material, dimensions, compatible models), rewrite seller titles, or propose a new category that is missing from the tree, you need a generative model. Jev selects from your options and generates nothing. If your taxonomy is flat and has fewer than 255 entries, skip the cascade and use one Choice, as in [invoice and document classification](/use-cases/invoice-document-classification/). For background on the trade-off, see [Jev versus LLM classification](/guides/jev-vs-llm-classification/).
+
+## Question design
+
+The `state` is the same at every level: a trimmed view of the listing. Leave out seller boilerplate such as shipping terms, return policy, and store promotions. The [known limitations page](https://docs.typesafe.ai/model-jaggedness/jev-1.13) notes that irrelevant state reduces accuracy, and in a cascade that cost is paid at every level.
+
+```json
+{
+  "title": "Pre-seasoned cast iron skillet 12 inch with silicone handle cover",
+  "brand": "Ironhearth",
+  "attributes": { "material": "cast iron", "diameter": "12 in", "oven_safe": "yes" },
+  "description": "Heavy skillet for searing, baking and frying. Works on gas, electric, induction and campfire."
+}
+```
+
+Each level sends one Choice per node still being explored. Option keys are opaque (`c0`, `c1`, and so on) and the category name goes in the option description, the same construction the cookbook uses. This avoids problems with category names that contain ampersands, commas, or duplicates across branches.
+
+| Question ID | Type | Instructions | Criteria |
+| --- | --- | --- | --- |
+| `n0` | Choice | Which direct child category best matches the product described in `title`, `attributes` and `description`? | One key per child of the best path so far (`c0`, `c1`, ...) with the category name as its description, plus `none` |
+| `n1`, `n2` | Choice | Same instructions | Children of the second and third paths in the beam, plus `none` |
+
+Three design decisions:
+
+1. **One request per level, several questions per request.** Questions in a request are evaluated [in parallel and independently](https://docs.typesafe.ai/patterns/fan-out), so the beam's frontier nodes go into the same request. The state is sent once per level, not once per path.
+2. **A `none` option at every node.** TypeSafe recommends an escape option whenever the list might not cover the input. In a cascade, `none` has a natural meaning: stop here and report the current node.
+3. **Beam width of three.** Greedy search takes the top child at each level and cannot recover from an early mistake. A beam keeps the `K` best paths, scored by the geometric mean of the edge probabilities along each path so that shallow and deep paths compare fairly. The cookbook uses `K = 3`. In its four worked examples, beam search reached the expected leaf in all four and greedy search in two. That is a demonstration on four documents with an earlier model version, not a benchmark, so measure on your own catalog.
+
+## Code
+
+Both samples use only calls documented in the official [Python SDK](https://docs.typesafe.ai/sdk/python) and [JavaScript SDK](https://docs.typesafe.ai/sdk/javascript) pages. `TAXONOMY` is a nested map from category name to its children, with an empty map for a leaf. No node may have more than 254 children, because `none` takes one of the 255 option slots.
+
+<CodeTabs>
+<Fragment slot="python">
+
+```python
+from math import exp, log
+
+from typesafe_sdk import Choice, TypeSafeClient
+
+client = TypeSafeClient()  # reads TYPESAFE_API_KEY, defaults to jev-latest
+
+BEAM_WIDTH = 3
+MAX_DEPTH = 8
+INSTRUCTIONS = (
+    "Which direct child category best matches the product described in "
+    "`title`, `attributes` and `description`?"
+)
+
+
+def children(tree: dict, path: tuple) -> list[str]:
+    node = tree
+    for label in path:
+        node = node[label]
+    return list(node)
+
+
+def child_question(labels: list[str]) -> tuple[Choice, dict[str, str]]:
+    assert len(labels) <= 254, "split this node: 255 options including none"
+    keys = {f"c{i}": label for i, label in enumerate(labels)}
+    criteria = {**keys, "none": "None of the listed categories fits the product"}
+    return Choice(instructions=INSTRUCTIONS, criteria=criteria), keys
+
+
+def path_score(edges: list[dict]) -> float:
+    # geometric mean of edge probabilities, computed in log space
+    if not edges:
+        return 1.0
+    return exp(sum(log(max(e["p"], 1e-9)) for e in edges) / len(edges))
+
+
+def categorize(product: dict, tree: dict) -> list[dict]:
+    state = {
+        "title": product["title"],
+        "brand": product.get("brand"),
+        "attributes": product.get("attributes", {}),
+        "description": product.get("description", "")[:1500],
+    }
+    beam = [{"path": (), "edges": [], "stopped": False}]
+
+    for _ in range(MAX_DEPTH):
+        frontier = [c for c in beam if not c["stopped"] and children(tree, c["path"])]
+        if not frontier:
+            break
+        built = [child_question(children(tree, c["path"])) for c in frontier]
+        response = client.system_one(
+            state=state,
+            questions={f"n{i}": question for i, (question, _) in enumerate(built)},
+        )
+
+        candidates = [c for c in beam if c not in frontier]  # finished paths stay in play
+        for i, (cand, (_, keys)) in enumerate(zip(frontier, built)):
+            answer = response.answers[f"n{i}"]
+            if answer.choice == "none":
+                candidates.append({**cand, "stopped": True})
+                continue
+            ranked = sorted(keys, key=lambda k: answer.probabilities[k], reverse=True)
+            for k in ranked[:BEAM_WIDTH]:
+                edge = {
+                    "p": answer.probabilities[k],
+                    "confidence": answer.confidence,
+                    "winner": k == answer.choice,
+                }
+                candidates.append(
+                    {"path": cand["path"] + (keys[k],), "edges": cand["edges"] + [edge], "stopped": False}
+                )
+        beam = sorted(candidates, key=lambda c: path_score(c["edges"]), reverse=True)[:BEAM_WIDTH]
+
+    return beam  # best path first
+```
+
+</Fragment>
+<Fragment slot="ts">
+
+```ts
+import { choice, TypeSafeClient } from "@typesafe-ai/sdk";
+
+const client = new TypeSafeClient(); // reads TYPESAFE_API_KEY
+
+const BEAM_WIDTH = 3;
+const MAX_DEPTH = 8;
+const INSTRUCTIONS =
+  "Which direct child category best matches the product described in `title`, `attributes` and `description`?";
+
+type Tree = { [label: string]: Tree };
+type Edge = { p: number; confidence: number; winner: boolean };
+type Candidate = { path: string[]; edges: Edge[]; stopped: boolean };
+type Product = {
+  title: string;
+  brand?: string;
+  attributes?: Record<string, string>;
+  description?: string;
+};
+
+function children(tree: Tree, path: string[]): string[] {
+  let node = tree;
+  for (const label of path) node = node[label];
+  return Object.keys(node);
+}
+
+function childQuestion(labels: string[]) {
+  if (labels.length > 254) throw new Error("split this node: 255 options including none");
+  const keys: Record<string, string> = {};
+  labels.forEach((label, i) => (keys[`c${i}`] = label));
+  const question = choice(INSTRUCTIONS, {
+    ...keys,
+    none: "None of the listed categories fits the product",
+  });
+  return { question, keys };
+}
+
+export function pathScore(edges: Edge[]): number {
+  if (edges.length === 0) return 1;
+  const sum = edges.reduce((acc, e) => acc + Math.log(Math.max(e.p, 1e-9)), 0);
+  return Math.exp(sum / edges.length); // geometric mean of edge probabilities
+}
+
+export async function categorize(product: Product, tree: Tree): Promise<Candidate[]> {
+  const state = {
+    title: product.title,
+    brand: product.brand ?? null,
+    attributes: product.attributes ?? {},
+    description: (product.description ?? "").slice(0, 1500),
+  };
+  let beam: Candidate[] = [{ path: [], edges: [], stopped: false }];
+
+  for (let depth = 0; depth < MAX_DEPTH; depth++) {
+    const frontier = beam.filter((c) => !c.stopped && children(tree, c.path).length > 0);
+    if (frontier.length === 0) break;
+    const built = frontier.map((c) => childQuestion(children(tree, c.path)));
+    const questions = Object.fromEntries(built.map((b, i) => [`n${i}`, b.question]));
+    const response = await client.systemOne({ state, questions });
+
+    const candidates = beam.filter((c) => !frontier.includes(c)); // finished paths stay in play
+    frontier.forEach((cand, i) => {
+      const answer = response.answers[`n${i}`];
+      const { keys } = built[i];
+      if (answer.choice === "none") {
+        candidates.push({ ...cand, stopped: true });
+        return;
+      }
+      const ranked = Object.keys(keys).sort(
+        (a, b) => answer.probabilities[b] - answer.probabilities[a],
+      );
+      for (const k of ranked.slice(0, BEAM_WIDTH)) {
+        candidates.push({
+          path: [...cand.path, keys[k]],
+          edges: [
+            ...cand.edges,
+            { p: answer.probabilities[k], confidence: answer.confidence, winner: k === answer.choice },
+          ],
+          stopped: false,
+        });
+      }
+    });
+    beam = candidates.sort((a, b) => pathScore(b.edges) - pathScore(a.edges)).slice(0, BEAM_WIDTH);
+  }
+  return beam; // best path first
+}
+```
+
+</Fragment>
+</CodeTabs>
+
+For greedy search, set the beam width to 1. The rest of the code is unchanged.
+
+## Example response
+
+This is an illustrative response for the second level of the skillet listing, where the beam holds two open paths: `Home & Kitchen` (question `n0`) and `Sports & Outdoors` (question `n1`). Option lists are shortened to four children each for readability. The shape follows the [API reference](https://docs.typesafe.ai/api); the numbers are made up for the example, not measured.
+
+```json
+{
+  "model": "jev-1.13.0",
+  "answers": {
+    "n0": {
+      "type": "choice",
+      "choice": "c2",
+      "probabilities": { "c0": 0.02, "c1": 0.03, "c2": 0.91, "c3": 0.03, "none": 0.01 },
+      "confidence": 0.86
+    },
+    "n1": {
+      "type": "choice",
+      "choice": "c1",
+      "probabilities": { "c0": 0.08, "c1": 0.47, "c2": 0.05, "c3": 0.04, "none": 0.36 },
+      "confidence": 0.31
+    }
+  },
+  "usage": { "input_tokens": 512, "output_tokens": 36 }
+}
+```
+
+Here `n0.c2` maps back to `Kitchen & Dining` and `n1.c1` to `Camping & Hiking` through the `keys` map your code kept. The two questions were answered independently. The second one spreads its weight between a camping category and `none`. Its best edge probability of 0.47 drags that path's score down, so the first path leads the beam at the next sort, and its low `confidence` would trigger the back-off below if that path ever won.
+
+## Decision logic
+
+The cascade returns ranked paths. Your code decides how deep to trust the best one. The rule below is the back-off from the confidence cookbook applied to a tree: strip levels from the bottom of the path while the decision that produced them was weak, then report whatever is left. The parent label follows from the path you already have, so backing off needs no extra request.
+
+```python
+LEAF_CONFIDENT = 0.80   # illustrative starting points, tune on labelled listings
+MIN_SEPARATION = 1.15   # best path score divided by runner-up score
+MIN_DEPTH = 2           # never auto-file above this level
+
+
+def decide(beam: list[dict]) -> dict:
+    best = beam[0]
+    path, edges = list(best["path"]), list(best["edges"])
+
+    # back off: drop trailing levels whose Choice was not confident
+    while edges and not (edges[-1]["winner"] and edges[-1]["confidence"] >= LEAF_CONFIDENT):
+        edges.pop()
+        path.pop()
+
+    if len(beam) > 1 and beam[1]["path"][:1] != best["path"][:1]:
+        separation = path_score(best["edges"]) / max(path_score(beam[1]["edges"]), 1e-9)
+        if separation < MIN_SEPARATION:
+            return {"action": "human_review", "candidates": [c["path"] for c in beam]}
+
+    if len(path) < MIN_DEPTH:
+        return {"action": "human_review", "candidates": [c["path"] for c in beam]}
+    if len(path) < len(best["path"]) or best["stopped"]:
+        return {"action": "file_at_parent", "category": path, "suggested_leaf": best["path"]}
+    return {"action": "file_at_leaf", "category": path}
+```
+
+Three outcomes come out of this. A confident leaf is filed automatically. A path that was confident down to some parent and unsure below it is filed at the parent, with the unsure leaf kept as a suggestion for the seller or a catalog editor to confirm. When the two best paths disagree at the top level and their scores are nearly equal, a person decides, and they see all the beam's candidates instead of only the winner.
+
+Filing at a parent is a correct but less specific answer, which is usually better for search than a specific wrong one. In the confidence cookbook's experiment on 60 SEC filings with an earlier model version, answers under a 0.9 confidence cutoff were right 40% of the time at the narrow level and 70% of the time when reported one level up. Those figures are TypeSafe's, for a different dataset, and are quoted only to show the shape of the trade-off. The thresholds above follow the act, caution, do-not-act bands in the [confidence guide](https://docs.typesafe.ai/confidence). See [how to pick confidence thresholds](/guides/confidence-thresholds/) for a tuning procedure. Note that the ratio and the geometric mean are computed by your code from returned probabilities. Jev is never asked to do the arithmetic.
+
+## Cost estimate
+
+A cascade makes several requests per product, so `tokensPerItem` here is the total across the whole cascade, not the size of one request. The table's "per request" wording should be read as "per product" on this page. The assumptions:
+
+| Step | Requests | Tokens per request | Subtotal |
+| --- | --- | --- | --- |
+| Level 1, one question | 1 | about 220 state + 200 question = 420 | 420 |
+| Levels 2 to 5, up to three questions each | 4 | about 220 state + 3 x 200 questions = 820 | 3,280 |
+| Total per product |  |  | 3,700 |
+
+This assumes a trimmed listing of about 220 tokens, an average of 20 children per node at roughly 8 tokens per option plus instructions, five levels, and a beam of three. The state is billed again at every level because each level is a separate request. Putting the beam's questions in one request per level means the state is billed once per level and not once per path. Greedy search under the same assumptions is five requests of about 420 tokens, or 2,100 tokens per product. Shallow branches and nodes with a single child (which need no question) reduce the total. Read `usage.input_tokens` from every response in the cascade and sum them per product to get your real figure.
+
+<CostTable tokens={frontmatter.tokensPerItem} unit="products" />
+
+Rate limits are per request and per token. At the [documented limit of 1,200 requests per minute](https://docs.typesafe.ai/models), a five-request cascade works out to about 240 products per minute per account, so plan backfills accordingly. The division is done here, in prose and in your scheduler, not by the model.
+
+## Pitfalls
+
+- **Nodes with too many children.** A Choice takes at most 255 options, and the confidence cookbook describes Choice as working reliably up to roughly 240. A flat "Brands" or "Parts by model" node with 600 children needs an intermediate grouping level before it can be classified.
+- **Sibling names that only make sense with their parent.** "Accessories" appears under forty parents. Jev reads literally and sees only the option text, so write the description as "Camera accessories: bags, straps, lens caps", not the bare name.
+- **Early errors in greedy mode.** A wrong department at level one cannot be repaired further down. If you run with a beam width of 1 to save tokens, at least apply the back-off rule so that weak decisions are not filed at leaf depth.
+- **Treating the path score as a probability.** The geometric mean is a ranking device for comparing paths of different lengths. Do not reuse the `LEAF_CONFIDENT` threshold on it, and do not reuse either threshold on a Noul. They are different quantities.
+- **No invariants between questions.** The questions in one request are answered independently, so two beam paths can each look confident about their own subtree. Compare them with the path score. Never expect one answer to take another into account.
+- **Seller text as an attack surface.** Descriptions are untrusted input, and TypeSafe notes that adversarial content in the state can move answers. Keyword stuffing ("phone case laptop tablet camera") is the everyday version. Prefer structured attributes over free text where you have them, and cap description length.
+- **Taxonomy changes.** Renaming or moving a category changes the options and can shift confidence. Keep a labelled set of listings and re-run it when the tree changes. The cookbook points out that a cascade makes this testable per node, since you can see which node misclassifications come from.
+- **Alias drift.** `jev-latest` moves when a new version ships. Pin the versioned model ID from the [models page](https://docs.typesafe.ai/models) if your thresholds were tuned, and re-test before upgrading.
+- **Non-English listings.** English is the primary language. Test other languages on your own data and expect to back off to parents more often.

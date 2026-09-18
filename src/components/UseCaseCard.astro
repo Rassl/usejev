@@ -1,0 +1,27 @@
+---
+import type { CollectionEntry } from 'astro:content';
+interface Props {
+  entry: CollectionEntry<'use-cases'>;
+  heading?: 'h2' | 'h3';
+}
+const { entry, heading: H = 'h3' } = Astro.props;
+const { title, description, primitives, industry, category, difficulty } = entry.data;
+---
+
+<li
+  class="card"
+  data-primitives={primitives.join('|')}
+  data-industries={industry.join('|')}
+>
+  <H><a href={`/use-cases/${entry.id}/`}>{title}</a></H>
+  <p>{description}</p>
+  <ul class="tags" aria-label="Tags">
+    {primitives.map((p) => <li class="tag tag-primitive">{p}</li>)}
+    <li class="tag">{category}</li>
+    <li class="tag">{difficulty}</li>
+  </ul>
+</li>
+<style>
+  li :global(h2) { margin: 0; font-size: 1.1rem; }
+  li :global(h2 a) { color: var(--ink); text-decoration: none; }
+</style>

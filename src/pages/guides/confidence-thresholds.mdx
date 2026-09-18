@@ -1,0 +1,140 @@
+---
+layout: ../../layouts/Guide.astro
+title: "Jev Confidence Thresholds: Gating Actions"
+description: "How to gate automated actions on Jev confidence: what the number means, three-band routing, risk-based thresholds, and a procedure to tune them on your data."
+path: /guides/confidence-thresholds/
+publishedAt: 2026-09-19
+updatedAt: 2026-09-19
+faqs:
+  - q: Is Jev's confidence the probability that the answer is correct?
+    a: No. Confidence is a statistic derived from the shape of the whole probability distribution across your options or levels. It is not the probability of the top option, and it is not a guarantee of correctness. Measure how accuracy relates to confidence on your own labelled data.
+  - q: What confidence threshold should I use with Jev?
+    a: There is no universal number. TypeSafe's example uses 0.5 as a floor below which the system does not act and 0.9 before a high-stakes action. Start conservative, then tune per action on a labelled sample, choosing the lowest threshold that meets your accuracy target.
+  - q: How do I threshold a Noul answer?
+    a: A Noul has no confidence field. Threshold the noul value directly, and consider two cutoffs, for example act on yes above 0.9, act on no below 0.1, and review everything between. Tune those cutoffs separately from any Choice or Score thresholds.
+  - q: Do thresholds survive a model upgrade?
+    a: Not necessarily. The jev-latest alias moves when a new version ships. If you tuned thresholds carefully, pin the versioned model ID, and re-run your labelled sample before moving to a new version.
+---
+
+Jev returns a decision and a measure of how sure it is. The second part is what lets you automate safely: act on the confident answers, and send the rest somewhere safer. This guide explains what the confidence number is, how to turn it into routing logic, and how to choose thresholds with data instead of guesswork. It builds on TypeSafe's official [confidence guide](https://docs.typesafe.ai/confidence) and [confidence-gated routing pattern](https://docs.typesafe.ai/patterns/confidence-routing).
+
+## What confidence is, and is not
+
+Every [Choice](https://docs.typesafe.ai/primitives/choice) and [Score](https://docs.typesafe.ai/primitives/score) answer contains `probabilities`, a distribution over your options or levels, and `confidence`, a number from 0 to 1 that TypeSafe derives from the shape of that distribution. Concentrated mass gives high confidence. A flat distribution gives low confidence.
+
+Three consequences:
+
+- **Confidence is not the top probability.** The official quick start shows `billing` at 0.84 with a confidence of 0.596. Do not substitute one for the other.
+- **Confidence is not correctness.** A confident answer can be wrong, especially if the question is ambiguous or the text is adversarial. Only your own labelled data tells you how accuracy tracks confidence for your task.
+- **Noul has no confidence field.** The `noul` value is the probability of yes. Values near 0.5 are the unsure zone.
+
+You are not locked into TypeSafe's statistic. The full distribution is in the response, so you can compute your own measure, for example the margin between the top two options.
+
+## The three-band pattern
+
+TypeSafe's starting pattern divides confidence into three ranges:
+
+| Band | Behavior | Examples |
+| --- | --- | --- |
+| High | Act automatically | Assign the ticket, apply the label, call the handler |
+| Medium | Proceed with caution | Act but flag for review, ask the user to confirm, use a reversible action |
+| Low | Do not act | Route to a person, ask a clarifying question, fall back to another system |
+
+Low confidence is useful information. On a Choice it often means no option clearly wins, which may mean your options overlap or the right option is missing. On a Score it often means the levels are ambiguous or the state lacks the evidence.
+
+## Thresholds scale with the cost of a mistake
+
+A threshold belongs to an **action**, not to a model or a question. The same Choice answer can trigger a harmless action at one confidence level and a destructive one only at a much higher level. This sample uses only the documented Python SDK surface:
+
+```python
+from typesafe_sdk import Choice, TypeSafeClient
+
+client = TypeSafeClient()
+
+# Illustrative starting points. Tune per action on labelled data.
+FLOOR = 0.50
+THRESHOLDS = {
+    "show_order_status": 0.50,   # read-only, trivially recoverable
+    "update_address": 0.75,      # reversible, mildly annoying if wrong
+    "cancel_order": 0.90,        # costly to undo
+}
+
+def handle(message: str) -> str:
+    response = client.system_one(
+        state=message,
+        questions={
+            "action": Choice(
+                instructions="What is the customer asking us to do?",
+                criteria={
+                    "show_order_status": "Wants to know where an order is",
+                    "update_address": "Wants to change the delivery address",
+                    "cancel_order": "Wants to cancel an order",
+                    "other": "Anything else",
+                },
+            ),
+        },
+    )
+    action = response.answers["action"]
+
+    if action.confidence < FLOOR or action.choice == "other":
+        return "handoff_to_human"
+    if action.confidence >= THRESHOLDS[action.choice]:
+        return action.choice
+    return f"confirm_with_user:{action.choice}"
+```
+
+The 0.5 floor and the 0.9 bar for a high-stakes action mirror the example in the official guide. The middle value is ours and is illustrative.
+
+## How to tune thresholds on your data
+
+1. **Collect a labelled sample.** A few hundred real items per decision, labelled by the people who do the job today. Include the ugly cases.
+2. **Run the sample and store everything:** the choice, the full probabilities, the confidence, and the model ID from the response.
+3. **Sort by confidence and sweep a threshold.** At each candidate threshold compute two numbers: *coverage*, the share of items at or above the threshold, and *accuracy above the threshold*.
+4. **Pick the threshold from your error budget.** If a wrong auto-assignment is acceptable 2% of the time, choose the lowest threshold whose accuracy above it is at least 98%. The lowest one gives you the most automation for that error rate.
+5. **Do it per action or per option.** A rare, costly option may need its own, higher bar.
+6. **Keep a holdout.** Tune on one half of the sample and confirm on the other so you do not fit noise.
+
+The sweep is a few lines of code:
+
+```python
+def sweep(rows, thresholds=(0.5, 0.6, 0.7, 0.8, 0.9, 0.95)):
+    """rows: list of (confidence, was_correct) pairs from your labelled sample."""
+    for t in thresholds:
+        kept = [ok for conf, ok in rows if conf >= t]
+        coverage = len(kept) / len(rows)
+        accuracy = sum(kept) / len(kept) if kept else float("nan")
+        print(f"threshold {t:.2f}  coverage {coverage:.0%}  accuracy {accuracy:.1%}")
+```
+
+If accuracy does not rise as the threshold rises, the problem is usually the question. Look for overlapping options, a missing `other` option, or instructions the model is reading more literally than you intended ([known limitations](https://docs.typesafe.ai/model-jaggedness/jev-1.13)).
+
+## Thresholding Noul answers
+
+Use two cutoffs on the `noul` value so that the unsure middle is explicit:
+
+```python
+def gate(noul: float, yes_at: float = 0.9, no_at: float = 0.1) -> str:
+    if noul >= yes_at:
+        return "yes"
+    if noul <= no_at:
+        return "no"
+    return "review"
+```
+
+For safety filters the costs are asymmetric. Missing a [prompt injection](/use-cases/content-moderation-prompt-injection-screening/) is worse than reviewing a harmless message, so set the blocking cutoff low and accept more reviews. For convenience features, do the reverse.
+
+TypeSafe warns against assuming structural invariants between questions. A Noul and a yes/no Choice on the same question can give different numbers, and a question and its negation need not sum to 1. Tune each question's threshold on its own, and never copy a Choice threshold onto a Noul.
+
+## Composite decisions
+
+When you combine several answers, for example weighted Scores in [lead scoring](/use-cases/lead-scoring/) or [email priority](/use-cases/email-triage-priority-scoring/), gate the inputs before you combine them. A simple rule works well: if any input Score has confidence below your floor, mark the composite as "needs review" instead of averaging an unreliable number into it. Also follow TypeSafe's advice not to read a fractional `score` as an exact magnitude. Use it to compare against a threshold or to sort.
+
+## Operating thresholds in production
+
+- **Log the inputs to every gate:** confidence, probabilities, chosen action, and the `model` string from the response.
+- **Sample the automated band.** Review a small random slice of auto-handled items every week. It is the only way to see confident mistakes.
+- **Watch coverage over time.** A falling share of high-confidence answers usually means your inputs changed, for example a new product line that no option describes.
+- **Pin the model version** if thresholds matter. The `jev-latest` alias [moves with new releases](https://docs.typesafe.ai/models). Re-run the sweep before upgrading.
+- **Feed reviews back.** Every human correction in the medium and low bands is a free labelled example for the next tuning pass.
+
+For end-to-end examples of these gates in context, see [support ticket routing](/use-cases/support-ticket-routing/) and [security alert triage](/use-cases/security-alert-triage/), where the bar for automated containment is far higher than the bar for labelling.

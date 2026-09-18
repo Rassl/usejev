@@ -1,0 +1,34 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import UseCaseCard from '../../components/UseCaseCard.astro';
+import { breadcrumbs } from '../../lib/jsonld';
+
+const entries = (await getCollection('use-cases')).sort((a, b) => a.data.title.localeCompare(b.data.title));
+const categories = [...new Set(entries.map((e) => e.data.category))].sort();
+---
+
+<Base
+  title="All Jev Use Cases by Category"
+  description="Every Jev use case on usejev.dev, grouped by category: routing, triage, moderation, scoring, re-ranking, and classification, each with verified code."
+  jsonLd={[breadcrumbs([{ name: 'Home', path: '/' }, { name: 'Use cases', path: '/use-cases/' }])]}
+>
+  <h1>All Jev use cases</h1>
+  <p class="lede">
+    {entries.length} worked examples of typed decisions with Jev. Each page has the question design, Python and
+    TypeScript code checked against the official docs, decision logic, and a cost estimate.
+  </p>
+  {categories.map((category) => (
+    <section aria-labelledby={category.toLowerCase().replace(/[^a-z]+/g, '-')}>
+      <h2 id={category.toLowerCase().replace(/[^a-z]+/g, '-')}>{category}</h2>
+      <ul class="grid">
+        {entries.filter((e) => e.data.category === category).map((e) => <UseCaseCard entry={e} />)}
+      </ul>
+    </section>
+  ))}
+  <h2>New to Jev?</h2>
+  <p>
+    Start with <a href="/guides/what-is-jev/">what Jev is and how System One models differ from LLMs</a>, then read
+    <a href="/guides/confidence-thresholds/">how to gate actions on confidence</a>.
+  </p>
+</Base>

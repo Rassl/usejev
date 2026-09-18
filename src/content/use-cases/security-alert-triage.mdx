@@ -1,0 +1,355 @@
+---
+title: Security Alert Triage with Jev
+description: Triage SIEM and EDR alerts with Jev Score and Choice questions, rank the analyst queue, and keep host isolation behind a high confidence bar and a human.
+slug: security-alert-triage
+category: Security and observability
+industry: [Security, SaaS]
+primitives: [Score, Choice, Noul]
+difficulty: Advanced
+tokensPerItem: 850
+related: [log-anomaly-classification, content-moderation-prompt-injection-screening, email-triage-priority-scoring]
+publishedAt: 2026-09-19
+updatedAt: 2026-09-19
+---
+
+## The problem
+
+A security operations centre receives tens of thousands of alerts a day from its SIEM and EDR tools, and most of them are noise: a scheduled admin script, a vulnerability scanner, a user who mistyped a password. Analysts work the queue in arrival order, so the one alert that matters can sit behind hundreds that do not. Static severity from the detection rule does not help much, because the same rule fires for the help desk technician and for the intruder.
+
+## Why Jev fits
+
+Alert triage is a set of closed questions asked about a small JSON object: how bad would this be, how likely is it to be real, and what kind of thing is it. Jev answers exactly that kind of question. For background on the model, see [what Jev is](/guides/what-is-jev/).
+
+- **Typed output.** A [Score](https://docs.typesafe.ai/primitives/score) returns a value on levels you wrote, and a [Choice](https://docs.typesafe.ai/primitives/choice) returns one of your category keys. The result drops straight into a queue sort or a SOAR playbook condition with nothing to parse.
+- **Speed.** TypeSafe reports [70 to 500 ms end to end](https://typesafe.ai/blog/introducing-system-one-models-and-jev), so every alert can be triaged at ingestion rather than in a nightly batch.
+- **Cost.** At [$0.042 per million input tokens](https://docs.typesafe.ai/models) with free output, scoring the full alert stream is affordable, not only the subset that already looks interesting.
+- **Confidence gating.** Score and Choice answers carry a `confidence` value. TypeSafe's [confidence guide](https://docs.typesafe.ai/confidence) recommends not acting below roughly 0.5 and raising the bar for high-stakes actions, which maps directly onto the difference between reordering a queue and isolating a host.
+
+**When an LLM is the better tool:** writing the incident narrative, summarising a long process tree for the analyst, proposing a hunt query, or reasoning across many related alerts over time all need a generative model or a correlation engine. Jev makes one snap judgment about one alert. A sensible split is Jev on every alert for ordering and categorisation, and an LLM or an analyst on the small set that reaches the top of the queue.
+
+One caveat belongs up front rather than in the pitfalls. Alerts contain strings the attacker chose: file names, command lines, email subjects, user agents. TypeSafe's limitations page says plainly that [adversarial content in the state can move answers](https://docs.typesafe.ai/model-jaggedness/jev-1.13#adversarial-content). Treat Jev as a prioritisation aid that can be fooled, never as the control that decides an alert is safe to ignore on its own.
+
+## Question design
+
+Normalise the alert in code first. Keep the fields that carry the decision and drop raw event IDs, GUIDs, hashes, and vendor metadata, because [large irrelevant state hurts accuracy](https://docs.typesafe.ai/model-jaggedness/jev-1.13#large-state-full-of-irrelevant-detail). Anything numeric is turned into a word bucket before it goes into the state, since Jev is [not reliable at counting or comparing numbers](https://docs.typesafe.ai/model-jaggedness/jev-1.13#math-and-numbers). In the example below, `prior_alerts_on_host_24h` was counted by the pipeline and written as a label.
+
+```json
+{
+  "alert": {
+    "source": "EDR",
+    "rule": "Office application spawned PowerShell with encoded command",
+    "process_tree": "OUTLOOK.EXE > WINWORD.EXE > powershell.exe -NoP -W Hidden -enc [base64 removed]",
+    "decoded_command_summary": "Downloads a file from an external IP address and runs it from the user's Temp folder",
+    "user_role": "accounts payable clerk",
+    "host_role": "finance workstation"
+  },
+  "context": {
+    "asset_criticality": "high",
+    "prior_alerts_on_host_24h": "none",
+    "user_is_it_admin": "no",
+    "rule_historical_noise": "low"
+  }
+}
+```
+
+| Question ID | Type | Instructions | Criteria |
+| --- | --- | --- | --- |
+| `severity` | Score | If the activity in `alert` is malicious, how severe is the potential impact given `context.asset_criticality` and `alert.host_role`? | 4 ordered levels from "negligible impact" to "critical: likely compromise of sensitive systems or data" |
+| `true_positive` | Score | How likely is it that `alert` describes real malicious activity rather than normal user, admin, or software behaviour? | 4 ordered levels from "almost certainly benign" to "almost certainly malicious" |
+| `category` | Choice | Which category best describes the activity in `alert`? | `phishing`, `malware`, `credential_abuse`, `data_exfiltration`, `policy_violation`, `benign_noise`, `other`, each with a one-line description |
+| `explained_by_role` | Noul | Is the activity in `alert` something a person with `alert.user_role` would plausibly do as part of their normal job? | none |
+| `lateral_movement` | Noul | Does `alert` describe one machine or account being used to access another internal machine? | none |
+| `privileged_account` | Noul | Does `alert` involve an administrator, service, or other privileged account? | none |
+
+Severity and true-positive likelihood are separate questions on purpose. A port scan from the office printer is likely real and low impact. A single odd login on the domain controller is probably benign and very high impact if it is not. One blended "priority" question would hide that difference. TypeSafe's [composite scoring pattern](https://docs.typesafe.ai/patterns/composite-scoring) describes the same approach: atomic scores, combined in your code.
+
+The three Noul questions are [speculative fan-out](https://docs.typesafe.ai/patterns/fan-out). All questions in a request are evaluated in parallel against the same state, so they add a few tokens and no extra round trip. Your code reads them only when relevant. Remember that questions are independent: the `category` answer is never context for `severity`.
+
+## Code
+
+Both samples use only calls documented in the official [Python SDK](https://docs.typesafe.ai/sdk/python) and [JavaScript SDK](https://docs.typesafe.ai/sdk/javascript) pages. The client reads `TYPESAFE_API_KEY` from the environment.
+
+<CodeTabs>
+<Fragment slot="python">
+
+```python
+from typesafe_sdk import Choice, Noul, Score, TypeSafeClient
+
+# Thresholds were tuned on this version, so pin it instead of using jev-latest.
+client = TypeSafeClient(model="jev-1.13.0")
+
+QUESTIONS = {
+    "severity": Score(
+        instructions=(
+            "If the activity in `alert` is malicious, how severe is the potential impact "
+            "given `context.asset_criticality` and `alert.host_role`?"
+        ),
+        criteria=[
+            "Negligible: no meaningful impact even if malicious",
+            "Limited: one low-value host or account affected",
+            "Serious: business data or an important system at risk",
+            "Critical: likely compromise of sensitive systems or data",
+        ],
+    ),
+    "true_positive": Score(
+        instructions=(
+            "How likely is it that `alert` describes real malicious activity rather than "
+            "normal user, admin, or software behaviour?"
+        ),
+        criteria=[
+            "Almost certainly benign",
+            "Probably benign, with something slightly unusual",
+            "Probably malicious",
+            "Almost certainly malicious",
+        ],
+    ),
+    "category": Choice(
+        instructions="Which category best describes the activity in `alert`?",
+        criteria={
+            "phishing": "A malicious email, link, or attachment delivered to a user",
+            "malware": "Malicious code executing or persisting on a host",
+            "credential_abuse": "Stolen, guessed, or misused credentials and suspicious logins",
+            "data_exfiltration": "Data being copied or sent out of the organisation",
+            "policy_violation": "A user breaking policy without attacker involvement",
+            "benign_noise": "Expected activity from users, admins, scanners, or software",
+            "other": "Anything that does not fit the categories above",
+        },
+    ),
+    "explained_by_role": Noul(
+        instructions=(
+            "Is the activity in `alert` something a person with `alert.user_role` would "
+            "plausibly do as part of their normal job?"
+        ),
+    ),
+    "lateral_movement": Noul(
+        instructions="Does `alert` describe one machine or account being used to access another internal machine?",
+    ),
+    "privileged_account": Noul(
+        instructions="Does `alert` involve an administrator, service, or other privileged account?",
+    ),
+}
+
+
+def triage(alert: dict, context: dict) -> dict:
+    response = client.system_one(
+        state={"alert": alert, "context": context},
+        questions=QUESTIONS,
+    )
+    a = response.answers
+    return {
+        "severity": a["severity"].score,
+        "severity_confidence": a["severity"].confidence,
+        "true_positive": a["true_positive"].score,
+        "true_positive_confidence": a["true_positive"].confidence,
+        "category": a["category"].choice,
+        "category_confidence": a["category"].confidence,
+        "category_probabilities": a["category"].probabilities,
+        "explained_by_role": a["explained_by_role"].noul,
+        "lateral_movement": a["lateral_movement"].noul,
+        "privileged_account": a["privileged_account"].noul,
+    }
+```
+
+</Fragment>
+<Fragment slot="ts">
+
+```ts
+import { choice, noul, score, TypeSafeClient } from "@typesafe-ai/sdk";
+
+const client = new TypeSafeClient(); // reads TYPESAFE_API_KEY
+
+const questions = {
+  severity: score(
+    "If the activity in `alert` is malicious, how severe is the potential impact given `context.asset_criticality` and `alert.host_role`?",
+    [
+      "Negligible: no meaningful impact even if malicious",
+      "Limited: one low-value host or account affected",
+      "Serious: business data or an important system at risk",
+      "Critical: likely compromise of sensitive systems or data",
+    ],
+  ),
+  true_positive: score(
+    "How likely is it that `alert` describes real malicious activity rather than normal user, admin, or software behaviour?",
+    [
+      "Almost certainly benign",
+      "Probably benign, with something slightly unusual",
+      "Probably malicious",
+      "Almost certainly malicious",
+    ],
+  ),
+  category: choice("Which category best describes the activity in `alert`?", {
+    phishing: "A malicious email, link, or attachment delivered to a user",
+    malware: "Malicious code executing or persisting on a host",
+    credential_abuse: "Stolen, guessed, or misused credentials and suspicious logins",
+    data_exfiltration: "Data being copied or sent out of the organisation",
+    policy_violation: "A user breaking policy without attacker involvement",
+    benign_noise: "Expected activity from users, admins, scanners, or software",
+    other: "Anything that does not fit the categories above",
+  }),
+  explained_by_role: noul(
+    "Is the activity in `alert` something a person with `alert.user_role` would plausibly do as part of their normal job?",
+  ),
+  lateral_movement: noul(
+    "Does `alert` describe one machine or account being used to access another internal machine?",
+  ),
+  privileged_account: noul(
+    "Does `alert` involve an administrator, service, or other privileged account?",
+  ),
+};
+
+export async function triage(alert: Record<string, string>, context: Record<string, string>) {
+  const response = await client.systemOne({
+    state: { alert, context },
+    questions,
+    model: "jev-1.13.0", // pinned because thresholds were tuned on this version
+  });
+  const a = response.answers;
+  return {
+    severity: a.severity.score,
+    severityConfidence: a.severity.confidence,
+    truePositive: a.true_positive.score,
+    truePositiveConfidence: a.true_positive.confidence,
+    category: a.category.choice,
+    categoryConfidence: a.category.confidence,
+    categoryProbabilities: a.category.probabilities,
+    explainedByRole: a.explained_by_role.noul,
+    lateralMovement: a.lateral_movement.noul,
+    privilegedAccount: a.privileged_account.noul,
+  };
+}
+```
+
+</Fragment>
+</CodeTabs>
+
+## Example response
+
+This is an illustrative response for the encoded PowerShell alert above. The shape follows the [API reference](https://docs.typesafe.ai/api); every number is made up for the example, not measured.
+
+```json
+{
+  "model": "jev-1.13.0",
+  "answers": {
+    "severity": {
+      "type": "score",
+      "score": 2.64,
+      "legend": {
+        "0": "Negligible: no meaningful impact even if malicious",
+        "1": "Limited: one low-value host or account affected",
+        "2": "Serious: business data or an important system at risk",
+        "3": "Critical: likely compromise of sensitive systems or data"
+      },
+      "probabilities": { "0": 0.01, "1": 0.04, "2": 0.25, "3": 0.7 },
+      "confidence": 0.71
+    },
+    "true_positive": {
+      "type": "score",
+      "score": 2.48,
+      "legend": {
+        "0": "Almost certainly benign",
+        "1": "Probably benign, with something slightly unusual",
+        "2": "Probably malicious",
+        "3": "Almost certainly malicious"
+      },
+      "probabilities": { "0": 0.02, "1": 0.08, "2": 0.3, "3": 0.6 },
+      "confidence": 0.64
+    },
+    "category": {
+      "type": "choice",
+      "choice": "malware",
+      "probabilities": {
+        "phishing": 0.3,
+        "malware": 0.62,
+        "credential_abuse": 0.03,
+        "data_exfiltration": 0.01,
+        "policy_violation": 0.01,
+        "benign_noise": 0.02,
+        "other": 0.01
+      },
+      "confidence": 0.48
+    },
+    "explained_by_role": { "type": "noul", "noul": 0.03 },
+    "lateral_movement": { "type": "noul", "noul": 0.05 },
+    "privileged_account": { "type": "noul", "noul": 0.04 }
+  },
+  "usage": { "input_tokens": 842, "output_tokens": 96 }
+}
+```
+
+The `score` value is probability-weighted, so it lands between levels. The category split between `malware` and `phishing` is what you would expect for a malicious attachment, and the low category confidence is useful information: show the analyst both labels. Noul answers have no `confidence` field; the `noul` value is the probability of yes.
+
+## Decision logic
+
+The model answers; your code decides. The logic below has three tiers with very different bars. Every threshold is an illustrative starting point to tune against alerts your analysts have already dispositioned, following the procedure in [how to pick confidence thresholds](/guides/confidence-thresholds/).
+
+```python
+# Illustrative starting points, tune on your own dispositioned alerts.
+ACT_MIN_CONFIDENCE = 0.50        # below this, ignore the answer
+CONTAINMENT_CONFIDENCE = 0.90    # high-stakes bar
+DEPRIORITISE_CONFIDENCE = 0.90
+
+CONTAINMENT_CATEGORIES = {"malware", "credential_abuse", "data_exfiltration"}
+
+
+def decide(r: dict, rule_is_known_noisy: bool, ioc_match: bool) -> dict:
+    # 1. Deterministic signals win. Jev never overrides them.
+    if ioc_match:
+        return {"queue": "p1", "propose": "containment", "needs_human": True}
+
+    # 2. Unsure answers get no special treatment: default queue, in arrival order.
+    if min(r["severity_confidence"], r["true_positive_confidence"]) < ACT_MIN_CONFIDENCE:
+        return {"queue": "default", "propose": None, "needs_human": True}
+
+    # 3. Propose containment only on a very high bar. A human still confirms.
+    if (
+        r["severity"] >= 2.5
+        and r["true_positive"] >= 2.5
+        and r["severity_confidence"] > CONTAINMENT_CONFIDENCE
+        and r["true_positive_confidence"] > CONTAINMENT_CONFIDENCE
+        and r["category"] in CONTAINMENT_CATEGORIES
+    ):
+        return {"queue": "p1", "propose": "containment", "needs_human": True}
+
+    # 4. Deprioritise, never auto-close, and only for rules already known to be noisy.
+    if (
+        rule_is_known_noisy
+        and r["category"] == "benign_noise"
+        and r["category_confidence"] > DEPRIORITISE_CONFIDENCE
+        and r["true_positive"] < 0.5
+        and r["explained_by_role"] > 0.9
+    ):
+        return {"queue": "low", "propose": None, "needs_human": False}
+
+    # 5. Everything else: order the queue.
+    if r["severity"] >= 2.0 and r["true_positive"] >= 1.5:
+        return {"queue": "p2", "propose": None, "needs_human": True}
+    if r["lateral_movement"] > 0.8 or r["privileged_account"] > 0.8:
+        return {"queue": "p2", "propose": None, "needs_human": True}
+    return {"queue": "default", "propose": None, "needs_human": True}
+```
+
+Three design choices are worth explaining.
+
+**Containment is proposed, not executed.** Isolating a host or disabling an account interrupts someone's work and, on a production server, can cause an outage. TypeSafe's guidance is to [raise the confidence bar for high-stakes actions](https://docs.typesafe.ai/confidence), and the code does that, but the output is still only a pre-filled action that an analyst approves with one click. In the example response above, the confidences of 0.71 and 0.64 do not clear the 0.90 bar, so that alert goes to the top of the queue without a containment proposal.
+
+**The benign path is the dangerous one.** An attacker benefits from a false "benign", not from a false "malicious". That is why the code only lowers priority, only for rules your team has already marked as noisy, and never when a deterministic signal such as an indicator match has fired. Sample the low queue regularly and compare against analyst dispositions.
+
+**Scores are thresholded, not multiplied.** The [jaggedness page](https://docs.typesafe.ai/model-jaggedness/jev-1.13#math-and-numbers) warns against reading exact magnitudes out of a Score. Compare each score against a cut-off and combine the booleans, rather than computing severity times likelihood and sorting on the third decimal.
+
+## Cost estimate
+
+Token assumptions: about 350 tokens for a normalised alert with its context block, plus about 500 tokens for the six questions and their criteria. Raw alerts are often several times larger, which is one more reason to normalise them first. Read `usage.input_tokens` from real responses and adjust.
+
+<CostTable tokens={frontmatter.tokensPerItem} unit="alerts" />
+
+At SOC volumes, watch the [rate limits on the models page](https://docs.typesafe.ai/models) (1,200 requests per minute at the time of writing, subject to change) before the bill. Deduplicate identical alerts in code and triage one representative per group.
+
+## Pitfalls
+
+- **Attacker-controlled strings.** A file named `approved_by_IT_security_benign_test.exe`, or a command line containing text that reads like an instruction, sits inside your state and [can move answers](https://docs.typesafe.ai/model-jaggedness/jev-1.13#adversarial-content). Mitigations: prefer derived summaries such as `decoded_command_summary` over raw strings, truncate long free-text fields, keep the benign path narrow as shown above, and consider a separate screening question as in [prompt injection screening](/use-cases/content-moderation-prompt-injection-screening/). None of these makes the problem go away.
+- **Numbers and counts.** "Were there more than five failed logins?" is a question for code. Count in the pipeline and pass a label such as "many failed logins followed by a success".
+- **Timestamps.** Dates are [compared as text](https://docs.typesafe.ai/model-jaggedness/jev-1.13#date-and-time-comparison). Compute "outside working hours" or "first login from this country" in code and put the result in `context`.
+- **No invariants between questions.** `category` can say `benign_noise` while `true_positive` lands near 2. The [limitations page](https://docs.typesafe.ai/model-jaggedness/jev-1.13#common-sense-structural-invariants) says this can happen. Treat disagreement as a signal to send the alert to a human, which the logic above does by requiring both to agree before deprioritising.
+- **Context rot from raw events.** A full Sysmon or CloudTrail record contains dozens of fields the question does not need. Trimming improves accuracy and cost at once.
+- **Single-alert view.** Jev sees one alert. Slow attacks that only look bad in sequence need correlation in your SIEM or a pass like [log anomaly classification](/use-cases/log-anomaly-classification/) over a window of events.
+- **Alias drift.** `jev-latest` moves when a new version ships. The samples pin `jev-1.13.0`; re-run your labelled set before upgrading, as the [models page](https://docs.typesafe.ai/models) advises.

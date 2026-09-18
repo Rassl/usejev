@@ -1,0 +1,281 @@
+---
+title: Invoice and Document Classification with Jev
+description: Classify OCR text from an accounts payable inbox with one Jev Choice question, flag reminders and past-due notices with Nouls, keep amounts and dates in code.
+slug: invoice-document-classification
+category: Documents and finance
+industry: [Fintech, Logistics, SaaS]
+primitives: [Choice, Noul]
+difficulty: Intermediate
+tokensPerItem: 1200
+related: [hierarchical-product-categorization, email-triage-priority-scoring, log-anomaly-classification]
+publishedAt: 2026-09-19
+updatedAt: 2026-09-19
+---
+
+## The problem
+
+A mid-sized distributor receives every finance document at one address, `ap@`, and through a scanner in the mail room. Invoices, credit notes, monthly statements, remittance advices, purchase order confirmations, and the occasional tax form all arrive as PDFs. A clerk opens each one to decide which workflow it belongs to before any data entry starts. The expensive mistakes are quiet ones: a monthly statement keyed in as a new invoice, or a "second reminder" for an invoice already in the system entered and paid a second time.
+
+Filename and template rules do not hold up, because every vendor's layout is different and half the files are called `scan_0042.pdf`.
+
+## Why Jev fits
+
+Document type is a closed-set decision. The intake pipeline has a fixed list of workflows, and each document must land in exactly one of them. That is what Jev's [Choice primitive](https://docs.typesafe.ai/primitives/choice) does: it returns one of the keys you supplied, a probability for every key, and a `confidence` value.
+
+- **Typed output.** The answer is always one of your workflow keys. There is no generated text to validate, and the model cannot invent a document type you do not have a queue for.
+- **Speed.** TypeSafe reports [70 to 500 ms end to end](https://typesafe.ai/blog/introducing-system-one-models-and-jev). Next to OCR, which usually takes longer, the classification step is not the bottleneck.
+- **Cost.** At [$0.042 per million input tokens](https://docs.typesafe.ai/models) with free output, a page of OCR text costs far less to classify than the OCR that produced it.
+- **Confidence gating.** Low-confidence documents go to a clerk. In accounts payable that matters more than in most pipelines, because a wrong automatic action can end in a payment.
+
+Jev is [text only](https://docs.typesafe.ai/api). It does not read PDFs or images, so this step sits after OCR or PDF text extraction, and its accuracy depends on the quality of that text.
+
+**When an LLM is the better tool:** field extraction. Pulling the invoice number, line items, tax, and total out of an arbitrary layout is a generation task, and Jev [does not generate text](https://docs.typesafe.ai/model-jaggedness/jev-1.13#generation). Use a document extraction service or an LLM for that. The split that works is Jev first, on everything, to decide which documents are invoices at all, and the more expensive extractor only on those. For more on this trade, see the guide on [Jev versus LLM classification](/guides/jev-vs-llm-classification/).
+
+## Question design
+
+The state is the extracted text of the first page plus the few metadata fields that help. For classification, the first page is nearly always enough: the words "INVOICE", "CREDIT NOTE", or "STATEMENT OF ACCOUNT" are at the top. Sending all fourteen pages of line items adds tokens and, according to TypeSafe's [known limitations page](https://docs.typesafe.ai/model-jaggedness/jev-1.13#large-state-full-of-irrelevant-detail), costs accuracy.
+
+```json
+{
+  "our_company": "Harbor Supply Co.",
+  "email_subject": "2nd reminder: invoice 88213",
+  "filename": "scan_0042.pdf",
+  "page_1_text": "MERIDIAN PACKAGING LTD\nREMINDER - SECOND NOTICE\nInvoice No: 88213   Invoice date: 14/07/2026\nBill to: Harbor Supply Co.\nOur records show the above invoice remains unpaid. Amount outstanding: 4,310.00 EUR. This account is now past due. Please remit within 7 days to avoid suspension of deliveries..."
+}
+```
+
+| Question ID | Type | Instructions | Criteria |
+| --- | --- | --- | --- |
+| `doc_type` | Choice | What type of business document is the text in `page_1_text`? | `invoice`, `credit_note`, `statement`, `remittance_advice`, `purchase_order`, `receipt`, `tax_form`, `contract`, `other`, each with a one-line description |
+| `is_reminder` | Noul | Does `page_1_text` or `email_subject` present this document as a reminder, a copy, or a repeat notice about an invoice that was issued earlier? | none |
+| `mentions_past_due` | Noul | Does `page_1_text` say that a payment is overdue or past due, or threaten a late fee, suspension, or collection? | none |
+| `billed_to_us` | Noul | Is the company named in `our_company` the party being billed or addressed in `page_1_text`? | none |
+| `text_unreadable` | Noul | Is `page_1_text` mostly garbled characters, fragments, or empty, so that a person could not tell what the document is? | none |
+
+The four Noul questions are [speculative](https://docs.typesafe.ai/patterns/fan-out). You do not know yet whether the document is an invoice, but asking costs a few dozen tokens and no extra round trip, because all questions in a request run in parallel against the same state. If the document turns out to be a contract, the code ignores the answers.
+
+Notice what is not in the table. There is no "What is the total?" and no "Is the due date before today?". Those are covered in the next sections: amounts, dates, and totals are parsed and compared in code.
+
+`is_reminder` deserves a comment. A reminder often looks exactly like the original invoice with one extra line, so making `reminder` an option in the Choice would set it against `invoice` and drag confidence down on both. As a separate Noul it becomes a flag on top of the document type, which is what it is.
+
+## Code
+
+Both samples use only calls documented in the official [Python SDK](https://docs.typesafe.ai/sdk/python) and [JavaScript SDK](https://docs.typesafe.ai/sdk/javascript) pages. The client reads `TYPESAFE_API_KEY` from the environment. OCR is assumed to have run already.
+
+<CodeTabs>
+<Fragment slot="python">
+
+```python
+from typesafe_sdk import Choice, Noul, TypeSafeClient
+
+client = TypeSafeClient()  # reads TYPESAFE_API_KEY, defaults to jev-latest
+
+MAX_CHARS = 3000  # first page only, capped; tune to your documents
+
+QUESTIONS = {
+    "doc_type": Choice(
+        instructions="What type of business document is the text in `page_1_text`?",
+        criteria={
+            "invoice": "A request for payment for specific goods or services, with its own invoice number",
+            "credit_note": "A document reducing or cancelling an amount previously invoiced",
+            "statement": "A periodic account summary listing several invoices or a running balance",
+            "remittance_advice": "A notice that a payment has been made or received",
+            "purchase_order": "An order or order confirmation for goods or services not yet billed",
+            "receipt": "Proof of a payment already completed, such as a card or till receipt",
+            "tax_form": "A tax authority form or tax certificate",
+            "contract": "An agreement, terms document, or order form to be signed",
+            "other": "Anything that does not fit the types above",
+        },
+    ),
+    "is_reminder": Noul(
+        instructions="Does `page_1_text` or `email_subject` present this document as a reminder, a copy, or a repeat notice about an invoice that was issued earlier?",
+    ),
+    "mentions_past_due": Noul(
+        instructions="Does `page_1_text` say that a payment is overdue or past due, or threaten a late fee, suspension, or collection?",
+    ),
+    "billed_to_us": Noul(
+        instructions="Is the company named in `our_company` the party being billed or addressed in `page_1_text`?",
+    ),
+    "text_unreadable": Noul(
+        instructions="Is `page_1_text` mostly garbled characters, fragments, or empty, so that a person could not tell what the document is?",
+    ),
+}
+
+
+def classify(doc: dict) -> dict:
+    response = client.system_one(
+        state={
+            "our_company": "Harbor Supply Co.",
+            "email_subject": doc.get("email_subject", ""),
+            "filename": doc["filename"],
+            "page_1_text": doc["pages"][0][:MAX_CHARS],
+        },
+        questions=QUESTIONS,
+    )
+    a = response.answers
+    return {
+        "doc_type": a["doc_type"].choice,
+        "confidence": a["doc_type"].confidence,
+        "probabilities": a["doc_type"].probabilities,
+        "reminder": a["is_reminder"].noul,
+        "past_due": a["mentions_past_due"].noul,
+        "billed_to_us": a["billed_to_us"].noul,
+        "unreadable": a["text_unreadable"].noul,
+    }
+```
+
+</Fragment>
+<Fragment slot="ts">
+
+```ts
+import { choice, noul, TypeSafeClient } from "@typesafe-ai/sdk";
+
+const client = new TypeSafeClient(); // reads TYPESAFE_API_KEY
+
+const MAX_CHARS = 3000; // first page only, capped; tune to your documents
+
+const questions = {
+  doc_type: choice("What type of business document is the text in `page_1_text`?", {
+    invoice: "A request for payment for specific goods or services, with its own invoice number",
+    credit_note: "A document reducing or cancelling an amount previously invoiced",
+    statement: "A periodic account summary listing several invoices or a running balance",
+    remittance_advice: "A notice that a payment has been made or received",
+    purchase_order: "An order or order confirmation for goods or services not yet billed",
+    receipt: "Proof of a payment already completed, such as a card or till receipt",
+    tax_form: "A tax authority form or tax certificate",
+    contract: "An agreement, terms document, or order form to be signed",
+    other: "Anything that does not fit the types above",
+  }),
+  is_reminder: noul(
+    "Does `page_1_text` or `email_subject` present this document as a reminder, a copy, or a repeat notice about an invoice that was issued earlier?",
+  ),
+  mentions_past_due: noul(
+    "Does `page_1_text` say that a payment is overdue or past due, or threaten a late fee, suspension, or collection?",
+  ),
+  billed_to_us: noul(
+    "Is the company named in `our_company` the party being billed or addressed in `page_1_text`?",
+  ),
+  text_unreadable: noul(
+    "Is `page_1_text` mostly garbled characters, fragments, or empty, so that a person could not tell what the document is?",
+  ),
+};
+
+type IntakeDoc = { filename: string; emailSubject?: string; pages: string[] };
+
+export async function classify(doc: IntakeDoc) {
+  const response = await client.systemOne({
+    state: {
+      our_company: "Harbor Supply Co.",
+      email_subject: doc.emailSubject ?? "",
+      filename: doc.filename,
+      page_1_text: doc.pages[0].slice(0, MAX_CHARS),
+    },
+    questions,
+  });
+  const a = response.answers;
+  return {
+    docType: a.doc_type.choice, // typed as one of the nine keys above
+    confidence: a.doc_type.confidence,
+    probabilities: a.doc_type.probabilities,
+    reminder: a.is_reminder.noul,
+    pastDue: a.mentions_past_due.noul,
+    billedToUs: a.billed_to_us.noul,
+    unreadable: a.text_unreadable.noul,
+  };
+}
+```
+
+</Fragment>
+</CodeTabs>
+
+## Example response
+
+This is an illustrative response for the second-notice document above. The shape follows the [API reference](https://docs.typesafe.ai/api); the numbers are made up for the example, not measured.
+
+```json
+{
+  "model": "jev-1.13.0",
+  "answers": {
+    "doc_type": {
+      "type": "choice",
+      "choice": "invoice",
+      "probabilities": {
+        "invoice": 0.66,
+        "credit_note": 0.01,
+        "statement": 0.27,
+        "remittance_advice": 0.01,
+        "purchase_order": 0.01,
+        "receipt": 0.01,
+        "tax_form": 0.01,
+        "contract": 0.01,
+        "other": 0.01
+      },
+      "confidence": 0.57
+    },
+    "is_reminder": { "type": "noul", "noul": 0.96 },
+    "mentions_past_due": { "type": "noul", "noul": 0.98 },
+    "billed_to_us": { "type": "noul", "noul": 0.94 },
+    "text_unreadable": { "type": "noul", "noul": 0.02 }
+  },
+  "usage": { "input_tokens": 1164, "output_tokens": 88 }
+}
+```
+
+The `doc_type` distribution is deliberately not clean. A reminder that refers to one invoice and an outstanding balance sits between `invoice` and `statement`, and a middling confidence is the honest answer. The Noul flags carry the useful signal here. Noul answers have no `confidence` field; the `noul` value is itself the probability of yes.
+
+## Decision logic
+
+The model says what the document looks like. Code decides what happens to it, and code owns everything involving numbers.
+
+```python
+# Illustrative starting points. Tune on a labelled sample of your own documents.
+AUTO_FILE = 0.85      # high bar: the next step can lead to a payment
+CLERK_REVIEW = 0.50
+FLAG = 0.70           # threshold for the Noul flags, tuned separately
+
+def route(r: dict, parsed: dict, ledger) -> str:
+    """parsed comes from your extractor: invoice_no, vendor_id, total, due_date."""
+    if r["unreadable"] >= FLAG:
+        return "rescan"
+    if r["confidence"] < CLERK_REVIEW or r["doc_type"] == "other":
+        return "clerk_review"
+    if r["doc_type"] != "invoice":
+        queue = r["doc_type"]
+        return queue if r["confidence"] >= AUTO_FILE else f"{queue}:needs_confirmation"
+
+    # Invoice path. Every check below is code, not a Jev question.
+    if r["billed_to_us"] < 0.50:
+        return "clerk_review"                          # possibly misdelivered
+    if ledger.exists(parsed["vendor_id"], parsed["invoice_no"]):
+        return "duplicate_hold"                        # exact match in the ledger
+    if r["reminder"] >= FLAG:
+        return "duplicate_hold"                        # looks like a repeat, number not matched
+    if r["past_due"] >= FLAG:
+        return "invoice:priority"                      # real and overdue, pay attention
+    return "invoice" if r["confidence"] >= AUTO_FILE else "invoice:needs_confirmation"
+```
+
+The pattern is the three ranges from TypeSafe's [confidence guide](https://docs.typesafe.ai/confidence): act, proceed with caution, or do not act. The auto-file bar is higher here than in a ticket router because the downstream action is harder to undo. The guide on [picking confidence thresholds](/guides/confidence-thresholds/) describes how to set these from a labelled sample.
+
+The order of the duplicate checks matters. The ledger lookup on vendor and invoice number is exact and cheap, so it runs first and is authoritative. The `is_reminder` flag is the fallback for the cases the lookup misses: OCR misread a digit, the vendor reformatted the number, or the original never arrived. In those cases "this says second notice but I cannot find the first" is precisely what a clerk should see.
+
+Similarly, `mentions_past_due` reports what the vendor claims. Whether the invoice is actually overdue is a comparison between a parsed due date and today's date, done in code with a real date type. If the two disagree, that is worth surfacing: the vendor may have the wrong terms on file.
+
+## Cost estimate
+
+Token assumptions: about 750 tokens for the capped first-page text and metadata, plus about 450 tokens for the five questions and the nine type descriptions. OCR text tokenizes poorly when it is noisy, so dense or messy pages can run higher. Read `usage.input_tokens` from real responses and adjust.
+
+<CostTable tokens={frontmatter.tokensPerItem} unit="documents" />
+
+## Pitfalls
+
+- **Asking Jev about amounts.** The limitations page lists [counting and math](https://docs.typesafe.ai/model-jaggedness/jev-1.13#math-and-numbers) as unreliable. "Do the line items add up to the total?", "Is the amount above 10,000?", and "How many invoices are listed?" are all code. Number formats make it worse: `4.310,00` and `4,310.00` are the same amount to your parser and different strings to a text model.
+- **Asking Jev about dates.** Dates are [compared as text](https://docs.typesafe.ai/model-jaggedness/jev-1.13#date-and-time-comparison). `14/07/2026` could be July or a parse error depending on locale, and "is this before today" is not a snap judgment. Parse with the vendor's locale and compare in code.
+- **OCR noise presented as content.** Jev reads what it is given, literally. A page where "INVOICE" came through as "1NV0ICE" and the table is a column of fragments can still get a confident-looking answer from the remaining words. The `text_unreadable` flag helps, and so does a simple code check on the ratio of dictionary words.
+- **Overlapping type descriptions.** `statement` and `invoice` both mention amounts owed, and `receipt` and `remittance_advice` both mention payment. Put the distinguishing feature in each description, such as "lists several invoices" versus "its own invoice number", or confidence will be low across the whole boundary.
+- **Multi-document scans.** A mail room scan can contain three invoices in one PDF. Classifying page one tells you about the first. Split the file in code, for example on pages where the text restarts with a new header, and classify each part.
+- **Fraudulent documents.** A fake invoice looks like an invoice, and `doc_type` will say so. Text in the state can also be written to steer the answers. Classification is not vendor verification: bank detail changes and new vendors need their own controls regardless of what any model says.
+- **Reusing thresholds across question types.** The `FLAG` value for Nouls and the `AUTO_FILE` value for the Choice confidence are different quantities. Tune them separately, and re-test both before moving off a pinned model version such as `jev-1.13.0`, as the [models page](https://docs.typesafe.ai/models) advises.
+- **Non-English documents.** English is the primary language. If you receive invoices in German or Spanish, measure those separately and expect to send more of them to review.
+
+If your document types form a tree, for example invoice, then utility or freight or services, the two-step approach on the [hierarchical categorization](/use-cases/hierarchical-product-categorization/) page applies. If documents arrive by email and you also want to sort the messages themselves, see [email triage and priority scoring](/use-cases/email-triage-priority-scoring/). For a primer on the model, start with [what Jev is](/guides/what-is-jev/).

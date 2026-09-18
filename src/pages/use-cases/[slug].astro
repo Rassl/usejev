@@ -1,0 +1,54 @@
+---
+import { getCollection, render } from 'astro:content';
+import Article from '../../layouts/Article.astro';
+import CodeTabs from '../../components/CodeTabs.astro';
+import CostTable from '../../components/CostTable.astro';
+import UseCaseCard from '../../components/UseCaseCard.astro';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('use-cases');
+  const byId = new Map(entries.map((e) => [e.id, e]));
+  return entries.map((entry) => ({
+    params: { slug: entry.id },
+    props: {
+      entry,
+      related: entry.data.related.map((id) => {
+        const match = byId.get(id);
+        if (!match) throw new Error(`${entry.id}: related use case "${id}" does not exist`);
+        return match;
+      }),
+    },
+  }));
+}
+
+const { entry, related } = Astro.props;
+const { Content } = await render(entry);
+const d = entry.data;
+---
+
+<Article
+  title={d.title}
+  description={d.description}
+  path={`/use-cases/${entry.id}/`}
+  section={{ name: 'Use cases', path: '/use-cases/' }}
+  publishedAt={d.publishedAt}
+  updatedAt={d.updatedAt}
+  proficiency={d.difficulty}
+>
+  <ul class="tags" slot="meta" aria-label="Tags">
+    {d.primitives.map((p) => <li class="tag tag-primitive">{p}</li>)}
+    <li class="tag">{d.category}</li>
+    {d.industry.map((i) => <li class="tag">{i}</li>)}
+    <li class="tag">{d.difficulty}</li>
+  </ul>
+
+  <Content components={{ CodeTabs, CostTable }} />
+
+  <section class="related" slot="after" aria-labelledby="related-heading">
+    <h2 id="related-heading">Related use cases</h2>
+    <ul class="grid">
+      {related.map((r) => <UseCaseCard entry={r} />)}
+    </ul>
+    <p><a href="/use-cases/">Browse all Jev use cases</a></p>
+  </section>
+</Article>

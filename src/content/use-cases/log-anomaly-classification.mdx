@@ -1,0 +1,300 @@
+---
+title: Log Anomaly Classification with Jev
+description: Classify flagged log clusters into cause categories with one Jev Choice and speculative Noul checks, while counting and rate math stay in your own code.
+slug: log-anomaly-classification
+category: Security and observability
+industry: [DevOps, SaaS]
+primitives: [Choice, Noul]
+difficulty: Intermediate
+tokensPerItem: 650
+related: [security-alert-triage, support-ticket-routing, invoice-document-classification]
+publishedAt: 2026-09-19
+updatedAt: 2026-09-19
+---
+
+## The problem
+
+A SaaS platform with a few dozen services already runs a cheap anomaly pre-filter: a log template miner plus a rate check that flags any message pattern whose volume jumps well above its baseline. The filter is good at saying "this is unusual" and useless at saying why. During a bad hour the on-call engineer gets forty flagged clusters and has to open each one to learn that thirty are a known retry storm, eight are one dependency timing out, and two are a real regression from the deploy that went out ten minutes earlier.
+
+The missing step is a label per flagged cluster: what kind of failure does this text describe, and does it look customer-facing? Regex rules cover the messages you have already seen. New exception text, new vendor error strings, and reworded messages after a library upgrade fall through.
+
+## Why Jev fits
+
+The pre-filter decides what is unusual. Jev only has to read one representative line per flagged cluster and put it in a closed set of cause categories, which is what the [Choice primitive](https://docs.typesafe.ai/primitives/choice) does.
+
+- **Typed output.** The answer is one of your category keys plus a probability for each, so it drops straight into an alert label or a dashboard facet. There is no generated text to parse.
+- **Speed.** TypeSafe reports [70 to 500 ms end to end](https://typesafe.ai/blog/introducing-system-one-models-and-jev). Labels can be attached before the alert is sent, not added in a later enrichment pass.
+- **Cost.** At [$0.042 per million input tokens](https://docs.typesafe.ai/models) with free output, labelling every flagged cluster is cheap enough that you do not need a second filter to decide which clusters deserve a label.
+- **Confidence gating.** Choice answers carry a `confidence` value. Clusters with a split answer are shown as "unclassified" instead of being given a confident-looking wrong cause. The on-site guide to [Jev versus LLM classification](/guides/jev-vs-llm-classification/) covers why that matters for closed-set work.
+
+**When an LLM is the better tool:** Jev does not generate text, so it cannot write a root-cause summary, propose a fix, or correlate twenty clusters into one incident narrative. It is also the wrong tool for the statistical half of the job. TypeSafe's [known limitations page](https://docs.typesafe.ai/model-jaggedness/jev-1.13) says counting, arithmetic, and date comparison are unreliable, so "is this rate five times the baseline" and "did this start after the deploy" are questions for your code, not for the model. A sensible split is: code for detection and timing, Jev for the label on every flagged cluster, and a generative model only for the few clusters that become incidents and need a written summary.
+
+## Question design
+
+Classify one representative line per cluster, not every raw line. The pre-filter has already grouped lines by template, so a cluster of 4,000 identical timeouts is one request.
+
+Stack traces need trimming before they go into the `state`. A raw Java or Python trace is mostly framework frames that look the same in every error, and the limitations page warns that large amounts of irrelevant state reduce accuracy. Keep the exception type and message, the first few frames from your own packages, and the innermost "caused by" line. Drop the rest.
+
+Anything numeric is computed in code and either kept out of the state or passed as a plain boolean. The example below does not send timestamps or counts. It sends `deployed_shortly_before_first_seen`, which your code derives by comparing the deploy log with the cluster's first occurrence.
+
+```json
+{
+  "service": "checkout-api",
+  "level": "ERROR",
+  "message": "Unhandled exception in POST /v2/orders: KeyError: 'shipping_tier'",
+  "frames": [
+    "checkout/pricing/shipping.py:88 in quote_for_cart",
+    "checkout/orders/create.py:141 in build_order",
+    "checkout/api/orders.py:57 in post_order"
+  ],
+  "caused_by": null,
+  "deployed_shortly_before_first_seen": true
+}
+```
+
+| Question ID | Type | Instructions | Criteria |
+| --- | --- | --- | --- |
+| `cause` | Choice | Which category best describes the failure shown in `message`, `frames` and `caused_by`? | `deploy_regression`, `dependency_timeout`, `resource_exhaustion`, `auth_failure`, `data_validation`, `expected_noise`, `other`, each with a one-line description |
+| `customer_impact` | Noul | Does `message` indicate that a request from an end user failed or returned an error? | none |
+| `data_loss_risk` | Noul | Does `message` indicate that data was lost, corrupted, or not written? | none |
+| `security_relevant` | Noul | Does `message` indicate credential misuse, a permission bypass attempt, or an injection attempt? | none |
+
+The three Noul questions are [speculative fan-out](https://docs.typesafe.ai/patterns/fan-out). All questions in a request are evaluated in parallel against the same state, so asking them adds a few dozen tokens and no extra round trip. Your code reads whichever ones matter for the chosen category. Each question is answered independently, so `cause` is never context for `customer_impact`.
+
+Write the category descriptions around what the text looks like, because the text is all Jev sees. "Deploy regression" is described as a code-level fault: an unhandled exception, a missing key, field or method, a config value not found, or a schema mismatch. Whether a deploy actually happened is a fact your code already has, and the decision logic below cross-checks it. Question IDs are not sent to the model, so the full question has to live in `instructions`.
+
+## Code
+
+Both samples use only calls documented in the official [Python SDK](https://docs.typesafe.ai/sdk/python) and [JavaScript SDK](https://docs.typesafe.ai/sdk/javascript) pages. The `trim_frames` helper is plain string filtering and runs before the request.
+
+<CodeTabs>
+<Fragment slot="python">
+
+```python
+from typesafe_sdk import Choice, Noul, TypeSafeClient
+
+client = TypeSafeClient()  # reads TYPESAFE_API_KEY, defaults to jev-latest
+
+OWN_PACKAGES = ("checkout/", "shared/")
+MAX_FRAMES = 5
+
+QUESTIONS = {
+    "cause": Choice(
+        instructions="Which category best describes the failure shown in `message`, `frames` and `caused_by`?",
+        criteria={
+            "deploy_regression": "Code-level fault typical of a bad release: unhandled exception, missing key, field or method, config value not found, schema mismatch",
+            "dependency_timeout": "A call to another service, database, queue or third-party API timed out, was refused, or returned a server error",
+            "resource_exhaustion": "Out of memory, disk full, connection pool or thread pool exhausted, file descriptor or quota limit reached",
+            "auth_failure": "Invalid or expired credentials, token rejected, permission denied, certificate problem",
+            "data_validation": "Input or stored data was malformed, failed validation, or violated a constraint",
+            "expected_noise": "Routine condition that needs no action: client disconnects, handled retries, health check chatter, deprecation warnings",
+            "other": "A failure that fits none of the categories above",
+        },
+    ),
+    "customer_impact": Noul(
+        instructions="Does `message` indicate that a request from an end user failed or returned an error?",
+    ),
+    "data_loss_risk": Noul(
+        instructions="Does `message` indicate that data was lost, corrupted, or not written?",
+    ),
+    "security_relevant": Noul(
+        instructions="Does `message` indicate credential misuse, a permission bypass attempt, or an injection attempt?",
+    ),
+}
+
+
+def trim_frames(frames: list[str]) -> list[str]:
+    own = [f for f in frames if f.startswith(OWN_PACKAGES)]
+    return (own or frames)[:MAX_FRAMES]
+
+
+def classify(cluster: dict) -> dict:
+    sample = cluster["representative"]
+    response = client.system_one(
+        state={
+            "service": cluster["service"],
+            "level": sample["level"],
+            "message": sample["message"][:1000],
+            "frames": trim_frames(sample["frames"]),
+            "caused_by": sample.get("caused_by"),
+            "deployed_shortly_before_first_seen": cluster["recent_deploy"],  # computed in code
+        },
+        questions=QUESTIONS,
+    )
+    cause = response.answers["cause"]
+    return {
+        "cause": cause.choice,
+        "confidence": cause.confidence,
+        "probabilities": cause.probabilities,
+        "customer_impact": response.answers["customer_impact"].noul,
+        "data_loss_risk": response.answers["data_loss_risk"].noul,
+        "security_relevant": response.answers["security_relevant"].noul,
+    }
+```
+
+</Fragment>
+<Fragment slot="ts">
+
+```ts
+import { choice, noul, TypeSafeClient } from "@typesafe-ai/sdk";
+
+const client = new TypeSafeClient(); // reads TYPESAFE_API_KEY
+
+const OWN_PACKAGES = ["checkout/", "shared/"];
+const MAX_FRAMES = 5;
+
+const questions = {
+  cause: choice(
+    "Which category best describes the failure shown in `message`, `frames` and `caused_by`?",
+    {
+      deploy_regression:
+        "Code-level fault typical of a bad release: unhandled exception, missing key, field or method, config value not found, schema mismatch",
+      dependency_timeout:
+        "A call to another service, database, queue or third-party API timed out, was refused, or returned a server error",
+      resource_exhaustion:
+        "Out of memory, disk full, connection pool or thread pool exhausted, file descriptor or quota limit reached",
+      auth_failure:
+        "Invalid or expired credentials, token rejected, permission denied, certificate problem",
+      data_validation:
+        "Input or stored data was malformed, failed validation, or violated a constraint",
+      expected_noise:
+        "Routine condition that needs no action: client disconnects, handled retries, health check chatter, deprecation warnings",
+      other: "A failure that fits none of the categories above",
+    },
+  ),
+  customer_impact: noul(
+    "Does `message` indicate that a request from an end user failed or returned an error?",
+  ),
+  data_loss_risk: noul("Does `message` indicate that data was lost, corrupted, or not written?"),
+  security_relevant: noul(
+    "Does `message` indicate credential misuse, a permission bypass attempt, or an injection attempt?",
+  ),
+};
+
+type Cluster = {
+  service: string;
+  recentDeploy: boolean; // computed in code from deploy and first-seen timestamps
+  representative: { level: string; message: string; frames: string[]; causedBy: string | null };
+};
+
+function trimFrames(frames: string[]): string[] {
+  const own = frames.filter((f) => OWN_PACKAGES.some((p) => f.startsWith(p)));
+  return (own.length > 0 ? own : frames).slice(0, MAX_FRAMES);
+}
+
+export async function classify(cluster: Cluster) {
+  const sample = cluster.representative;
+  const response = await client.systemOne({
+    state: {
+      service: cluster.service,
+      level: sample.level,
+      message: sample.message.slice(0, 1000),
+      frames: trimFrames(sample.frames),
+      caused_by: sample.causedBy,
+      deployed_shortly_before_first_seen: cluster.recentDeploy,
+    },
+    questions,
+  });
+  const { cause, customer_impact, data_loss_risk, security_relevant } = response.answers;
+  return {
+    cause: cause.choice, // typed as one of the seven keys above
+    confidence: cause.confidence,
+    probabilities: cause.probabilities,
+    customerImpact: customer_impact.noul,
+    dataLossRisk: data_loss_risk.noul,
+    securityRelevant: security_relevant.noul,
+  };
+}
+```
+
+</Fragment>
+</CodeTabs>
+
+## Example response
+
+This is an illustrative response for the `KeyError` cluster above. The shape follows the [API reference](https://docs.typesafe.ai/api); the numbers are made up for the example, not measured.
+
+```json
+{
+  "model": "jev-1.13.0",
+  "answers": {
+    "cause": {
+      "type": "choice",
+      "choice": "deploy_regression",
+      "probabilities": {
+        "deploy_regression": 0.81,
+        "dependency_timeout": 0.01,
+        "resource_exhaustion": 0.01,
+        "auth_failure": 0.01,
+        "data_validation": 0.13,
+        "expected_noise": 0.01,
+        "other": 0.02
+      },
+      "confidence": 0.74
+    },
+    "customer_impact": { "type": "noul", "noul": 0.93 },
+    "data_loss_risk": { "type": "noul", "noul": 0.06 },
+    "security_relevant": { "type": "noul", "noul": 0.02 }
+  },
+  "usage": { "input_tokens": 642, "output_tokens": 58 }
+}
+```
+
+The runner-up is `data_validation`, which is reasonable: a missing key can be a code bug or a malformed payload. Noul answers have no `confidence` field. The `noul` value is itself the probability of yes.
+
+## Decision logic
+
+The model labels the text. Your code owns everything involving numbers and time: the rate against baseline, the deploy timing, and the paging policy. The thresholds below are illustrative starting points, not recommendations.
+
+```python
+LABEL = 0.75      # illustrative starting points, tune on your own labelled clusters
+UNSURE = 0.50
+IMPACT = 0.80
+
+def decide(r: dict, cluster: dict) -> dict:
+    # cluster["rate_ratio"] and cluster["recent_deploy"] are computed in code, never by Jev
+    if r["security_relevant"] > 0.8:
+        return {"route": "security_triage", "label": r["cause"]}
+
+    if r["confidence"] < UNSURE or r["cause"] == "other":
+        return {"route": "oncall_review", "label": "unclassified"}
+
+    label = r["cause"]
+    if label == "deploy_regression" and not cluster["recent_deploy"]:
+        label = "code_fault_no_recent_deploy"   # text says code bug, timeline says no release
+
+    if label == "expected_noise":
+        if r["confidence"] >= LABEL and r["customer_impact"] < 0.2:
+            return {"route": "suppress_and_count", "label": label}
+        return {"route": "oncall_review", "label": label}
+
+    urgent = r["customer_impact"] > IMPACT or r["data_loss_risk"] > IMPACT
+    if urgent and cluster["rate_ratio"] >= 5:
+        return {"route": "page", "label": label}
+    if r["confidence"] < LABEL:
+        return {"route": "ticket", "label": f"{label}:unconfirmed"}
+    return {"route": "ticket", "label": label}
+```
+
+This follows the three-band pattern in TypeSafe's [confidence guide](https://docs.typesafe.ai/confidence): act when confidence is high, proceed with a caveat in the middle, and do not act when it is low. The one action that hides information, suppressing a cluster as expected noise, has the strictest gate: high Choice confidence and a low `customer_impact` value, both required. See [how to pick confidence thresholds](/guides/confidence-thresholds/) for a tuning procedure. Clusters routed to `security_triage` can be handed to the flow described in [security alert triage](/use-cases/security-alert-triage/).
+
+Store the full `probabilities` map with the alert. When `deploy_regression` and `data_validation` are close, showing both to the engineer is more useful than showing only the winner.
+
+## Cost estimate
+
+Token assumptions: about 300 tokens for the trimmed state (a message capped at 1,000 characters, five frames, a few short fields) plus about 350 tokens for the four questions and the seven category descriptions. The unit is one flagged cluster, not one log line, because the pre-filter deduplicates by template before anything is sent. Your numbers will differ; read `usage.input_tokens` from real responses and adjust.
+
+<CostTable tokens={frontmatter.tokensPerItem} unit="flagged clusters" />
+
+If you cache labels by template ID, a recurring cluster costs nothing after its first classification. Re-classify only when the template or the trimmed frames change.
+
+## Pitfalls
+
+- **Asking Jev to count or compare times.** The [limitations page](https://docs.typesafe.ai/model-jaggedness/jev-1.13) lists counting, math, and date comparison as unreliable, and notes that dates are compared as text. Do not send "412 lines in 5 minutes, baseline 3" and ask whether that is a spike, and do not send two timestamps and ask which came first. Compute the answer in code and, if the model needs it at all, pass a boolean.
+- **Untrimmed stack traces.** Eighty framework frames bury the three that matter and push the answer toward whatever library appears most often. Keep the exception line, your own frames, and the innermost cause.
+- **Literal reading of log levels.** A line at `ERROR` level that says "retry 2 of 5 succeeded" is noise, and a line at `INFO` that says "falling back to stale cache, upstream unavailable" is not. Ask about `message`, and do not write instructions that lean on `level` alone.
+- **Attacker-controlled text.** Log lines often contain user input such as URLs, headers, and form fields. TypeSafe notes that adversarial content in the state can move answers. Never let the `expected_noise` label alone suppress a security-relevant cluster, which is why the security check runs first in the decision logic.
+- **Overlapping categories.** A database connection pool running dry is both `resource_exhaustion` and a symptom of a slow dependency. Decide which one you want, write the boundary into the descriptions, and expect lower confidence near it.
+- **No invariants between questions.** `cause` can come back as `expected_noise` while `customer_impact` is high. The questions are independent, so treat disagreement as a reason for review, as the decision logic does.
+- **Reusing thresholds across types.** A cutoff tuned on the `cause` Choice confidence does not transfer to the Noul values. They are different quantities.
+- **Alias drift.** `jev-latest` moves when a new version ships. If you tuned thresholds, pin the versioned model ID from the [models page](https://docs.typesafe.ai/models) and re-test before upgrading.

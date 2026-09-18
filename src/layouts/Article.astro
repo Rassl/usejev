@@ -1,0 +1,52 @@
+---
+import Base from './Base.astro';
+import { breadcrumbs, techArticle } from '../lib/jsonld';
+
+interface Props {
+  title: string;
+  description: string;
+  path: string;
+  section: { name: string; path: string };
+  publishedAt: Date;
+  updatedAt: Date;
+  proficiency?: string;
+  extraJsonLd?: Record<string, unknown>[];
+}
+const { title, description, path, section, publishedAt, updatedAt, proficiency, extraJsonLd = [] } = Astro.props;
+const crumbs = [{ name: 'Home', path: '/' }, section, { name: title, path }];
+const fmt = (d: Date) => d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
+---
+
+<Base
+  title={title}
+  description={description}
+  ogType="article"
+  publishedAt={publishedAt}
+  updatedAt={updatedAt}
+  jsonLd={[techArticle({ title, description, path, publishedAt, updatedAt, proficiency }), breadcrumbs(crumbs), ...extraJsonLd]}
+>
+  <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <ol>
+      <li><a href="/">Home</a></li>
+      <li><a href={section.path}>{section.name}</a></li>
+      <li aria-current="page">{title}</li>
+    </ol>
+  </nav>
+  <article>
+    <header class="article-header">
+      <h1>{title}</h1>
+      <p class="lede">{description}</p>
+      <slot name="meta" />
+      <p class="meta">
+        Published <time datetime={publishedAt.toISOString()}>{fmt(publishedAt)}</time>
+        {updatedAt.getTime() !== publishedAt.getTime() && (
+          <>, updated <time datetime={updatedAt.toISOString()}>{fmt(updatedAt)}</time></>
+        )}
+      </p>
+    </header>
+    <div class="prose">
+      <slot />
+    </div>
+    <slot name="after" />
+  </article>
+</Base>

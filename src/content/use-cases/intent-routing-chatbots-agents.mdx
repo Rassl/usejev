@@ -1,0 +1,278 @@
+---
+title: Intent Routing for Chatbots and Agents with Jev
+description: Route chatbot and agent messages across 60+ intents with one Jev Choice built from your intent registry, a none option, and a Noul gate. Code and cost math.
+slug: intent-routing-chatbots-agents
+category: AI engineering
+industry: [AI products, SaaS, E-commerce]
+primitives: [Choice, Noul]
+difficulty: Intermediate
+tokensPerItem: 1450
+related: [support-ticket-routing, llm-output-qa-agent-run-review, hierarchical-product-categorization]
+publishedAt: 2026-09-19
+updatedAt: 2026-09-19
+---
+
+## The problem
+
+A retail chatbot has grown to 64 intents: order status, returns, address changes, promo codes, store hours, and dozens more. Every message currently goes to a large model with all 64 tool definitions in the prompt, which is slow, costs the same for "where is my order" as for a real complaint, and still calls a tool when the user only said "thanks". The team wants a fast first step that names the intent, knows when no intent applies, and sends each message to the cheapest handler that can finish it.
+
+## Why Jev fits
+
+TypeSafe documents this exact setup as its [intent routing pattern](https://docs.typesafe.ai/patterns/intent-routing): classify first, then route each request to deterministic logic, a specialist LLM, or a human. The classifier is a [Choice question](https://docs.typesafe.ai/primitives/choice), and a single Choice accepts up to 255 options, so a registry of 60-plus intents fits in one question with room to grow.
+
+- **Typed output.** The answer is always a key from your registry or `none`. The router is a dictionary lookup, with no JSON repair and no invented tool names.
+- **Speed.** TypeSafe reports [70 to 500 ms end to end](https://typesafe.ai/blog/introducing-system-one-models-and-jev). The expensive model is called only after the route is known, and often not at all.
+- **Cost.** At [$0.042 per million input tokens](https://docs.typesafe.ai/models) with free output, carrying 64 one-line descriptions on every message is a small, predictable number (see the cost section).
+- **Confidence gating.** The Choice returns a probability per intent and a `confidence` value. The documented pattern sends anything below 0.5 to a human, and you can set a higher bar for intents that change data.
+
+The design below borrows two ideas from TypeSafe's cookbooks. The [function calling cookbook](https://docs.typesafe.ai/cookbooks/function_calling) picks one of ten functions with a Choice and reads closed-set arguments with more questions in the same request. The [skill suggestion cookbook](https://docs.typesafe.ai/cookbooks/skill_suggestion) ranks 182 skills with one Choice and adds Noul questions that ask whether the turn needs a skill at all.
+
+**When an LLM is the better tool:** routing decides where a message goes; it does not extract an order number, hold a multi-turn clarification, plan a sequence of tool calls, or write the reply. If your arguments are free text, numbers, or dates, a generative model (or a regular expression) has to read them. The function calling cookbook makes the same cut: only arguments drawn from a fixed list get a question. Keep Jev as the router in front and the LLM as one of the handlers behind it. The guide on [Jev versus LLM classification](/guides/jev-vs-llm-classification/) goes through the trade.
+
+## Question design
+
+The `state` is the latest user message plus, at most, one line of context. Do not send the whole conversation: TypeSafe's [known limitations page](https://docs.typesafe.ai/model-jaggedness/jev-1.13) notes that irrelevant state lowers accuracy, and old turns pull the intent toward old topics.
+
+```json
+{
+  "message": "I moved last week, can you send order 8841 to my new place instead?",
+  "previous_bot_message": "Anything else I can help with?"
+}
+```
+
+| Question ID | Type | Instructions | Criteria |
+| --- | --- | --- | --- |
+| `intent` | Choice | Which of these intents, if any, matches what the user asks for in `message`? | One option per registry entry, with its one-line description, plus `none` |
+| `needs_tool` | Noul | Does `message` ask the assistant to look something up or take an action, rather than only greeting, thanking, or making small talk? | none |
+| `wants_human` | Noul | Does `message` ask to speak with a human agent? | none |
+
+### Why a Choice and a Noul
+
+A Choice is relative. Its probabilities are spread across the options you supplied, so it answers "which of these is the best match", and some option always wins, even for "lol ok". A Noul is absolute: it answers one yes/no condition on its own terms. The skill suggestion cookbook states the split directly: the Choice settles which skill, and the Nouls settle whether to say anything at all. It also reports the two disagreeing on real inputs, which is expected because they decide different things.
+
+So the design uses both. The `none` option gives the Choice an honest exit, as the [Choice page](https://docs.typesafe.ai/primitives/choice) recommends whenever the list may not cover an input. The `needs_tool` Noul is an independent gate: if it is low, the router answers conversationally and ignores the Choice. The skill suggestion cookbook gives one more tip that applies here: write the gate about whether an action is wanted, not about the subject. "Is this about orders?" does not separate "how do refunds work in general" from "refund order 8841".
+
+### Build the criteria from the registry
+
+With 60-plus intents, a hand-written criteria map drifts from the code. Keep one registry with an ID, a one-line description, and a handler type, and generate the Choice from it. The sample shows 10 entries; the real registry holds the rest in the same shape. Write each description about the idea, not keywords, and state the boundary with its nearest neighbour ("before the order ships" versus "after delivery").
+
+All questions share one state, so they go in [one request](https://docs.typesafe.ai/patterns/fan-out). Question IDs are not sent to the model; option keys and descriptions are.
+
+## Code
+
+Both samples use only calls documented in the official [Python SDK](https://docs.typesafe.ai/sdk/python) and [JavaScript SDK](https://docs.typesafe.ai/sdk/javascript) pages.
+
+<CodeTabs>
+<Fragment slot="python">
+
+```python
+from typesafe_sdk import Choice, Noul, TypeSafeClient
+
+client = TypeSafeClient()  # reads TYPESAFE_API_KEY, defaults to jev-latest
+
+# The intent registry. 10 entries shown; the production registry holds 64.
+# handler: "code" = deterministic function, "llm" = specialist prompt, "human" = agent queue
+REGISTRY = [
+    {"id": "order_status", "handler": "code", "description": "Asks where an existing order is or when it will arrive"},
+    {"id": "update_address", "handler": "code", "description": "Wants to change the delivery address of an order that has not shipped"},
+    {"id": "reset_password", "handler": "code", "description": "Cannot log in or wants to reset a password"},
+    {"id": "store_hours", "handler": "code", "description": "Asks about opening hours or location of a physical store"},
+    {"id": "apply_promo_code", "handler": "code", "description": "Wants to use a discount or promo code, or says one is not working"},
+    {"id": "cancel_order", "handler": "llm", "description": "Wants to cancel an order before it is delivered"},
+    {"id": "return_item", "handler": "llm", "description": "Wants to return or exchange an item that was already delivered"},
+    {"id": "product_question", "handler": "llm", "description": "Asks about features, sizing, or compatibility of a product before buying"},
+    {"id": "billing_dispute", "handler": "human", "description": "Says a charge is wrong, duplicated, or unauthorised"},
+    {"id": "delete_account", "handler": "human", "description": "Wants the account and personal data removed"},
+    # ... 54 more entries in the same shape
+]
+
+assert len(REGISTRY) + 1 <= 255, "one Choice holds at most 255 options"
+
+HANDLER = {intent["id"]: intent["handler"] for intent in REGISTRY}
+
+criteria = {intent["id"]: intent["description"] for intent in REGISTRY}
+criteria["none"] = "The message matches none of the intents above, or asks for nothing"
+
+QUESTIONS = {
+    "intent": Choice(
+        instructions="Which of these intents, if any, matches what the user asks for in `message`?",
+        criteria=criteria,
+    ),
+    "needs_tool": Noul(
+        instructions="Does `message` ask the assistant to look something up or take an action, rather than only greeting, thanking, or making small talk?",
+    ),
+    "wants_human": Noul(
+        instructions="Does `message` ask to speak with a human agent?",
+    ),
+}
+
+
+def classify(message: str, previous_bot_message: str = "") -> dict:
+    response = client.system_one(
+        state={"message": message, "previous_bot_message": previous_bot_message},
+        questions=QUESTIONS,
+    )
+    intent = response.answers["intent"]
+    ranked = sorted(intent.probabilities.items(), key=lambda kv: kv[1], reverse=True)
+    return {
+        "intent": intent.choice,
+        "confidence": intent.confidence,
+        "top3": ranked[:3],
+        "needs_tool": response.answers["needs_tool"].noul,
+        "wants_human": response.answers["wants_human"].noul,
+    }
+```
+
+</Fragment>
+<Fragment slot="ts">
+
+```ts
+import { choice, noul, TypeSafeClient } from "@typesafe-ai/sdk";
+
+const client = new TypeSafeClient(); // reads TYPESAFE_API_KEY
+
+type HandlerKind = "code" | "llm" | "human";
+type Intent = { id: string; handler: HandlerKind; description: string };
+
+// The intent registry. 10 entries shown; the production registry holds 64.
+const REGISTRY: Intent[] = [
+  { id: "order_status", handler: "code", description: "Asks where an existing order is or when it will arrive" },
+  { id: "update_address", handler: "code", description: "Wants to change the delivery address of an order that has not shipped" },
+  { id: "reset_password", handler: "code", description: "Cannot log in or wants to reset a password" },
+  { id: "store_hours", handler: "code", description: "Asks about opening hours or location of a physical store" },
+  { id: "apply_promo_code", handler: "code", description: "Wants to use a discount or promo code, or says one is not working" },
+  { id: "cancel_order", handler: "llm", description: "Wants to cancel an order before it is delivered" },
+  { id: "return_item", handler: "llm", description: "Wants to return or exchange an item that was already delivered" },
+  { id: "product_question", handler: "llm", description: "Asks about features, sizing, or compatibility of a product before buying" },
+  { id: "billing_dispute", handler: "human", description: "Says a charge is wrong, duplicated, or unauthorised" },
+  { id: "delete_account", handler: "human", description: "Wants the account and personal data removed" },
+  // ... 54 more entries in the same shape
+];
+
+if (REGISTRY.length + 1 > 255) throw new Error("one Choice holds at most 255 options");
+
+export const HANDLER = new Map(REGISTRY.map((i) => [i.id, i.handler]));
+
+const criteria: Record<string, string> = Object.fromEntries(
+  REGISTRY.map((i) => [i.id, i.description]),
+);
+criteria.none = "The message matches none of the intents above, or asks for nothing";
+
+const questions = {
+  intent: choice(
+    "Which of these intents, if any, matches what the user asks for in `message`?",
+    criteria,
+  ),
+  needs_tool: noul(
+    "Does `message` ask the assistant to look something up or take an action, rather than only greeting, thanking, or making small talk?",
+  ),
+  wants_human: noul("Does `message` ask to speak with a human agent?"),
+};
+
+export async function classify(message: string, previousBotMessage = "") {
+  const response = await client.systemOne({
+    state: { message, previous_bot_message: previousBotMessage },
+    questions,
+  });
+  const { intent, needs_tool, wants_human } = response.answers;
+  const ranked = Object.entries(intent.probabilities).sort((a, b) => b[1] - a[1]);
+  return {
+    intent: intent.choice,
+    confidence: intent.confidence,
+    top3: ranked.slice(0, 3),
+    needsTool: needs_tool.noul,
+    wantsHuman: wants_human.noul,
+  };
+}
+```
+
+</Fragment>
+</CodeTabs>
+
+## Example response
+
+This is an illustrative response for the address-change message above, using only the 10 sample intents so the block stays readable. With the full registry the `probabilities` map has one entry per option. The shape follows the [API reference](https://docs.typesafe.ai/api); the numbers are made up for the example, not measured.
+
+```json
+{
+  "model": "jev-1.13.0",
+  "answers": {
+    "intent": {
+      "type": "choice",
+      "choice": "update_address",
+      "probabilities": {
+        "order_status": 0.06,
+        "update_address": 0.84,
+        "reset_password": 0.0,
+        "store_hours": 0.0,
+        "apply_promo_code": 0.0,
+        "cancel_order": 0.04,
+        "return_item": 0.03,
+        "product_question": 0.0,
+        "billing_dispute": 0.0,
+        "delete_account": 0.01,
+        "none": 0.02
+      },
+      "confidence": 0.81
+    },
+    "needs_tool": { "type": "noul", "noul": 0.96 },
+    "wants_human": { "type": "noul", "noul": 0.03 }
+  },
+  "usage": { "input_tokens": 352, "output_tokens": 58 }
+}
+```
+
+Noul answers have no `confidence` field. The `noul` value is itself the probability of yes.
+
+## Decision logic
+
+The router reads the gate first, then the Choice, then the handler type from the registry. Thresholds are illustrative starting points; tune them on labelled messages from your own logs.
+
+```python
+GATE = 0.30          # below this, no tool is needed: reply conversationally
+ACT = 0.50           # the documented floor: below it, do not act on the Choice
+ACT_ON_WRITE = 0.85  # higher bar for intents that change data
+WRITE_INTENTS = {"update_address", "cancel_order", "delete_account"}
+
+def route(r: dict) -> tuple[str, str | None]:
+    if r["wants_human"] > 0.80:
+        return ("human", None)
+    if r["needs_tool"] < GATE:
+        return ("smalltalk_llm", None)              # "thanks!", "hi", "lol ok"
+    if r["intent"] == "none":
+        return ("general_llm", None)                # a real request the registry does not cover
+    if r["confidence"] < ACT:
+        (first, _), (second, _) = r["top3"][0], r["top3"][1]
+        return ("clarify", f"{first}|{second}")     # ask the user which of the two they mean
+    bar = ACT_ON_WRITE if r["intent"] in WRITE_INTENTS else ACT
+    if r["confidence"] < bar:
+        return ("confirm_with_user", r["intent"])   # "Do you want to change the address on order 8841?"
+    kind = HANDLER[r["intent"]]                     # "code" | "llm" | "human"
+    return (kind, r["intent"])
+```
+
+This is the three-way split from the [intent routing pattern](https://docs.typesafe.ai/patterns/intent-routing): `code` intents such as `order_status` run a database lookup with no LLM involved, `llm` intents go to a specialist prompt loaded only with the context that intent needs, and `human` intents go to a queue. The pattern page also adds a complexity Score so that a complicated complaint goes to a person while a simple one goes to an LLM; add it to the same request if your handlers need that distinction.
+
+Note what the gate and `none` each catch. "Thanks, that's all" fails the gate. "Can you recommend a good pizza place?" passes the gate, since it asks for something, and should land on `none`. When the two signals conflict, for example a high-confidence intent with a low `needs_tool`, log the case and prefer the cautious route. The [confidence thresholds guide](/guides/confidence-thresholds/) describes how to tune each line separately.
+
+### Optional second pass
+
+If lookalike intents keep colliding, copy the skill suggestion cookbook's second request: take the top three intents from the first response, and ask a new Choice over only those three, this time with longer descriptions and examples, plus one Noul per candidate asking whether that intent does the specific thing the user asked. This is a legitimate second request, because code needs the first answer to build it. TypeSafe reports that this two-request recipe cut wrong skill loads from 16.8% to 7.3% in its own test of 488 requests against a 182-skill roster; those are [TypeSafe's figures](https://docs.typesafe.ai/cookbooks/skill_suggestion) for its task, not a measurement of intent routing.
+
+## Cost estimate
+
+Token assumptions: about 20 tokens per intent for the key and its description, so roughly 1,300 tokens for 64 intents and `none`, plus about 150 tokens for the message, the two Noul questions, and the Choice instructions. The criteria map dominates the bill, which is the price of high cardinality: every request carries the whole registry. Read `usage.input_tokens` from real responses and adjust.
+
+<CostTable tokens={frontmatter.tokensPerItem} unit="messages" />
+
+## Pitfalls
+
+- **Treating the Choice as a gate.** Without `none` and the Noul, "lol ok" is routed to whichever intent is least unlike it. The Choice is relative; it cannot say "nothing here applies" unless you give it that option.
+- **Overlapping descriptions.** `cancel_order` and `return_item` both involve sending money back. Put the boundary in the text ("before it is delivered", "already delivered"). Overlap shows up as split probabilities and low confidence on exactly the messages that matter.
+- **Keyword-style descriptions.** The function calling cookbook advises writing each option about the idea, because the match is on meaning. "refund, money back, return" is weaker than a sentence that says what the user wants.
+- **Registries past 255.** The limit is per Choice. Past it, or when descriptions get long, group intents and classify in two steps as in [hierarchical product categorization](/use-cases/hierarchical-product-categorization/), or rank chunks separately and re-run the winners, which is what the skill suggestion cookbook suggests for rosters a few times larger than its 182.
+- **Expecting consistency between questions.** There are no invariants between questions in a request. `wants_human` can be high while `intent` is a confident `order_status`. Decide the precedence in code, as `route` does.
+- **Multi-intent messages.** "Cancel my order and also reset my password" has two intents, and a Choice returns one. Check whether the top two probabilities are both high and handle the second after the first, or let the general LLM split the message.
+- **Arguments and arithmetic.** Jev does not extract the order number and does not count or compare dates reliably. "Has the order shipped yet?" is a database lookup in the handler, not a question for the model.
+- **Literal reading and language.** Jev answers the question as written, so "matches what the user asks for" is better than "is related to". English is the primary language; test other languages on your own traffic before relying on them.
+- **Alias drift.** Registry edits and model upgrades both shift the probabilities. Re-run your labelled set when either changes, and pin `jev-1.13.0` if the thresholds were tuned on it, as the [models page](https://docs.typesafe.ai/models) advises.

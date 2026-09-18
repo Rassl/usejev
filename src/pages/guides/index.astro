@@ -1,0 +1,26 @@
+---
+import Base from '../../layouts/Base.astro';
+import { GUIDES } from '../../lib/site';
+import { breadcrumbs } from '../../lib/jsonld';
+---
+
+<Base
+  title="Jev Guides: Concepts, Costs, Confidence"
+  description="Guides to Jev, TypeSafe AI's System One model: a neutral explainer, a cost and latency comparison with LLM classification, and confidence threshold tuning."
+  jsonLd={[breadcrumbs([{ name: 'Home', path: '/' }, { name: 'Guides', path: '/guides/' }])]}
+>
+  <h1>Jev guides</h1>
+  <p class="lede">Background reading for the <a href="/use-cases/">Jev use cases</a>: what the model is, what it costs, and how to act on its confidence.</p>
+  <ul class="grid">
+    {GUIDES.map((g) => (
+      <li class="card">
+        <h2><a href={g.href}>{g.title}</a></h2>
+        <p>{g.blurb}</p>
+      </li>
+    ))}
+  </ul>
+</Base>
+<style>
+  .card h2 { margin: 0; font-size: 1.1rem; }
+  .card h2 a { color: var(--ink); text-decoration: none; }
+</style>

@@ -1,0 +1,121 @@
+---
+layout: ../../layouts/Guide.astro
+title: "What Is Jev? System One Models Explained"
+description: "A neutral explainer of Jev, TypeSafe AI's System One model: Choice, Score and Noul questions, confidence, pricing, speed, and where it falls short."
+path: /guides/what-is-jev/
+publishedAt: 2026-09-19
+updatedAt: 2026-09-19
+faqs:
+  - q: Is Jev a large language model?
+    a: Not in the usual sense. Jev does not generate text. You send a state and typed questions, and it returns a probability distribution over the options you supplied. TypeSafe calls this class of model System One.
+  - q: Can Jev hallucinate?
+    a: Jev cannot fabricate text or return a value outside the options you gave it, so the classic hallucination failure does not apply. It can still choose the wrong option, which is why every Choice and Score answer comes with probabilities and a confidence value for your code to check.
+  - q: How much does Jev cost?
+    a: TypeSafe's models page lists $0.042 per million input tokens ($42 per billion) with free output tokens. Check the official page before budgeting because prices can change.
+  - q: How fast is Jev?
+    a: TypeSafe's launch post reports 70 to 500 milliseconds end to end. That is a vendor figure. Measure it from your own region with your own state sizes.
+  - q: Does Noul return a confidence value?
+    a: No. Choice and Score answers include a confidence field. A Noul answer is a single number from 0 to 1, the probability that the answer is yes, and values near 0.5 mean the model is unsure.
+  - q: Can I fine-tune Jev on my data?
+    a: No. The official models page says the same weights serve every account. You adapt Jev through the state you send and through the instructions and criteria of each question.
+---
+
+Jev is a model from [TypeSafe AI](https://typesafe.ai), a company founded by Diogo Almeida, who previously worked at OpenAI on instruction-following research. It entered early access on September 15, 2026 ([launch post](https://typesafe.ai/blog/introducing-system-one-models-and-jev)). TypeSafe describes it as the first "System One" model. This page explains what that means without the marketing, and it links every factual claim to an official source.
+
+<div class="note">
+
+This is an unofficial explainer. For authoritative details read the [official TypeSafe documentation](https://docs.typesafe.ai).
+
+</div>
+
+## System One vs LLMs
+
+An LLM produces text. To use that text in software you prompt it, wait for generation, parse the result, validate it, and handle the cases where it does not parse.
+
+Jev skips generation. You send two things:
+
+- a **`state`**: any text or JSON that describes the situation, such as an email, a log line, a support ticket, or a record from your database, and
+- a map of typed **`questions`** about that state.
+
+Jev returns one typed answer per question. The name comes from Daniel Kahneman's *Thinking, Fast and Slow*: System 1 is the fast, intuitive judgment, and System 2 is slow deliberate reasoning ([System One concept page](https://docs.typesafe.ai/concepts/system-one)). Jev is built for the first kind only. The docs put it this way: ask for a judgment a knowledgeable person could make in a second, given the right context ([primitives page](https://docs.typesafe.ai/primitives)).
+
+All questions in one request are evaluated in parallel and in isolation. One answer is never hidden context for another, so you can add or remove questions without changing the other results.
+
+## The three primitives
+
+| Primitive | Answers | Returns | Typical use |
+| --- | --- | --- | --- |
+| [Choice](https://docs.typesafe.ai/primitives/choice) | Which of these options? | `choice`, `probabilities`, `confidence` | Routing, classification, picking a function |
+| [Score](https://docs.typesafe.ai/primitives/score) | Which level on this ordered scale? | `score`, `legend`, `probabilities`, `confidence` | Severity, fit, relevance, frustration |
+| [Noul](https://docs.typesafe.ai/primitives/noul) | Is this true? | `noul` from 0 to 1 | Flags, filters, guard conditions |
+
+A Choice accepts [up to 255 options](https://docs.typesafe.ai/primitives/choice). A Score takes an ordered list of at least two level descriptions and returns a probability-weighted position that can fall between levels. A Noul returns the probability that the answer is yes.
+
+Here is a minimal request against the documented [HTTP endpoint](https://docs.typesafe.ai/api):
+
+```bash
+curl -X POST https://api.typesafe.ai/v1/systemone \
+  -H "Authorization: Bearer $TYPESAFE_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "state": "Our API started returning 500s twenty minutes ago and orders are failing.",
+    "model": "jev-latest",
+    "questions": {
+      "team": {
+        "type": "choice",
+        "instructions": "Which team should handle this message?",
+        "criteria": { "billing": null, "technical": null, "sales": null }
+      },
+      "is_urgent": { "type": "noul", "instructions": "Does this message convey urgency?" }
+    }
+  }'
+```
+
+The response has an `answers` map with the same keys, plus `model` and `usage`. There are official SDKs for [Python](https://docs.typesafe.ai/sdk/python) (`typesafe-sdk`) and [JavaScript](https://docs.typesafe.ai/sdk/javascript) (`@typesafe-ai/sdk`). The [support ticket routing use case](/use-cases/support-ticket-routing/) shows both in full.
+
+## Confidence
+
+Every Choice and Score answer includes a `confidence` value from 0 to 1. It is easy to misread, so be precise: confidence is **not** the probability of the top option. It is a statistic that summarizes the *shape* of the whole probability distribution. A distribution piled on one option gives high confidence, and a flat one gives low confidence ([confidence guide](https://docs.typesafe.ai/confidence)). The official quick start shows an answer whose top option has probability 0.84 and whose confidence is 0.596.
+
+Noul answers carry no separate confidence. The `noul` value is the signal: near 1 is a strong yes, near 0 a strong no, and near 0.5 means unsure.
+
+TypeSafe recommends thresholds that depend on the cost of a mistake, for example treating anything below 0.5 as "do not act" and requiring more than 0.9 before a high-stakes action. Our guide on [confidence thresholds](/guides/confidence-thresholds/) turns that into a tuning procedure.
+
+## Pricing and speed
+
+| Item | Value | Source |
+| --- | --- | --- |
+| Input price | $0.042 per million tokens ($42 per billion) | [Models page](https://docs.typesafe.ai/models) |
+| Output price | Free | [Models page](https://docs.typesafe.ai/models) |
+| End-to-end latency | 70 to 500 ms (vendor figure) | [Launch post](https://typesafe.ai/blog/introducing-system-one-models-and-jev) |
+| Context | 64k tokens per request; 32k for the state plus the longest question | [Models page](https://docs.typesafe.ai/models) |
+| Rate limits | 250,000 tokens per second, 1,200 requests per minute, subject to change | [Models page](https://docs.typesafe.ai/models) |
+| Current model | `jev-1.13.0`, aliased as `jev-latest` | [Models page](https://docs.typesafe.ai/models) |
+
+Because all questions share one state, asking ten questions costs the state tokens once plus a few tokens per question. For the math against LLM pricing, see [Jev vs LLMs for classification](/guides/jev-vs-llm-classification/).
+
+## Limitations
+
+TypeSafe publishes a candid list of [known failure modes for jev-1.13](https://docs.typesafe.ai/model-jaggedness/jev-1.13). The ones that matter most in practice:
+
+- **No text generation.** Jev cannot write a reply, a summary, or an extracted free-form value. If you need words, you need a generative model.
+- **Literal reading.** It answers the question you wrote, not the one you meant. Put the exact condition and the boundary cases in the instructions and criteria.
+- **Math, counting, and dates.** It does not count reliably or compare dates as quantities. Extract with Jev if needed, then compute in code.
+- **Multi-hop reasoning.** Double negatives and "a property of a property" questions lose accuracy. Those are System Two tasks.
+- **Large, noisy state.** Irrelevant content in the state lowers accuracy. Filter before you send.
+- **Adversarial content.** Text in the state that argues for its own classification can move the answer. Treat Jev as one layer in a [moderation or injection-screening pipeline](/use-cases/content-moderation-prompt-injection-screening/), not the only one.
+- **No cross-question invariants.** A Noul and an equivalent yes/no Choice can disagree, and thresholds do not transfer between them.
+- **Language.** English is the primary training language. Test other languages before relying on them.
+- **Text only.** Images, audio, and PDFs must be converted to text first.
+
+### The "no hallucinations" claim, read carefully
+
+TypeSafe's site says "Zero Hallucinations", and the launch post says Jev "can't hallucinate". The narrow version of that claim is true by construction: Jev can only return a distribution over the options you provided, so it cannot invent a fact, a citation, or a malformed value.
+
+The broader reading, that Jev cannot be wrong, is false, and TypeSafe does not claim it. Their own FAQ asks "Can Jev still get things wrong?" and the limitations page opens with "Jev isn't perfect". Jev can pick the wrong queue, under-score a severe alert, or answer yes to a question it read too literally. The design answer to that is not trust. It is probabilities, confidence thresholds, a human fallback, and testing on your own labelled data.
+
+## When to use Jev and when not to
+
+Use it when the output is a decision from a closed set, when you need it fast or at high volume, and when software rather than a person consumes the result. Skip it when the output must be language, when the task needs step-by-step reasoning, or when a regular expression already solves the problem.
+
+The quickest way to get a feel for the fit is to read a few worked examples: start with [all Jev use cases](/use-cases/).

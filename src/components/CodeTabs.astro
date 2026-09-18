@@ -1,0 +1,16 @@
+---
+// CSS-only Python / TypeScript tabs. Usage in MDX:
+// <CodeTabs><Fragment slot="python">```python ...```</Fragment><Fragment slot="ts">```ts ...```</Fragment></CodeTabs>
+const id = 'tabs-' + Math.random().toString(36).slice(2, 8);
+---
+
+<div class="tabs">
+  <input type="radio" name={id} id={`${id}-py`} checked />
+  <input type="radio" name={id} id={`${id}-ts`} />
+  <div class="tab-labels">
+    <label for={`${id}-py`}>Python</label>
+    <label for={`${id}-ts`}>TypeScript</label>
+  </div>
+  <section class="tab-panel" aria-label="Python sample"><slot name="python" /></section>
+  <section class="tab-panel" aria-label="TypeScript sample"><slot name="ts" /></section>
+</div>

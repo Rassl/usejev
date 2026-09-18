@@ -1,0 +1,366 @@
+---
+title: News Relevance Filtering with Jev
+description: Filter headlines against a client profile with Jev Noul and Choice questions, one request per article, run concurrently. Includes code and cost estimates.
+slug: news-relevance-filtering
+category: Sales and marketing
+industry: [Media]
+primitives: [Choice, Noul]
+difficulty: Intermediate
+tokensPerItem: 800
+related: [search-result-reranking, email-triage-priority-scoring, lead-scoring]
+publishedAt: 2026-09-19
+updatedAt: 2026-09-19
+---
+
+## The problem
+
+A media-monitoring product ingests a few hundred thousand headlines a day from feeds, wires, and blogs, and each client wants only the handful that matter to them. Keyword matching on the client name produces a clip list full of junk: a payments company called Kestrel gets stories about birds, a football club, and a drone. Analysts then spend the morning deleting rows so the client's daily briefing is readable.
+
+## Why Jev fits
+
+Relevance filtering is a yes/no question and a couple of closed-set labels, asked about a very short text, a very large number of times. That is the shape Jev was built for. See [what Jev is](/guides/what-is-jev/) for background on the model.
+
+- **Typed output.** A [Noul](https://docs.typesafe.ai/primitives/noul) returns the probability of yes, and a [Choice](https://docs.typesafe.ai/primitives/choice) returns one of your bucket keys with a probability for every bucket. Both go straight into a database column.
+- **Speed.** TypeSafe reports [70 to 500 ms end to end](https://typesafe.ai/blog/introducing-system-one-models-and-jev), so a breaking story can be classified and pushed as an alert while it is still breaking.
+- **Cost.** At [$0.042 per million input tokens](https://docs.typesafe.ai/models) with free output, it is practical to judge every candidate article against every client whose keywords it matched, rather than sampling.
+- **Confidence gating.** Borderline articles go to an analyst queue instead of being silently dropped or sent to the client.
+
+**When an LLM is the better tool:** writing the summary paragraph in the daily briefing, translating foreign coverage, or explaining why a story matters to this client all require text generation, which Jev does not do. Articles where relevance depends on reading the full text and connecting facts several paragraphs apart are also better handled by an LLM. The usual split is Jev as the high-volume filter and an LLM to write up the few dozen articles that survive. The guide on [Jev versus LLM classification](/guides/jev-vs-llm-classification/) goes through that trade-off.
+
+## Question design
+
+The state holds two things: a compact client profile and one article. Keep the profile to what the questions refer to. TypeSafe's limitations page notes that [large state full of irrelevant detail](https://docs.typesafe.ai/model-jaggedness/jev-1.13#large-state-full-of-irrelevant-detail) costs accuracy, so do not paste the client's whole onboarding questionnaire. The client below is fictional.
+
+```json
+{
+  "client": {
+    "name": "Kestrel Pay",
+    "also_known_as": ["Kestrel", "Kestrel Payments Ltd"],
+    "description": "UK payments company that sells card terminals and online checkout to small retailers",
+    "competitors": ["Marlow Pay", "Tallgrass Payments"],
+    "topics_of_interest": "Card fees regulation, small business payments, point-of-sale hardware, open banking"
+  },
+  "article": {
+    "source": "Retail Ledger",
+    "headline": "Marlow Pay cuts terminal fees for independent shops ahead of Christmas",
+    "snippet": "The payments provider said the new pricing applies to merchants processing under a set monthly volume. Analysts expect rivals to respond before the holiday trading period."
+  }
+}
+```
+
+| Question ID | Type | Instructions | Criteria |
+| --- | --- | --- | --- |
+| `mentions_client_or_competitor` | Noul | Is the article in `article.headline` and `article.snippet` about the company in `client.name`, one of its names in `client.also_known_as`, or a company listed in `client.competitors`? | none |
+| `client_is_main_subject` | Noul | Is the company described in `client.description` the main subject of the article, rather than a passing mention? | none |
+| `relevance` | Choice | How relevant is the article to the client described in `client`? | `direct_coverage`, `competitor_news`, `industry_topic`, `passing_mention`, `name_collision`, `irrelevant`, each with a one-line description |
+| `topic` | Choice | What is the article mainly about? | `product_or_pricing`, `funding_or_deal`, `legal_or_regulatory`, `people_move`, `incident_or_outage`, `financial_results`, `opinion_or_analysis`, `other` |
+| `is_wire_rewrite` | Noul | Does the article read as syndicated wire copy or a lightly reworded press release, rather than original reporting? | none |
+| `negative_for_client` | Noul | Would a communications team at the company in `client.name` consider this article negative coverage of their company? | none |
+
+The `name_collision` bucket does a lot of work. It gives the model an explicit place to put the bird and the football club, which is better than hoping they fall into `irrelevant`. TypeSafe recommends an explicit catch-all whenever your options may not cover every input, and `other` in `topic` plays that role.
+
+All six questions go in one request. This is [speculative fan-out](https://docs.typesafe.ai/patterns/fan-out): questions that share a state are evaluated in parallel and independently, so `negative_for_client` costs a few tokens whether or not the article turns out to be relevant, and your code ignores it when it is not. The docs' [parallel questions cookbook](https://docs.typesafe.ai/cookbooks/parallel_questions) measures how much cheaper and faster one batched call is than one call per question.
+
+### Batching: one request per article, many at once
+
+Do not put fifty articles into one state and ask about all of them. The model would have to find the right article for each question, which is the kind of [indirection](https://docs.typesafe.ai/model-jaggedness/jev-1.13#indirection) that hurts accuracy, and irrelevant articles become noise for each other. Instead send one request per article and client pair, each carrying all six questions, and run the requests concurrently. The published [rate limits](https://docs.typesafe.ai/models) are 1,200 requests per minute and 250,000 tokens per second at the time of writing, subject to change, so cap concurrency and let the SDK's default retry handle the occasional 429.
+
+## Code
+
+Both samples use only calls documented in the official [Python SDK usage page](https://docs.typesafe.ai/sdk/python/usage) and [JavaScript SDK](https://docs.typesafe.ai/sdk/javascript) pages. The Python sample uses `AsyncTypeSafeClient`; the client reads `TYPESAFE_API_KEY` from the environment.
+
+<CodeTabs>
+<Fragment slot="python">
+
+```python
+import asyncio
+
+from typesafe_sdk import AsyncTypeSafeClient, Choice, Noul
+
+QUESTIONS = {
+    "mentions_client_or_competitor": Noul(
+        instructions=(
+            "Is the article in `article.headline` and `article.snippet` about the company in "
+            "`client.name`, one of its names in `client.also_known_as`, or a company listed in "
+            "`client.competitors`?"
+        ),
+    ),
+    "client_is_main_subject": Noul(
+        instructions=(
+            "Is the company described in `client.description` the main subject of the article, "
+            "rather than a passing mention?"
+        ),
+    ),
+    "relevance": Choice(
+        instructions="How relevant is the article to the client described in `client`?",
+        criteria={
+            "direct_coverage": "The article is about the client company itself",
+            "competitor_news": "The article is about a company listed in `client.competitors`",
+            "industry_topic": "No named client or competitor, but it covers `client.topics_of_interest`",
+            "passing_mention": "The client or a competitor is named once in an article about something else",
+            "name_collision": "A person, place, animal, or other organisation that shares a name with the client",
+            "irrelevant": "None of the above",
+        },
+    ),
+    "topic": Choice(
+        instructions="What is the article mainly about?",
+        criteria={
+            "product_or_pricing": "Product launches, features, pricing changes",
+            "funding_or_deal": "Funding rounds, acquisitions, mergers, partnerships",
+            "legal_or_regulatory": "Lawsuits, fines, regulation, government policy",
+            "people_move": "Executive hires, departures, layoffs",
+            "incident_or_outage": "Outages, security breaches, product failures",
+            "financial_results": "Earnings, revenue, trading updates",
+            "opinion_or_analysis": "Commentary, analysis, interviews",
+            "other": "Anything else",
+        },
+    ),
+    "is_wire_rewrite": Noul(
+        instructions=(
+            "Does the article read as syndicated wire copy or a lightly reworded press release, "
+            "rather than original reporting?"
+        ),
+    ),
+    "negative_for_client": Noul(
+        instructions=(
+            "Would a communications team at the company in `client.name` consider this article "
+            "negative coverage of their company?"
+        ),
+    ),
+}
+
+MAX_IN_FLIGHT = 16  # illustrative; keep well under the published requests-per-minute limit
+
+
+async def classify_batch(client_profile: dict, articles: list[dict]) -> list[dict]:
+    gate = asyncio.Semaphore(MAX_IN_FLIGHT)
+
+    async with AsyncTypeSafeClient() as client:
+
+        async def classify(article: dict) -> dict:
+            state = {
+                "client": client_profile,
+                "article": {
+                    "source": article["source"],
+                    "headline": article["headline"],
+                    "snippet": article["snippet"][:600],
+                },
+            }
+            async with gate:
+                response = await client.system_one(state=state, questions=QUESTIONS)
+            a = response.answers
+            return {
+                "article_id": article["id"],
+                "mentions": a["mentions_client_or_competitor"].noul,
+                "main_subject": a["client_is_main_subject"].noul,
+                "relevance": a["relevance"].choice,
+                "relevance_confidence": a["relevance"].confidence,
+                "relevance_probabilities": a["relevance"].probabilities,
+                "topic": a["topic"].choice,
+                "topic_confidence": a["topic"].confidence,
+                "wire_rewrite": a["is_wire_rewrite"].noul,
+                "negative": a["negative_for_client"].noul,
+            }
+
+        return await asyncio.gather(*(classify(article) for article in articles))
+```
+
+</Fragment>
+<Fragment slot="ts">
+
+```ts
+import { choice, noul, TypeSafeClient } from "@typesafe-ai/sdk";
+
+const client = new TypeSafeClient(); // reads TYPESAFE_API_KEY
+
+const questions = {
+  mentions_client_or_competitor: noul(
+    "Is the article in `article.headline` and `article.snippet` about the company in `client.name`, one of its names in `client.also_known_as`, or a company listed in `client.competitors`?",
+  ),
+  client_is_main_subject: noul(
+    "Is the company described in `client.description` the main subject of the article, rather than a passing mention?",
+  ),
+  relevance: choice("How relevant is the article to the client described in `client`?", {
+    direct_coverage: "The article is about the client company itself",
+    competitor_news: "The article is about a company listed in `client.competitors`",
+    industry_topic: "No named client or competitor, but it covers `client.topics_of_interest`",
+    passing_mention: "The client or a competitor is named once in an article about something else",
+    name_collision: "A person, place, animal, or other organisation that shares a name with the client",
+    irrelevant: "None of the above",
+  }),
+  topic: choice("What is the article mainly about?", {
+    product_or_pricing: "Product launches, features, pricing changes",
+    funding_or_deal: "Funding rounds, acquisitions, mergers, partnerships",
+    legal_or_regulatory: "Lawsuits, fines, regulation, government policy",
+    people_move: "Executive hires, departures, layoffs",
+    incident_or_outage: "Outages, security breaches, product failures",
+    financial_results: "Earnings, revenue, trading updates",
+    opinion_or_analysis: "Commentary, analysis, interviews",
+    other: "Anything else",
+  }),
+  is_wire_rewrite: noul(
+    "Does the article read as syndicated wire copy or a lightly reworded press release, rather than original reporting?",
+  ),
+  negative_for_client: noul(
+    "Would a communications team at the company in `client.name` consider this article negative coverage of their company?",
+  ),
+};
+
+type Article = { id: string; source: string; headline: string; snippet: string };
+type ClientProfile = Record<string, string | string[]>;
+
+async function classify(profile: ClientProfile, article: Article) {
+  const response = await client.systemOne({
+    state: {
+      client: profile,
+      article: {
+        source: article.source,
+        headline: article.headline,
+        snippet: article.snippet.slice(0, 600),
+      },
+    },
+    questions,
+  });
+  const a = response.answers;
+  return {
+    articleId: article.id,
+    mentions: a.mentions_client_or_competitor.noul,
+    mainSubject: a.client_is_main_subject.noul,
+    relevance: a.relevance.choice,
+    relevanceConfidence: a.relevance.confidence,
+    relevanceProbabilities: a.relevance.probabilities,
+    topic: a.topic.choice,
+    topicConfidence: a.topic.confidence,
+    wireRewrite: a.is_wire_rewrite.noul,
+    negative: a.negative_for_client.noul,
+  };
+}
+
+const MAX_IN_FLIGHT = 16; // illustrative; keep well under the published requests-per-minute limit
+
+export async function classifyBatch(profile: ClientProfile, articles: Article[]) {
+  const results: Awaited<ReturnType<typeof classify>>[] = [];
+  for (let i = 0; i < articles.length; i += MAX_IN_FLIGHT) {
+    const chunk = articles.slice(i, i + MAX_IN_FLIGHT);
+    results.push(...(await Promise.all(chunk.map((article) => classify(profile, article)))));
+  }
+  return results;
+}
+```
+
+</Fragment>
+</CodeTabs>
+
+## Example response
+
+This is an illustrative response for the Marlow Pay article above. The shape follows the [API reference](https://docs.typesafe.ai/api); every number is made up for the example, not measured.
+
+```json
+{
+  "model": "jev-1.13.0",
+  "answers": {
+    "mentions_client_or_competitor": { "type": "noul", "noul": 0.97 },
+    "client_is_main_subject": { "type": "noul", "noul": 0.04 },
+    "relevance": {
+      "type": "choice",
+      "choice": "competitor_news",
+      "probabilities": {
+        "direct_coverage": 0.03,
+        "competitor_news": 0.88,
+        "industry_topic": 0.06,
+        "passing_mention": 0.01,
+        "name_collision": 0.01,
+        "irrelevant": 0.01
+      },
+      "confidence": 0.82
+    },
+    "topic": {
+      "type": "choice",
+      "choice": "product_or_pricing",
+      "probabilities": {
+        "product_or_pricing": 0.9,
+        "funding_or_deal": 0.01,
+        "legal_or_regulatory": 0.02,
+        "people_move": 0.01,
+        "incident_or_outage": 0.01,
+        "financial_results": 0.02,
+        "opinion_or_analysis": 0.02,
+        "other": 0.01
+      },
+      "confidence": 0.85
+    },
+    "is_wire_rewrite": { "type": "noul", "noul": 0.35 },
+    "negative_for_client": { "type": "noul", "noul": 0.08 }
+  },
+  "usage": { "input_tokens": 806, "output_tokens": 74 }
+}
+```
+
+Noul answers have no `confidence` field. The `noul` value is the probability of yes, so a value near 0.5, like `is_wire_rewrite` here, is the model telling you it cannot tell.
+
+## Decision logic
+
+The model answers; your code decides what reaches the client. Thresholds below are illustrative starting points. Tune them on a few weeks of clips that analysts have already kept or deleted, using the procedure in [how to pick confidence thresholds](/guides/confidence-thresholds/).
+
+```python
+# Illustrative starting points, tune on your own kept/deleted clips.
+KEEP_CONFIDENCE = 0.75
+REVIEW_CONFIDENCE = 0.50
+KEEP_BUCKETS = {"direct_coverage", "competitor_news", "industry_topic"}
+DROP_BUCKETS = {"name_collision", "irrelevant"}
+
+
+def decide(r: dict) -> dict:
+    bucket, conf = r["relevance"], r["relevance_confidence"]
+
+    # The Noul and the Choice are independent answers and can disagree.
+    disagree = (bucket in DROP_BUCKETS and r["mentions"] > 0.8) or (
+        bucket == "direct_coverage" and r["main_subject"] < 0.2
+    )
+    if conf < REVIEW_CONFIDENCE or disagree:
+        return {"action": "analyst_review", "reason": "low confidence or conflicting answers"}
+
+    if bucket in DROP_BUCKETS:
+        return {"action": "drop"} if conf >= KEEP_CONFIDENCE else {"action": "analyst_review"}
+
+    if bucket == "passing_mention":
+        return {"action": "archive"}  # searchable, but not in the briefing
+
+    if conf < KEEP_CONFIDENCE:
+        return {"action": "analyst_review"}
+
+    topic = r["topic"] if r["topic_confidence"] >= REVIEW_CONFIDENCE else "unsorted"
+    return {
+        "action": "include",
+        "section": bucket,
+        "topic": topic,
+        "collapse_with_similar": r["wire_rewrite"] > 0.8,  # hint for the dedup step
+        "alert_now": bucket == "direct_coverage" and r["negative"] > 0.85,
+    }
+```
+
+This follows the three-band approach in TypeSafe's [confidence guide](https://docs.typesafe.ai/confidence): act when confidence is high, be cautious in the middle, and do not act when it is low. Which mistake is worse depends on the product. For a PR crisis-alert feature, a missed negative story is far more costly than an extra clip, so lower the bar for `include` and raise it for `drop`. For a weekly digest, the opposite is reasonable.
+
+Two responsibilities stay in code. Recency is a date comparison, and Jev [compares dates as text](https://docs.typesafe.ai/model-jaggedness/jev-1.13#date-and-time-comparison), so filter by publish time before calling the API. True deduplication means comparing articles with each other, and each request sees only one article. Use hashing or embeddings to cluster near-identical texts; `is_wire_rewrite` is only a hint that an article probably belongs to such a cluster, which tells the dedup step where to look harder.
+
+If the list of survivors then needs ordering within a section, that is a separate job covered in [search result re-ranking](/use-cases/search-result-reranking/).
+
+## Cost estimate
+
+Token assumptions: about 150 tokens for the client profile, about 120 tokens for a headline with a trimmed snippet, and about 530 tokens for the six questions and their option descriptions. The questions dominate, which is normal for short states. Read `usage.input_tokens` from real responses and adjust.
+
+<CostTable tokens={frontmatter.tokensPerItem} unit="article checks" />
+
+One unit here is one article checked against one client. An article that matches the keyword prefilter of five clients is five checks. A cheap keyword or entity prefilter in front of Jev keeps that multiplication under control: only run the check for clients whose names, competitors, or topic terms appear somewhere in the article.
+
+## Pitfalls
+
+- **Ambiguous client names.** Jev [reads literally](https://docs.typesafe.ai/model-jaggedness/jev-1.13#literal-reading). "Is this about Kestrel?" is true of an article about birds. Put `client.description` in the state and refer to "the company described in `client.description`" so the model has something to disambiguate with, and keep the `name_collision` bucket.
+- **Headline-only states.** A headline such as "Payments firm slashes fees" names nobody. If the snippet is missing, expect low confidence and route to review rather than forcing a decision, or fetch the first paragraph and make a second request.
+- **Long competitor lists.** Forty competitors in the profile is irrelevant detail for most articles. Let the keyword prefilter find which competitor names occur and pass only those.
+- **Counting and thresholds in questions.** "Is the client mentioned more than twice?" is a counting task, which the limitations page says is [unreliable](https://docs.typesafe.ai/model-jaggedness/jev-1.13#math-and-numbers). Count mentions in code if you need the number.
+- **Noul and Choice can disagree.** There are [no structural invariants between questions](https://docs.typesafe.ai/model-jaggedness/jev-1.13#common-sense-structural-invariants). `relevance` may say `irrelevant` while `mentions_client_or_competitor` is 0.9. The decision code treats that as a review case. Do not reuse a threshold tuned on the Choice confidence for a Noul probability; they are different quantities.
+- **Sentiment is a blunt question.** `negative_for_client` is one snap judgment on a snippet. Sarcasm, and stories that are bad for a competitor and therefore good for the client, will trip it. Use it to trigger a human look, not to label coverage in a client report.
+- **Planted text.** Press releases and SEO pages are written to get picked up. Stuffed company names or text addressed to automated readers is [adversarial content](https://docs.typesafe.ai/model-jaggedness/jev-1.13#adversarial-content) that can move answers. Weight by source reputation in code.
+- **Non-English sources.** English is the primary language according to the [models page](https://docs.typesafe.ai/models). Test each language you monitor separately and expect to need different thresholds.
+- **Alias drift.** `jev-latest` moves when a new version ships. Pin the versioned model ID if thresholds were tuned carefully, and re-test before upgrading.

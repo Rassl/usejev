@@ -1,0 +1,281 @@
+---
+title: Search Result Re-Ranking with Jev
+description: Re-rank BM25 or vector search results with one Jev Score question per query and candidate pair, run concurrently, then sort in code. Python, TypeScript, costs.
+slug: search-result-reranking
+category: Search and commerce
+industry: [E-commerce, Marketplaces, Media]
+primitives: [Score, Noul]
+difficulty: Intermediate
+tokensPerItem: 450
+related: [news-relevance-filtering, hierarchical-product-categorization, llm-output-qa-agent-run-review]
+publishedAt: 2026-09-19
+updatedAt: 2026-09-19
+---
+
+## The problem
+
+An outdoor gear marketplace runs keyword search with a vector index on the side. For "waterproof hiking boots for wide feet" the right products are usually somewhere in the first 30 results, but the top slots go to whatever repeats the words most: a waterproofing spray for boots, a narrow-fit trail shoe whose description says "not for wide feet". Retrieval finds the neighbourhood; it does not read each candidate against what the shopper asked for.
+
+## Why Jev fits
+
+The standard fix is two steps: a fast search narrows the catalog to a shortlist, then a re-ranker reads the query against each shortlisted candidate and reorders the list. TypeSafe's [re-ranking cookbook](https://docs.typesafe.ai/cookbooks/rerank_typesafe) follows this plan, and this page follows the cookbook: one question about one query and candidate pair per request, all requests fired concurrently, sorting done in your code.
+
+TypeSafe reports its own result for that setup. On 40 legal queries from the CLERC dataset, each with a 30-passage BM25 shortlist, re-ranking raised the share of queries with the correct passage in first place from 5% to 18%, and in the top 10 from 38% to 62%. Those are [TypeSafe's published figures](https://docs.typesafe.ai/cookbooks/rerank_typesafe) for a small legal retrieval test, not measurements made by this site, and they say nothing certain about your catalog. The cookbook sorted on a Noul. This page sorts on a [Score](https://docs.typesafe.ai/primitives/score) because product search benefits from named tiers (exact match, near match, same category, unrelated), and adds the cookbook-style Noul to the same request.
+
+- **Typed output.** Every pair comes back as a number on the same written scale. With a general LLM you would have to invent a scale, prompt for it, parse it, and hope repeated calls agree.
+- **Speed.** TypeSafe reports [70 to 500 ms end to end](https://typesafe.ai/blog/introducing-system-one-models-and-jev) per request. The 30 requests for one shortlist run concurrently, so the added latency is close to one slow request, not thirty.
+- **Cost.** At [$0.042 per million input tokens](https://docs.typesafe.ai/models) with free output, reading 30 candidates per query is cheap enough to do on live traffic.
+- **Confidence gating.** Each Score carries a `confidence`. When it is low for a candidate, your code can leave that item where retrieval put it instead of trusting a shaky reading.
+
+**When an LLM is the better tool:** a generative model can rank a whole shortlist listwise, comparing candidates with each other, explain why a result is first, rewrite the query, or write a summary of the results. Jev reads one pair at a time and returns numbers. If you need pairwise trade-offs ("cheaper but heavier") explained to the shopper, that is LLM work; do it on the top three after Jev has ordered the thirty. See [Jev versus LLM classification](/guides/jev-vs-llm-classification/) for the general trade.
+
+## Question design
+
+The `state` for each request is the query and one trimmed candidate. Send the fields a shopper would judge on; leave out SKU tables, shipping boilerplate, and review text. TypeSafe's [known limitations page](https://docs.typesafe.ai/model-jaggedness/jev-1.13) warns that irrelevant state costs accuracy.
+
+```json
+{
+  "query": "waterproof hiking boots for wide feet",
+  "candidate": {
+    "title": "Ridgeline Mid GTX Hiking Boot, Wide",
+    "category": "Footwear / Hiking boots",
+    "description": "Mid-cut leather hiking boot with a waterproof membrane. Available in regular and wide (2E) widths. Vibram outsole."
+  }
+}
+```
+
+| Question ID | Type | Instructions | Criteria |
+| --- | --- | --- | --- |
+| `relevance` | Score | How well does the product in `candidate` match what the shopper asks for in `query`? | 4 ordered levels, from "unrelated" to "meets the need and every stated constraint" |
+| `correct_result` | Noul | Would a shopper who typed `query` consider `candidate` a correct result? | none |
+
+Both questions go in the same request. The cookbook closes with that advice: it asked one question per pair for clarity, and says a real application would ask several about the same pair in one call, using the [fan-out pattern](https://docs.typesafe.ai/patterns/fan-out). Extra questions on a shared state add a few tokens and no round trip.
+
+### One candidate per request, or many?
+
+The cookbook sends one request per candidate, and its diagram labels the fan-out "no request sees another". This page does the same. Here is the trade.
+
+Putting all 30 candidates into one state with 30 questions would send the query and the instructions once instead of 30 times, so it would use fewer tokens. But questions in a request are independent and each one reads the whole state. Every question about candidate 7 would carry 29 unrelated products along, which is the irrelevant-state problem the limitations page describes, and a long shortlist would press against the practical budget of about 32k tokens for state plus the longest question ([models page](https://docs.typesafe.ai/models)). It would also require each question to point at `candidates[7]` by path, an indirection that page also flags as a weakness.
+
+With one pair per request, the token cost is simple: requests per query equals shortlist size, and each request pays for the query, one candidate, and the question text. The repeated part (query plus questions) is small next to a product description, so the overhead is modest, and you control the bill directly with the shortlist size and with how hard you trim each candidate. The price of this design is request count, not tokens: see the rate limit note under cost.
+
+## Code
+
+Both samples use only calls documented in the official [Python SDK](https://docs.typesafe.ai/sdk/python/usage) and [JavaScript SDK](https://docs.typesafe.ai/sdk/javascript) pages. The Python version uses the async client with a semaphore; the cookbook itself uses a thread pool of 12 workers with the sync client, which works equally well.
+
+<CodeTabs>
+<Fragment slot="python">
+
+```python
+import asyncio
+
+from typesafe_sdk import AsyncTypeSafeClient, Noul, Score, TypeSafeAPIError
+
+QUESTIONS = {
+    "relevance": Score(
+        instructions="How well does the product in `candidate` match what the shopper asks for in `query`?",
+        criteria=[
+            "Unrelated to the query",
+            "Same broad category, but not the kind of product the shopper asks for",
+            "The right kind of product, but it misses a constraint stated in the query",
+            "The right kind of product and it meets every constraint stated in the query",
+        ],
+    ),
+    "correct_result": Noul(
+        instructions="Would a shopper who typed `query` consider `candidate` a correct result?",
+    ),
+}
+
+MAX_IN_FLIGHT = 12  # concurrent requests; keep total traffic under your rate limit
+
+
+def trim(product: dict) -> dict:
+    return {
+        "title": product["title"],
+        "category": product["category"],
+        "description": product["description"][:800],
+    }
+
+
+async def score_pair(client, gate, query: str, product: dict) -> dict:
+    async with gate:
+        try:
+            response = await client.system_one(
+                state={"query": query, "candidate": trim(product)},
+                questions=QUESTIONS,
+            )
+        except TypeSafeAPIError:
+            # Retries are built in. If a pair still fails, keep its retrieval position.
+            return {"product": product, "score": None, "confidence": 0.0, "noul": None}
+    relevance = response.answers["relevance"]
+    return {
+        "product": product,
+        "score": relevance.score,
+        "confidence": relevance.confidence,
+        "noul": response.answers["correct_result"].noul,
+    }
+
+
+async def score_shortlist(query: str, shortlist: list[dict]) -> list[dict]:
+    """shortlist comes from BM25 or vector search, best first, typically 20 to 50 items."""
+    gate = asyncio.Semaphore(MAX_IN_FLIGHT)
+    async with AsyncTypeSafeClient() as client:  # reads TYPESAFE_API_KEY
+        return await asyncio.gather(
+            *(score_pair(client, gate, query, product) for product in shortlist)
+        )
+```
+
+</Fragment>
+<Fragment slot="ts">
+
+```ts
+import { APIError, noul, score, TypeSafeClient } from "@typesafe-ai/sdk";
+
+const client = new TypeSafeClient(); // reads TYPESAFE_API_KEY
+
+const questions = {
+  relevance: score(
+    "How well does the product in `candidate` match what the shopper asks for in `query`?",
+    [
+      "Unrelated to the query",
+      "Same broad category, but not the kind of product the shopper asks for",
+      "The right kind of product, but it misses a constraint stated in the query",
+      "The right kind of product and it meets every constraint stated in the query",
+    ],
+  ),
+  correct_result: noul("Would a shopper who typed `query` consider `candidate` a correct result?"),
+};
+
+const MAX_IN_FLIGHT = 12; // concurrent requests; keep total traffic under your rate limit
+
+type Product = { id: string; title: string; category: string; description: string };
+type Scored = { product: Product; score: number | null; confidence: number; noul: number | null };
+
+const trim = (p: Product) => ({
+  title: p.title,
+  category: p.category,
+  description: p.description.slice(0, 800),
+});
+
+async function scorePair(query: string, product: Product): Promise<Scored> {
+  try {
+    const response = await client.systemOne({
+      state: { query, candidate: trim(product) },
+      questions,
+    });
+    const { relevance, correct_result } = response.answers;
+    return {
+      product,
+      score: relevance.score,
+      confidence: relevance.confidence,
+      noul: correct_result.noul,
+    };
+  } catch (err) {
+    if (err instanceof APIError) {
+      // Retries are built in. If a pair still fails, keep its retrieval position.
+      return { product, score: null, confidence: 0, noul: null };
+    }
+    throw err;
+  }
+}
+
+/** shortlist comes from BM25 or vector search, best first, typically 20 to 50 items. */
+export async function scoreShortlist(query: string, shortlist: Product[]): Promise<Scored[]> {
+  const results: Scored[] = new Array(shortlist.length);
+  let next = 0;
+  async function worker() {
+    while (next < shortlist.length) {
+      const i = next++;
+      results[i] = await scorePair(query, shortlist[i]);
+    }
+  }
+  await Promise.all(Array.from({ length: MAX_IN_FLIGHT }, worker));
+  return results; // same order as the shortlist
+}
+```
+
+</Fragment>
+</CodeTabs>
+
+## Example response
+
+This is an illustrative response for one pair, the wide-fit boot above. The shape follows the [API reference](https://docs.typesafe.ai/api); the numbers are made up for the example, not measured. A 30-item shortlist produces 30 of these.
+
+```json
+{
+  "model": "jev-1.13.0",
+  "answers": {
+    "relevance": {
+      "type": "score",
+      "score": 2.85,
+      "legend": {
+        "0": "Unrelated to the query",
+        "1": "Same broad category, but not the kind of product the shopper asks for",
+        "2": "The right kind of product, but it misses a constraint stated in the query",
+        "3": "The right kind of product and it meets every constraint stated in the query"
+      },
+      "probabilities": { "0": 0.0, "1": 0.01, "2": 0.13, "3": 0.86 },
+      "confidence": 0.83
+    },
+    "correct_result": { "type": "noul", "noul": 0.94 }
+  },
+  "usage": { "input_tokens": 236, "output_tokens": 47 }
+}
+```
+
+`probabilities` and `legend` are keyed by level index as strings. The `score` is the probability-weighted level, here 0.01 times 1, plus 0.13 times 2, plus 0.86 times 3. The Noul has no `confidence` field; its value is the probability of yes.
+
+## Decision logic
+
+Sorting, cut-offs, and fallbacks stay in code. Thresholds are illustrative starting points; tune them on queries where you know the right results.
+
+```python
+HIDE_BELOW = 0.75   # likely unrelated
+TRUST = 0.50        # minimum Score confidence to act on a reading
+GOOD_TOP = 1.75     # if nothing reaches this, the shortlist probably lacks a real match
+
+def rerank(scored: list[dict]) -> dict:
+    """scored is in retrieval order, as returned by score_shortlist."""
+    keep = []
+    for item in scored:
+        if item["score"] is None or item["confidence"] < TRUST:
+            item = {**item, "score": 1.0, "noul": 0.0}   # unsure: neutral slot, never hidden
+        elif item["score"] < HIDE_BELOW and item["noul"] < 0.2:
+            continue                                      # both questions agree it is off-topic
+        keep.append(item)
+
+    # Python's sort is stable, so ties keep their retrieval order.
+    keep.sort(key=lambda item: (round(item["score"], 1), item["noul"]), reverse=True)
+
+    if not keep or keep[0]["score"] < GOOD_TOP:
+        return {"results": [i["product"] for i in scored], "note": "no_strong_match"}
+    return {"results": [i["product"] for i in keep], "note": "reranked"}
+```
+
+Three choices in this function are deliberate.
+
+**Use the score for order and cut-offs only.** TypeSafe's limitations page says not to interpolate exact magnitudes from a fractional score. A product at 2.85 is ranked above one at 2.4; it is not "19 percent more relevant", and the gap between two scores is not a calibrated distance. Do not show the number to shoppers, do not multiply it by price or margin as if it were a probability, and do not average it across queries as a quality metric. Rounding before the sort, as above, keeps tiny differences from overriding the retrieval order.
+
+**Hide only when two questions agree.** There are no invariants between questions, so the Score and the Noul can disagree. Removing a product from results is the costly mistake here, so the code requires both signals, and an unsure reading never hides anything.
+
+**Keep a fallback.** The cookbook stresses that re-ranking only reorders the shortlist; it cannot add a product retrieval missed. If the best score is low, return the original order and log the query for the search team. The [confidence thresholds guide](/guides/confidence-thresholds/) covers how to pick lines like `GOOD_TOP` from labelled data, and TypeSafe's [confidence page](https://docs.typesafe.ai/confidence) explains the 0.5 floor.
+
+## Cost estimate
+
+Token assumptions per request, meaning per query and candidate pair: about 15 tokens of query, about 250 tokens for a trimmed title, category, and description, and about 185 tokens for the two questions and the four level descriptions. One search with a 30-item shortlist is 30 requests, so multiply the row you care about accordingly: 1,000 searches is 30,000 pairs. For comparison, the long legal passages in TypeSafe's cookbook averaged about 1,280 input tokens per pair (1,536,002 input tokens over 1,200 calls, as the cookbook reports). Read `usage.input_tokens` from real responses and adjust.
+
+<CostTable tokens={frontmatter.tokensPerItem} unit="query-candidate pairs" />
+
+Requests, not tokens, are the limit you will meet first. The documented rate limits are 1,200 requests per minute and 250,000 tokens per second, subject to change ([models page](https://docs.typesafe.ai/models)). At 30 candidates per search, 1,200 requests per minute is 40 searches per minute. To stretch that: cache scores by query and product ID, since popular queries repeat; shorten the shortlist for queries where retrieval is already confident; and re-rank only the pages users actually open.
+
+## Pitfalls
+
+- **Reading the score as a magnitude.** Covered above, and the most common misuse. Order and threshold; nothing else.
+- **A shortlist that lacks the answer.** Re-ranking cannot recover what retrieval dropped. Measure how often the right item is in your top 30 before blaming the re-ranker, and widen or hybridise retrieval if it is not.
+- **Constraints that need math.** "Boots under $150" or "tents for 4 or more people" involve number comparison, which Jev does not do reliably. Apply price, size, stock, and date filters in code before scoring, and keep the question about meaning.
+- **Negation in listings.** "Not suitable for wide feet" contains every query word. This is where a reader beats keyword overlap, but check such cases in your test set, since the limitations page notes that negatives and indirection are weak spots.
+- **Untrimmed candidates.** Long descriptions, spec tables, and reviews add cost to every one of the 30 requests and dilute the reading. Trim hard; 800 characters of description is a starting point.
+- **Keyword-stuffed or adversarial listings.** Sellers control the candidate text, and content in the state can move answers. A description that says "perfect match for any search" should not help. Exclude seller-editable marketing fields if abuse appears, and watch for listings whose scores are high across unrelated queries.
+- **Vague instructions.** Jev reads literally. "Is this relevant?" gives it nothing to judge; level descriptions that name the kind of product and the stated constraints do.
+- **Partial failures.** With 30 concurrent requests, one may fail after retries. Keep that candidate at a neutral position instead of failing the whole search.
+- **Version drift.** Scores shift between model versions. Pin `jev-1.13.0` once your cut-offs are tuned, and re-run the labelled queries before moving. If you re-rank passages to feed a generator, pair this with [LLM output QA](/use-cases/llm-output-qa-agent-run-review/) on the answer.

@@ -1,0 +1,127 @@
+---
+layout: ../../layouts/Guide.astro
+title: "Jev vs GPT-Style LLMs for Classification"
+description: "Jev vs GPT-style LLMs for classification: cost per million items, latency, output reliability, and an honest list of cases where an LLM is the better tool."
+path: /guides/jev-vs-llm-classification/
+publishedAt: 2026-09-19
+updatedAt: 2026-09-19
+faqs:
+  - q: Is Jev cheaper than using GPT or Claude for classification?
+    a: On list price per input token, yes by a wide margin. Jev costs $0.042 per million input tokens with free output. The real saving depends on your LLM's price, your prompt length, and how many tickets you would have sent to the LLM anyway, so run the formula on this page with current prices.
+  - q: Is Jev more accurate than an LLM at classification?
+    a: This site has no independent benchmark and does not claim one. TypeSafe says Jev reaches similar quality to existing LLMs on System One shaped tasks. Test both on a labelled sample of your own data before deciding.
+  - q: Can I use Jev and an LLM together?
+    a: Yes, and it is a common design. Jev makes the cheap, fast decision on every item, and an LLM handles only the items that need generated text or deeper reasoning. TypeSafe documents this as the intent routing pattern.
+  - q: Do I still need structured outputs or JSON mode with Jev?
+    a: No. Jev never generates text, so there is nothing to parse. Each answer is a typed value restricted to the options or levels you supplied.
+---
+
+export const ITEMS = 1_000_000;
+export const IN_TOK = 400;
+export const LLM_PROMPT_OVERHEAD = 150;
+export const OUT_TOK = 20;
+export const tiers = [
+  { name: 'Small LLM tier', inPrice: 0.1, outPrice: 0.4 },
+  { name: 'Mid LLM tier', inPrice: 1, outPrice: 5 },
+  { name: 'Frontier LLM tier', inPrice: 10, outPrice: 50 },
+];
+export const jevCost = (ITEMS * IN_TOK * 0.042) / 1e6;
+export const llmCost = (t) => (ITEMS * ((IN_TOK + LLM_PROMPT_OVERHEAD) * t.inPrice + OUT_TOK * t.outPrice)) / 1e6;
+export const usd = (n) => '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+If your task is "read this text and pick one label", you can do it with a prompted LLM such as a GPT or Claude model, or with [Jev](/guides/what-is-jev/), which was built for exactly that shape of problem. This page compares the two on cost, latency, and reliability, and shows the arithmetic so you can redo it with your own numbers.
+
+<div class="note">
+
+No benchmarks were run for this page. Prices for Jev come from the official [models page](https://docs.typesafe.ai/models). The LLM price tiers below are **illustrative round numbers**, not quotes for any specific vendor or model. Substitute current list prices before you decide anything.
+
+</div>
+
+## How the two approaches differ
+
+| | Prompted LLM | Jev |
+| --- | --- | --- |
+| Output | Generated text you parse (or constrained JSON) | Typed value from your option set |
+| Uncertainty | Usually none, or token logprobs you must interpret | Probability per option plus `confidence` on Choice and Score |
+| Several judgments per item | Longer prompt, longer output, or several calls | Many questions in one request, evaluated in parallel |
+| Billing | Input and output tokens | Input tokens only |
+| Adapting to your domain | Prompting, few-shot examples, fine-tuning | State, instructions, and criteria only; no fine-tuning |
+| Can explain its answer | Yes | No |
+
+## Cost math
+
+The formula, per item:
+
+- **Jev:** input tokens x $0.042 / 1,000,000. Output is free ([models page](https://docs.typesafe.ai/models)).
+- **LLM:** (input tokens + prompt overhead) x input price + output tokens x output price.
+
+Worked example: classify {ITEMS.toLocaleString('en-US')} support tickets. Assume {IN_TOK} tokens per ticket including the label descriptions, an extra {LLM_PROMPT_OVERHEAD} tokens of system prompt and format instructions for the LLM, and {OUT_TOK} output tokens for a short JSON answer. These token counts are assumptions for the example.
+
+<div class="table-scroll">
+<table>
+  <thead>
+    <tr><th scope="col">Option</th><th scope="col">Input price / MTok</th><th scope="col">Output price / MTok</th><th scope="col">Cost for 1M items</th><th scope="col">Multiple of Jev</th></tr>
+  </thead>
+  <tbody>
+    <tr><th scope="row">Jev</th><td>$0.042</td><td>free</td><td>{usd(jevCost)}</td><td>1x</td></tr>
+    {tiers.map((t) => (
+      <tr><th scope="row">{t.name} (illustrative)</th><td>{usd(t.inPrice)}</td><td>{usd(t.outPrice)}</td><td>{usd(llmCost(t))}</td><td>{Math.round(llmCost(t) / jevCost)}x</td></tr>
+    ))}
+  </tbody>
+</table>
+</div>
+
+For reference, TypeSafe's own homepage states that Jev's input price is 238 times lower than the frontier model it compares against, and its [launch post](https://typesafe.ai/blog/introducing-system-one-models-and-jev) says the headline multipliers are "on the higher end of real world gains". That caveat is fair. Three things narrow the gap in practice:
+
+1. **Prompt caching and batch discounts.** Many LLM vendors discount repeated prompt prefixes and offline batches heavily.
+2. **Fine-tuned small models.** A small classifier you host yourself can be cheap per item, though it costs engineering time and labelled data.
+3. **Absolute size.** If you classify 20,000 items a month, the mid tier costs about the price of a lunch. Do not re-architect to save that.
+
+The gap widens when you need several judgments per item. With an LLM, each extra judgment lengthens the output or adds a call. With Jev, the [parallel questions cookbook](https://docs.typesafe.ai/cookbooks/parallel_questions) reports that batching 13 questions into one call was about 12 times cheaper and 10 times faster than 13 separate calls, because the state is only ingested once.
+
+## Latency math
+
+TypeSafe reports [70 to 500 ms end to end](https://typesafe.ai/blog/introducing-system-one-models-and-jev) for Jev, and 3 to 329 seconds for the frontier models in its comparison. Both are vendor figures, and the post itself notes likely bias in the LLM numbers. A small LLM returning 20 tokens is much faster than a frontier model that reasons first, so measure the specific model you would actually use.
+
+What the difference means in a system:
+
+- **Inline decisions.** A budget of a few hundred milliseconds lets you classify inside a request path: route a chat message before the first response token, or re-rank search results before rendering. Multi-second calls have to move to a queue.
+- **Sequential pipelines.** Five dependent calls at 300 ms each is 1.5 seconds. Five at 3 seconds each is 15 seconds. Cascades such as [hierarchical product categorization](/use-cases/hierarchical-product-categorization/) are only pleasant with fast calls.
+- **Throughput.** Speed per call is not throughput. Jev's published rate limit is currently 1,200 requests per minute, so one item per request caps at about 1.7 million items per day per account unless you negotiate higher limits. Plan backfills accordingly.
+
+## Reliability of the output
+
+A prompted LLM can return a label that is not in your list, wrap JSON in prose, or refuse. Structured-output modes fix the format but not the absence of a usable uncertainty signal.
+
+Jev's answer is always one of your options, and you get the full distribution. That lets you build the pattern described in our [confidence thresholds guide](/guides/confidence-thresholds/): automate the confident majority and send the uncertain remainder to a person or to a stronger model.
+
+Being type-safe is not the same as being right. Jev can still pick the wrong label, and TypeSafe's [limitations page](https://docs.typesafe.ai/model-jaggedness/jev-1.13) lists where it tends to: literal readings, numeric reasoning, multi-hop questions, large noisy state, and adversarial text.
+
+## When an LLM is the better tool
+
+- You need **text out**: a reply draft, a summary, a rationale for an auditor, or a free-form extracted value.
+- The label depends on **multi-step reasoning**, arithmetic, or date logic that cannot be pulled out into code.
+- Your label set is **open-ended** or you want the model to propose new categories.
+- You rely on **few-shot examples or fine-tuning** to teach subtle, company-specific distinctions that are hard to state as criteria.
+- The content is **not text**: images, audio, or scanned documents without OCR.
+- Your workload is heavily **non-English**. English is Jev's primary training language.
+- Your volume is small and an LLM is already integrated. Simplicity wins.
+
+## When Jev is the better tool
+
+- High volume, closed label set, and software consumes the answer.
+- You need a **calibrated signal** to decide between automation and review.
+- You want **many judgments per item** (category, urgency, sentiment, spam) for close to the cost of one.
+- The decision sits **inline** in a latency-sensitive path.
+
+## The hybrid most teams end up with
+
+Use Jev as the first stage and an LLM as the second. Jev decides what each item is and whether it needs anything more. Only the items that need language or reasoning reach the LLM. TypeSafe documents this as the [intent routing pattern](https://docs.typesafe.ai/patterns/intent-routing), and our [intent routing use case](/use-cases/intent-routing-chatbots-agents/) and [LLM output QA use case](/use-cases/llm-output-qa-agent-run-review/) show both directions: Jev in front of an LLM, and Jev checking an LLM's work.
+
+## How to run your own comparison
+
+1. Pull 300 to 500 real items and have a person label them.
+2. Run them through Jev and through your candidate LLM with your real prompt.
+3. Compare accuracy overall and per label, and for Jev plot accuracy against confidence.
+4. Record `usage.input_tokens` from Jev and token usage from the LLM, then apply the formulas above with current prices.
+5. Measure p50 and p95 latency from your own infrastructure.

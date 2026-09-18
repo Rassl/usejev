@@ -1,0 +1,29 @@
+{
+  "name": "usejev.dev",
+  "version": "1.0.0",
+  "description": "usejev.dev: unofficial Jev use cases",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro check && astro build",
+    "preview": "astro preview",
+    "og": "node scripts/make-og.mjs",
+    "indexnow": "node scripts/indexnow.mjs",
+    "check:dist": "node scripts/check-dist.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@astrojs/mdx": "^8.0.1",
+    "@astrojs/rss": "^4.0.19",
+    "@astrojs/sitemap": "^3.7.4",
+    "astro": "^7.3.3",
+    "typescript": "^6.0.3"
+  },
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  }
+}
