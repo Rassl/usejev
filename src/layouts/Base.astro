@@ -10,9 +10,10 @@ interface Props {
   noindex?: boolean;
   publishedAt?: Date;
   updatedAt?: Date;
+  markdownPath?: string;
 }
 
-const { title, description, ogType = 'website', jsonLd = [], noindex = false, publishedAt, updatedAt } = Astro.props;
+const { title, description, ogType = 'website', jsonLd = [], noindex = false, publishedAt, updatedAt, markdownPath } = Astro.props;
 
 const suffix = ` | ${SITE.shortName}`;
 const fullTitle = title.includes(SITE.shortName) || (title + suffix).length > 60 ? title : title + suffix;
@@ -38,6 +39,7 @@ const nav = [
     <link rel="canonical" href={canonical} />
     {noindex && <meta name="robots" content="noindex" />}
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    {markdownPath && <link rel="alternate" type="text/markdown" href={new URL(markdownPath, SITE.url).href} />}
     <link rel="sitemap" href="/sitemap-index.xml" />
     <link rel="alternate" type="application/rss+xml" title={`${SITE.shortName} new use cases`} href={new URL('/rss.xml', SITE.url).href} />
     <meta name="theme-color" content="#f6f3ea" media="(prefers-color-scheme: light)" />
@@ -99,6 +101,8 @@ const nav = [
           <li><a href="/guides/confidence-thresholds/">Confidence thresholds</a></li>
           <li><a href="/about/">About this site</a></li>
           <li><a href="/rss.xml">RSS feed</a></li>
+          <li><a href="/llms.txt">llms.txt for AI agents</a></li>
+          <li><a href={SITE.repo} rel="noopener">Source on GitHub</a></li>
         </ul>
       </div>
     </footer>

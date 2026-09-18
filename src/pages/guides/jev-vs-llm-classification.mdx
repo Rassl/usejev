@@ -16,18 +16,7 @@ faqs:
     a: No. Jev never generates text, so there is nothing to parse. Each answer is a typed value restricted to the options or levels you supplied.
 ---
 
-export const ITEMS = 1_000_000;
-export const IN_TOK = 400;
-export const LLM_PROMPT_OVERHEAD = 150;
-export const OUT_TOK = 20;
-export const tiers = [
-  { name: 'Small LLM tier', inPrice: 0.1, outPrice: 0.4 },
-  { name: 'Mid LLM tier', inPrice: 1, outPrice: 5 },
-  { name: 'Frontier LLM tier', inPrice: 10, outPrice: 50 },
-];
-export const jevCost = (ITEMS * IN_TOK * 0.042) / 1e6;
-export const llmCost = (t) => (ITEMS * ((IN_TOK + LLM_PROMPT_OVERHEAD) * t.inPrice + OUT_TOK * t.outPrice)) / 1e6;
-export const usd = (n) => '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+import { ITEMS, IN_TOK, LLM_PROMPT_OVERHEAD, OUT_TOK, tiers, jevCost, llmCost, usd } from '../../lib/compare';
 
 If your task is "read this text and pick one label", you can do it with a prompted LLM such as a GPT or Claude model, or with [Jev](/guides/what-is-jev/), which was built for exactly that shape of problem. This page compares the two on cost, latency, and reliability, and shows the arithmetic so you can redo it with your own numbers.
 

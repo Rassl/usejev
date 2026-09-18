@@ -23,6 +23,7 @@ const fmt = (d: Date) => d.toLocaleDateString('en-US', { year: 'numeric', month:
   ogType="article"
   publishedAt={publishedAt}
   updatedAt={updatedAt}
+  markdownPath={path.replace(/\/$/, '.md')}
   jsonLd={[techArticle({ title, description, path, publishedAt, updatedAt, proficiency }), breadcrumbs(crumbs), ...extraJsonLd]}
 >
   <nav class="breadcrumbs" aria-label="Breadcrumb">

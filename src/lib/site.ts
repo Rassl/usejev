@@ -6,6 +6,7 @@ export const SITE = {
     'Practical, unofficial use cases for Jev, the System One model from TypeSafe AI. Question designs, verified Python and TypeScript code, and cost math.',
   disclaimer: 'Unofficial community resource. Not affiliated with TypeSafe AI.',
   ogImage: '/og.png',
+  repo: 'https://github.com/Rassl/usejev',
 };
 
 export const DOCS = {

@@ -41,7 +41,30 @@ src/pages/                  home, use-case index + template, guides, about, 404,
 src/layouts/                Base (SEO tags, JSON-LD), Article, Guide (FAQ + FAQPage JSON-LD)
 src/components/             CodeTabs, CostTable, UseCaseCard
 src/lib/site.ts             site constants, official doc links, Jev price
+src/lib/markdown.ts         Markdown exports behind llms.txt, llms-full.txt and the .md endpoints
+AGENTS.md                   guidance for AI agents reading or editing the repo
+skills/jev-use-cases/       drop-in agent skill
 ```
+
+## Using this repo as a knowledge source
+
+The content is published in machine-readable forms so that LLMs, coding agents, and RAG pipelines
+can use it without scraping HTML:
+
+| Resource | URL or path |
+| --- | --- |
+| Index for LLMs | https://usejev.dev/llms.txt |
+| All content in one Markdown file | https://usejev.dev/llms-full.txt |
+| Any page as Markdown | append `.md` instead of the trailing slash, e.g. https://usejev.dev/use-cases/lead-scoring.md |
+| Use-case index as JSON | https://usejev.dev/use-cases.json |
+| Verified Jev API notes, with sources | `docs/jev-api-notes.md` |
+| Instructions for agents working in this repo | `AGENTS.md` |
+| Agent skill (Claude Code and compatible agents) | `skills/jev-use-cases/SKILL.md` |
+
+To use the skill, copy `skills/jev-use-cases/` into your project's `.claude/skills/` directory (or
+your agent's equivalent). The `.md` and `llms-full.txt` exports are served with
+`X-Robots-Tag: noindex` so they do not compete with the HTML pages in search; each HTML page
+advertises its Markdown twin with `<link rel="alternate" type="text/markdown">`.
 
 ## Adding a new use case
 
