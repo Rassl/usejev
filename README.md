@@ -24,6 +24,7 @@ Other scripts:
 | --- | --- |
 | `npm run og` | Regenerates the shared Open Graph image `public/og.png` from `scripts/make-og.mjs` |
 | `npm run check:dist` | After a build, checks every page in `dist/`: titles, descriptions, canonicals, one `<h1>`, heading order, JSON-LD, internal links, click depth, word counts, sitemap, RSS |
+| `npm run post -- <url> [--title …]` | Publishes a community post through `/api/posts/` using the token in `.env.local` (see `docs/posting-api.md`) |
 | `npm run indexnow` | Submits every URL in the built sitemap to IndexNow (see below) |
 
 ## Project layout

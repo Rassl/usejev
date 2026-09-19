@@ -8,7 +8,8 @@
     "preview": "astro preview",
     "og": "node scripts/make-og.mjs",
     "indexnow": "node scripts/indexnow.mjs",
-    "check:dist": "node scripts/check-dist.mjs"
+    "check:dist": "node scripts/check-dist.mjs",
+    "post": "node scripts/post.mjs"
   },
   "keywords": [],
   "author": "",
