@@ -5,13 +5,16 @@ interface Props {
   heading?: 'h2' | 'h3';
 }
 const { entry, heading: H = 'h3' } = Astro.props;
-const { title, description, primitives, industry, category, difficulty } = entry.data;
+const { title, description, primitives, industry, category, difficulty, publishedAt } = entry.data;
 ---
 
 <li
   class="card"
   data-primitives={primitives.join('|')}
   data-industries={industry.join('|')}
+  data-category={category}
+  data-published={publishedAt.toISOString()}
+  data-title={title}
 >
   <H><a href={`/use-cases/${entry.id}/`}>{title}</a></H>
   <p>{description}</p>

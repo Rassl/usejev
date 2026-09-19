@@ -140,7 +140,7 @@ advertises its Markdown twin with `<link rel="alternate" type="text/markdown">`.
    | `description` | 140 to 165 characters (aim for 150 to 160) |
    | `slug` | lowercase, hyphenated; becomes `/use-cases/<slug>/` |
    | `category` | one of the enum values in `src/content.config.ts` |
-   | `industry` | list; reuse existing values so the home page filter stays tidy |
+   | `industry` | list; reuse existing values so the `/use-cases/` filter stays tidy |
    | `primitives` | any of `Choice`, `Score`, `Noul` |
    | `difficulty` | `Beginner`, `Intermediate`, or `Advanced` |
    | `tokensPerItem` | input tokens per item; `<CostTable>` computes the dollar figures from it |
@@ -153,7 +153,7 @@ advertises its Markdown twin with `<link rel="alternate" type="text/markdown">`.
    `<CostTable tokens={frontmatter.tokensPerItem} unit="tickets" />` for costs. Never type dollar
    totals by hand.
 6. In MDX prose, avoid raw `<`, `>`, `{`, `}` outside code fences.
-7. `npm run build`. The page is added to the home grid, the index, the sitemap, and the RSS feed
+7. `npm run build`. The page is added to the home page (latest six), the `/use-cases/` index, the sitemap, and the RSS feed
    automatically.
 
 If TypeSafe changes its price, update `PRICE_PER_MTOK` in `src/lib/site.ts`.
