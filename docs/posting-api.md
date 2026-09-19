@@ -6,8 +6,11 @@ Deploys take about a minute after a commit lands on `main`.
 
 | Endpoint | Who | Result |
 | --- | --- | --- |
-| `POST https://usejev.dev/api/posts` | You and your tools (bearer token) | Commits the file to `main` (live on next deploy), or opens a pull request with `"mode": "pr"` |
-| `POST https://usejev.dev/api/submit` | Anyone, through the form at `/submit/` | Opens a pull request with a **draft** entry for a maintainer to complete. Never publishes. |
+| `POST https://usejev.dev/api/posts/` | You and your tools (bearer token) | Commits the file to `main` (live on next deploy), or opens a pull request with `"mode": "pr"` |
+| `POST https://usejev.dev/api/submit/` | Anyone, through the form at `/submit/` | Opens a pull request with a **draft** entry for a maintainer to complete. Never publishes. |
+
+Use the URLs **with the trailing slash**. Without it Vercel answers `308` first, which some HTTP
+clients do not follow for `POST`.
 
 ## Setup (once)
 
@@ -28,7 +31,7 @@ npx vercel deploy --prod        # env changes apply to new deployments only
 ## `POST /api/posts`
 
 ```sh
-curl -sS https://usejev.dev/api/posts \
+curl -sS https://usejev.dev/api/posts/ \
   -H "Authorization: Bearer $POSTS_API_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
