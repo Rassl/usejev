@@ -43,6 +43,11 @@ Facts agents most often get wrong about Jev:
 - Keep the unofficial disclaimer. Do not use TypeSafe branding or imply endorsement.
 - Never type dollar totals by hand; use `<CostTable>`.
 - In MDX prose, avoid raw `<`, `>`, `{`, `}` outside code fences. No em dashes.
+- Community posts live in `src/content/sightings/*.json`; the schema and rules are in `README.md`
+  under "Community sightings". Quote short excerpts only, always link the original, and never
+  restate a post's claims as fact.
+- The "At a glance" panel on each use case is generated from that page's own `## Question design`
+  and `## Example response` JSON blocks, so keep both as valid JSON.
 - To add a use case, follow "Adding a new use case" in `README.md`.
 
 ## Commands

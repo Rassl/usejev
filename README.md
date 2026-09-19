@@ -37,14 +37,52 @@ public/<key>.txt            IndexNow key file
 scripts/indexnow.mjs        IndexNow submission
 src/content.config.ts       use-case frontmatter schema (strict; the build fails on violations)
 src/content/use-cases/      one .mdx file per use case
+src/content/sightings/      one .json file per community post (written by an external tracker)
 src/pages/                  home, use-case index + template, guides, about, 404, rss.xml
 src/layouts/                Base (SEO tags, JSON-LD), Article, Guide (FAQ + FAQPage JSON-LD)
-src/components/             CodeTabs, CostTable, UseCaseCard
+src/components/             CodeTabs, CostTable, UseCaseCard, Readout (answer bars), SightingCard
+src/lib/readout.ts          extracts each page's example state and response for the At a glance panel
 src/lib/site.ts             site constants, official doc links, Jev price
 src/lib/markdown.ts         Markdown exports behind llms.txt, llms-full.txt and the .md endpoints
 AGENTS.md                   guidance for AI agents reading or editing the repo
 skills/jev-use-cases/       drop-in agent skill
 ```
+
+## Community sightings ("Jev in the wild")
+
+Posts that show how people use Jev are displayed as cards on `/community/`, on the home page
+(latest three), and under "Seen in the wild" on each matching use-case page. The site only
+displays them; finding them is the job of an external tracker, which just has to write one JSON
+file per post into `src/content/sightings/` and push. The schema in `src/content.config.ts` is
+the contract, and the build fails on invalid files.
+
+```json
+{
+  "source": "x",
+  "url": "https://x.com/<handle>/status/<id>",
+  "author": { "name": "Display Name", "handle": "handle", "url": "https://x.com/handle" },
+  "postedAt": "2026-09-18T14:05:00Z",
+  "text": "Short verbatim excerpt of the post (max 600 characters).",
+  "summary": "Optional neutral one-line description of what they built (max 200 characters).",
+  "useCases": ["support-ticket-routing"],
+  "primitives": ["Choice"],
+  "draft": false
+}
+```
+
+| Field | Notes |
+| --- | --- |
+| `source` | `x`, `hackernews`, `reddit`, `github`, `blog`, or `other` |
+| `url` | link to the original; every card links out with `rel="nofollow ugc"` |
+| `author.handle` | without the leading `@`; `handle` and `url` are optional |
+| `text` | keep it a short excerpt, never the full post; no media is copied or hot-linked |
+| `summary` | ours, not theirs: describe, do not endorse; omit rather than repeat an unverifiable claim |
+| `useCases` | existing use-case slugs; the build fails on an unknown slug; may be empty |
+| `draft` | `true` shows the card in `npm run dev` only; it never reaches production |
+
+File names become ids, so use something stable such as `x-<status id>.json`. `/community/` and
+its nav link only exist once at least one non-draft sighting is published.
+`src/content/sightings/sample-draft.json` is a draft fixture for previewing the layout.
 
 ## Using this repo as a knowledge source
 

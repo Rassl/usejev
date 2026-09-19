@@ -1,6 +1,8 @@
 ---
 import '../styles/global.css';
 import { SITE, DOCS } from '../lib/site';
+import { getSightings } from '../lib/sightings';
+import displayFont from '@fontsource-variable/bricolage-grotesque/files/bricolage-grotesque-latin-wght-normal.woff2?url';
 
 interface Props {
   title: string;
@@ -20,11 +22,13 @@ const fullTitle = title.includes(SITE.shortName) || (title + suffix).length > 60
 const canonical = new URL(Astro.url.pathname, SITE.url).href;
 const ogImage = new URL(SITE.ogImage, SITE.url).href;
 const path = Astro.url.pathname;
+const hasCommunity = (await getSightings()).length > 0;
 const nav = [
   { href: '/use-cases/', label: 'Use cases' },
   { href: '/guides/what-is-jev/', label: 'What is Jev?' },
   { href: '/guides/jev-vs-llm-classification/', label: 'Jev vs LLMs' },
   { href: '/guides/confidence-thresholds/', label: 'Confidence' },
+  ...(hasCommunity ? [{ href: '/community/', label: 'In the wild' }] : []),
   { href: '/about/', label: 'About' },
 ];
 ---
@@ -38,12 +42,13 @@ const nav = [
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
     {noindex && <meta name="robots" content="noindex" />}
+    <link rel="preload" href={displayFont} as="font" type="font/woff2" crossorigin />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     {markdownPath && <link rel="alternate" type="text/markdown" href={new URL(markdownPath, SITE.url).href} />}
     <link rel="sitemap" href="/sitemap-index.xml" />
     <link rel="alternate" type="application/rss+xml" title={`${SITE.shortName} new use cases`} href={new URL('/rss.xml', SITE.url).href} />
-    <meta name="theme-color" content="#f6f3ea" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#14161a" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f2f4f3" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0d1316" media="(prefers-color-scheme: dark)" />
 
     <meta property="og:site_name" content={SITE.name} />
     <meta property="og:type" content={ogType} />
@@ -99,6 +104,7 @@ const nav = [
           <li><a href="/guides/what-is-jev/">What is Jev?</a></li>
           <li><a href="/guides/jev-vs-llm-classification/">Jev vs LLMs for classification</a></li>
           <li><a href="/guides/confidence-thresholds/">Confidence thresholds</a></li>
+          {hasCommunity && <li><a href="/community/">Jev in the wild</a></li>}
           <li><a href="/about/">About this site</a></li>
           <li><a href="/rss.xml">RSS feed</a></li>
           <li><a href="/llms.txt">llms.txt for AI agents</a></li>

@@ -1,0 +1,11 @@
+{
+  "source": "x",
+  "url": "https://x.com/example/status/0000000000000000000",
+  "author": { "name": "Sample Author", "handle": "example" },
+  "postedAt": "2026-09-18T14:05:00Z",
+  "text": "SAMPLE ENTRY, not a real post. Replaced our regex ticket router with one Jev Choice question plus a confidence gate. Low-confidence tickets go to a human.",
+  "summary": "Sample card used to preview the layout in development. Drafts are never published.",
+  "useCases": ["support-ticket-routing"],
+  "primitives": ["Choice"],
+  "draft": true
+}

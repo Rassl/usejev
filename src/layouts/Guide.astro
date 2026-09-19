@@ -12,8 +12,9 @@ interface Props {
     updatedAt: string;
     faqs?: Faq[];
   };
+  headings?: { depth: number; slug: string; text: string }[];
 }
-const { frontmatter: f } = Astro.props;
+const { frontmatter: f, headings = [] } = Astro.props;
 const faqs = f.faqs ?? [];
 ---
 
@@ -25,6 +26,7 @@ const faqs = f.faqs ?? [];
   publishedAt={new Date(f.publishedAt)}
   updatedAt={new Date(f.updatedAt)}
   extraJsonLd={faqs.length ? [faqPage(faqs)] : []}
+  headings={headings}
 >
   <slot />
   {faqs.length > 0 && (

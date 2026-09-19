@@ -4,6 +4,10 @@ import Article from '../../layouts/Article.astro';
 import CodeTabs from '../../components/CodeTabs.astro';
 import CostTable from '../../components/CostTable.astro';
 import UseCaseCard from '../../components/UseCaseCard.astro';
+import Readout from '../../components/Readout.astro';
+import SightingCard from '../../components/SightingCard.astro';
+import { exampleAnswers, exampleState } from '../../lib/readout';
+import { getSightings } from '../../lib/sightings';
 
 export async function getStaticPaths() {
   const entries = await getCollection('use-cases');
@@ -22,7 +26,10 @@ export async function getStaticPaths() {
 }
 
 const { entry, related } = Astro.props;
-const { Content } = await render(entry);
+const { Content, headings } = await render(entry);
+const answers = exampleAnswers(entry.body ?? '');
+const state = exampleState(entry.body ?? '');
+const sightings = (await getSightings()).filter((x) => x.data.useCases.includes(entry.id));
 const d = entry.data;
 ---
 
@@ -34,6 +41,7 @@ const d = entry.data;
   publishedAt={d.publishedAt}
   updatedAt={d.updatedAt}
   proficiency={d.difficulty}
+  headings={headings}
 >
   <ul class="tags" slot="meta" aria-label="Tags">
     {d.primitives.map((p) => <li class="tag tag-primitive">{p}</li>)}
@@ -42,7 +50,38 @@ const d = entry.data;
     <li class="tag">{d.difficulty}</li>
   </ul>
 
+  {answers && (
+    <figure class="glance" slot="lead">
+      <figcaption>
+        <span class="eyebrow">At a glance</span>
+        One request: a <code>state</code> goes in, typed answers come out. Numbers are illustrative.
+      </figcaption>
+      <div class="glance-grid">
+        {state && (
+          <div class="glance-state">
+            <span class="glance-label">state</span>
+            <pre tabindex="0"><code>{state}</code></pre>
+          </div>
+        )}
+        <div class="glance-answers">
+          <span class="glance-label">answers</span>
+          <Readout answers={answers} />
+        </div>
+      </div>
+    </figure>
+  )}
+
   <Content components={{ CodeTabs, CostTable }} />
+
+  {sightings.length > 0 && (
+    <section class="related" slot="after" aria-labelledby="wild-heading">
+      <h2 id="wild-heading">Seen in the wild</h2>
+      <p class="meta">Public posts about this pattern. Claims belong to their authors. <a href="/community/">See all posts about Jev in the wild</a>.</p>
+      <ul class="sightings">
+        {sightings.slice(0, 4).map((x) => <SightingCard sighting={x} />)}
+      </ul>
+    </section>
+  )}
 
   <section class="related" slot="after" aria-labelledby="related-heading">
     <h2 id="related-heading">Related use cases</h2>

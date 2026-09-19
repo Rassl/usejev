@@ -1,0 +1,70 @@
+---
+// /community/ is only generated when at least one sighting is published, so an empty page never
+// reaches the sitemap. In `npm run dev`, drafts count too.
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import SightingCard from '../components/SightingCard.astro';
+import { getSightings } from '../lib/sightings';
+import { breadcrumbs } from '../lib/jsonld';
+
+export async function getStaticPaths() {
+  const sightings = await getSightings();
+  return sightings.length ? [{ params: { community: 'community' } }] : [];
+}
+
+const sightings = await getSightings();
+const useCases = await getCollection('use-cases');
+const titles = new Map(useCases.map((u) => [u.id, u.data.title.replace(/ with Jev$/, '')]));
+for (const s of sightings) {
+  for (const slug of s.data.useCases) {
+    if (!titles.has(slug)) throw new Error(`sighting ${s.id}: unknown use case "${slug}"`);
+  }
+}
+const used = [...new Set(sightings.flatMap((s) => s.data.useCases))];
+---
+
+<Base
+  title="Jev in the Wild: How People Use It"
+  description="Public posts from developers showing how they use Jev in real projects, linked to the original and matched to a worked use case with code."
+  jsonLd={[breadcrumbs([{ name: 'Home', path: '/' }, { name: 'In the wild', path: '/community/' }])]}
+>
+  <h1>Jev in the wild</h1>
+  <p class="lede">
+    Public posts showing how people use Jev. Each card quotes a short excerpt, links to the original, and points to the
+    closest <a href="/use-cases/">worked use case</a>. Claims in these posts belong to their authors and are not
+    verified by this site.
+  </p>
+
+  {used.length > 1 && (
+    <div class="filters" id="sighting-filters">
+      <fieldset>
+        <legend>Use case</legend>
+        {used.map((slug) => <button type="button" class="chip" aria-pressed="false" data-value={slug}>{titles.get(slug)}</button>)}
+      </fieldset>
+    </div>
+  )}
+
+  <ul class="sightings" id="sightings">
+    {sightings.map((s) => <SightingCard sighting={s} titles={titles} />)}
+  </ul>
+</Base>
+
+<script is:inline>
+  (() => {
+    const filters = document.getElementById('sighting-filters');
+    if (!filters) return;
+    const cards = [...document.querySelectorAll('#sightings .sighting')];
+    const wanted = new Set();
+    filters.addEventListener('click', (event) => {
+      const chip = event.target.closest('.chip');
+      if (!chip) return;
+      const on = chip.getAttribute('aria-pressed') !== 'true';
+      chip.setAttribute('aria-pressed', String(on));
+      on ? wanted.add(chip.dataset.value) : wanted.delete(chip.dataset.value);
+      for (const card of cards) {
+        const have = card.dataset.usecases.split('|');
+        card.hidden = wanted.size > 0 && ![...wanted].some((v) => have.includes(v));
+      }
+    });
+  })();
+</script>

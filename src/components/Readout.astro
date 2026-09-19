@@ -1,0 +1,80 @@
+---
+// Draws typed Jev answers as an instrument readout: probability bars, a confidence ruler with the
+// 0.5 and 0.9 marks from TypeSafe's confidence guide, and a 0 to 1 track for Noul.
+import type { Answer } from '../lib/readout';
+
+interface Props {
+  answers: Record<string, Answer>;
+  maxRows?: number;
+}
+const { answers, maxRows = 5 } = Astro.props;
+const pct = (n: number) => `${Math.round(n * 1000) / 10}%`;
+const fmt = (n: number) => (Math.round(n * 100) / 100).toFixed(2);
+
+function rows(a: Extract<Answer, { type: 'choice' | 'score' }>) {
+  const entries = Object.entries(a.probabilities);
+  if (a.type === 'choice') {
+    const sorted = entries.sort((x, y) => y[1] - x[1]);
+    return {
+      shown: sorted.slice(0, maxRows).map(([key, p]) => ({ label: key, p, on: key === a.choice })),
+      hidden: Math.max(0, sorted.length - maxRows),
+    };
+  }
+  const top = entries.reduce((best, e) => (e[1] > best[1] ? e : best), entries[0]!)[0];
+  return {
+    shown: entries.map(([key, p]) => ({ label: a.legend?.[key] ? `${key} · ${a.legend[key]}` : key, p, on: key === top })),
+    hidden: 0,
+  };
+}
+---
+
+<div class="readout">
+  {Object.entries(answers).map(([id, a]) => (
+    <section class="ro-q" aria-label={`Answer for ${id}`}>
+      <header class="ro-head">
+        <code class="ro-id">{id}</code>
+        <span class={`ro-type ro-type-${a.type}`}>{a.type}</span>
+        <span class="ro-value">
+          {a.type === 'choice' && a.choice}
+          {a.type === 'score' && fmt(a.score)}
+          {a.type === 'noul' && fmt(a.noul)}
+        </span>
+      </header>
+
+      {a.type !== 'noul' && (
+        <>
+          <ul class="ro-bars">
+            {rows(a).shown.map((r) => (
+              <li class:list={['ro-bar', { 'is-on': r.on }]}>
+                <span class="ro-label" title={r.label}>{r.label}</span>
+                <span class="ro-track" aria-hidden="true"><span class="ro-fill" style={`--w:${pct(r.p)}`} /></span>
+                <span class="ro-num">{fmt(r.p)}</span>
+              </li>
+            ))}
+            {rows(a).hidden > 0 && <li class="ro-more">+ {rows(a).hidden} more options</li>}
+          </ul>
+          <div class="ro-conf">
+            <span class="ro-conf-label">confidence</span>
+            <span class="ro-ruler" aria-hidden="true">
+              <span class="ro-tick" style="--x:50%"><i>0.5</i></span>
+              <span class="ro-tick" style="--x:90%"><i>0.9</i></span>
+              <span class="ro-marker" style={`--x:${pct(a.confidence)}`} />
+            </span>
+            <span class="ro-num">{fmt(a.confidence)}</span>
+          </div>
+        </>
+      )}
+
+      {a.type === 'noul' && (
+        <div class="ro-conf ro-noul">
+          <span class="ro-conf-label">no</span>
+          <span class="ro-ruler" aria-hidden="true">
+            <span class="ro-tick" style="--x:50%" />
+            <span class="ro-marker" style={`--x:${pct(a.noul)}`} />
+          </span>
+          <span class="ro-conf-label">yes</span>
+        </div>
+      )}
+    </section>
+  ))}
+</div>

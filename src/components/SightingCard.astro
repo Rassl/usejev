@@ -1,0 +1,43 @@
+---
+import { SOURCE_LABEL, type Sighting } from '../lib/sightings';
+
+interface Props {
+  sighting: Sighting;
+  titles?: Map<string, string>; // use-case slug -> title, to render tag links
+}
+const { sighting, titles } = Astro.props;
+const d = sighting.data;
+const source = SOURCE_LABEL[d.source];
+const date = d.postedAt.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' });
+const initial = d.author.name.trim().charAt(0).toUpperCase();
+---
+
+<li class="sighting" data-usecases={d.useCases.join('|')}>
+  <article>
+    <header class="sighting-head">
+      <span class="sighting-avatar" aria-hidden="true">{initial}</span>
+      <span class="sighting-who">
+        <span class="sighting-name">{d.author.name}</span>
+        {d.author.handle && <span class="sighting-handle">@{d.author.handle}</span>}
+      </span>
+      <span class="sighting-source" title={`Posted on ${source.name}`}>{source.short}</span>
+    </header>
+    <blockquote cite={d.url}>
+      <p>{d.text}</p>
+    </blockquote>
+    {d.summary && <p class="sighting-summary">{d.summary}</p>}
+    {(d.primitives.length > 0 || d.useCases.length > 0) && (
+      <ul class="tags" aria-label="Related">
+        {d.primitives.map((p) => <li class="tag tag-primitive">{p}</li>)}
+        {d.useCases.map((slug) => (
+          <li class="tag"><a href={`/use-cases/${slug}/`}>{titles?.get(slug) ?? slug}</a></li>
+        ))}
+      </ul>
+    )}
+    <footer class="sighting-foot">
+      <time datetime={d.postedAt.toISOString()}>{date}</time>
+      <a href={d.url} rel="noopener nofollow ugc">View the original on {source.name}<span class="sr-only"> by {d.author.name}</span></a>
+    </footer>
+    {d.draft && <p class="sighting-draft">Draft: visible in development only</p>}
+  </article>
+</li>

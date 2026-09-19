@@ -2,7 +2,36 @@
 import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import UseCaseCard from '../components/UseCaseCard.astro';
+import Readout from '../components/Readout.astro';
+import SightingCard from '../components/SightingCard.astro';
 import { SITE, DOCS, GUIDES } from '../lib/site';
+import { getSightings } from '../lib/sightings';
+import type { Answer } from '../lib/readout';
+
+const latestSightings = (await getSightings()).slice(0, 3);
+
+// Illustrative numbers, the same example as /use-cases/support-ticket-routing/.
+const demoState = `{
+  "subject": "Charged twice this month",
+  "body": "Hi, I see two charges of $49 on my
+    card for September. Can you refund one?"
+}`;
+const demoAnswers: Record<string, Answer> = {
+  queue: {
+    type: 'choice',
+    choice: 'billing',
+    probabilities: { billing: 0.95, technical: 0.02, account_access: 0.01, sales: 0.01, other: 0.01 },
+    confidence: 0.9,
+  },
+  frustration: {
+    type: 'score',
+    score: 0.45,
+    legend: { '0': 'Calm', '1': 'Frustrated', '2': 'Very angry' },
+    probabilities: { '0': 0.6, '1': 0.35, '2': 0.05 },
+    confidence: 0.62,
+  },
+  is_outage_report: { type: 'noul', noul: 0.02 },
+};
 
 const entries = (await getCollection('use-cases')).sort(
   (a, b) => b.data.publishedAt.getTime() - a.data.publishedAt.getTime() || a.data.title.localeCompare(b.data.title),
@@ -25,17 +54,34 @@ const jsonLd = [
 
 <Base title={SITE.name} description={SITE.description} jsonLd={jsonLd}>
   <section class="hero">
-    <h1>Practical Jev use cases, <em>with working code</em></h1>
-    <p class="lede">
-      <a href={DOCS.vendor}>Jev</a> is TypeSafe AI's "System One" model: you send a <code>state</code> (an email, a log
-      line, a ticket, any JSON) plus a list of typed questions. It answers every question in parallel with a Choice, a
-      Score, or a Noul (yes/no) value, each backed by probabilities, instead of generated text. Your code branches on
-      those typed answers and uses confidence to decide when to act and when to escalate.
-    </p>
-    <div class="cta-row">
-      <a class="btn btn-primary" href="/use-cases/">Browse all use cases</a>
-      <a class="btn" href="/guides/what-is-jev/">What is Jev?</a>
+    <div class="hero-copy">
+      <p class="eyebrow">Unofficial field guide to TypeSafe AI's Jev</p>
+      <h1>Practical Jev use cases, <em>with working code</em></h1>
+      <p class="lede">
+        <a href={DOCS.vendor}>Jev</a> is a "System One" model: you send a <code>state</code> (an email, a log line, a
+        ticket, any JSON) plus a list of typed questions. It answers every question in parallel with a Choice, a Score,
+        or a Noul (yes/no) value, each backed by probabilities, instead of generated text. Your code branches on those
+        answers and uses confidence to decide when to act and when to escalate.
+      </p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="/use-cases/">Browse all use cases</a>
+        <a class="btn" href="/guides/what-is-jev/">What is Jev?</a>
+      </div>
     </div>
+    <figure class="demo">
+      <div class="demo-state">
+        <span class="glance-label">state</span>
+        <pre><code>{demoState}</code></pre>
+      </div>
+      <div class="demo-answers">
+        <span class="glance-label">answers · 3 questions, 1 request</span>
+        <Readout answers={demoAnswers} />
+      </div>
+      <figcaption>
+        Illustrative numbers in the documented response shape. Worked through in the{' '}
+        <a href="/use-cases/support-ticket-routing/">support ticket routing use case</a>.
+      </figcaption>
+    </figure>
   </section>
 
   <section aria-labelledby="grid-heading">
@@ -55,6 +101,16 @@ const jsonLd = [
       {entries.map((e) => <UseCaseCard entry={e} />)}
     </ul>
   </section>
+
+  {latestSightings.length > 0 && (
+    <section aria-labelledby="wild-heading">
+      <h2 id="wild-heading">Jev in the wild</h2>
+      <ul class="sightings">
+        {latestSightings.map((x) => <SightingCard sighting={x} />)}
+      </ul>
+      <p><a href="/community/">See all posts about Jev in the wild</a></p>
+    </section>
+  )}
 
   <section aria-labelledby="guides-heading">
     <h2 id="guides-heading">Guides</h2>

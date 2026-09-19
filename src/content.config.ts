@@ -29,4 +29,29 @@ const useCases = defineCollection({
   }),
 });
 
-export const collections = { 'use-cases': useCases };
+// Posts found in the wild (X, Hacker News, Reddit, GitHub, blogs) showing how people use Jev.
+// One JSON file per post in src/content/sightings/. An external tracker can write these files;
+// the schema below is the contract. See README "Community sightings".
+const sightings = defineCollection({
+  loader: glob({ pattern: '**/*.json', base: './src/content/sightings' }),
+  schema: z.object({
+    source: z.enum(['x', 'hackernews', 'reddit', 'github', 'blog', 'other']),
+    url: z.url(),
+    author: z.object({
+      name: z.string(),
+      handle: z.string().optional(), // without the leading @
+      url: z.url().optional(),
+    }),
+    postedAt: z.coerce.date(),
+    // Short verbatim excerpt of the post. Keep it brief and always link to the original.
+    text: z.string().min(1).max(600),
+    // Our own neutral one-line description of what they built. No claims we cannot stand behind.
+    summary: z.string().max(200).optional(),
+    useCases: z.array(z.string()).default([]), // slugs from src/content/use-cases
+    primitives: z.array(z.enum(['Choice', 'Score', 'Noul'])).default([]),
+    // Drafts render in `npm run dev` only and never reach the production build.
+    draft: z.boolean().default(false),
+  }),
+});
+
+export const collections = { 'use-cases': useCases, sightings };
