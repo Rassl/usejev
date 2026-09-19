@@ -1,0 +1,14 @@
+{
+  "url": "https://x.com/adil_kadival/status/2101297611764589008",
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Adil",
+    "handle": "adil_kadival",
+    "url": "https://x.com/adil_kadival"
+  },
+  "postedAt": "2026-09-19T13:09:25.523Z",
+  "text": "I used Jev to triage support tickets; its zero‑shot labeling cuts routing time by half."
+}
