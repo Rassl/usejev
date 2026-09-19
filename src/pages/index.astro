@@ -108,7 +108,10 @@ const jsonLd = [
       <ul class="sightings">
         {latestSightings.map((x) => <SightingCard sighting={x} />)}
       </ul>
-      <p><a href="/community/">See all posts about Jev in the wild</a></p>
+      <p class="cta-row">
+        <a class="btn" href="/community/">See all posts about Jev in the wild</a>
+        <a class="btn btn-primary" href="/submit/">Submit your own</a>
+      </p>
     </section>
   )}
 

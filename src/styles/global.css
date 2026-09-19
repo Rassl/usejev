@@ -975,3 +975,18 @@ pre code {
   border-left: 0.5rem solid #ffffff;
   border-right: 0;
 }
+
+/* Header call to action */
+.site-header nav a.nav-cta {
+  border: 1.5px solid var(--accent);
+  border-radius: 999px;
+  padding: 0.3rem 0.85rem;
+  color: var(--accent);
+  font-weight: 600;
+}
+.site-header nav a.nav-cta:hover,
+.site-header nav a.nav-cta[aria-current='page'] {
+  background: var(--accent);
+  color: var(--accent-ink);
+  text-decoration: none;
+}

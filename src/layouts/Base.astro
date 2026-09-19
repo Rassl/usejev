@@ -84,6 +84,7 @@ const nav = [
                 <a href={item.href} aria-current={path.startsWith(item.href) ? 'page' : undefined}>{item.label}</a>
               </li>
             ))}
+            <li><a class="nav-cta" href="/submit/" aria-current={path.startsWith('/submit/') ? 'page' : undefined}>Submit a post</a></li>
           </ul>
         </nav>
       </div>
