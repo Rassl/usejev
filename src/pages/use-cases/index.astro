@@ -4,13 +4,18 @@ import Base from '../../layouts/Base.astro';
 import UseCaseCard from '../../components/UseCaseCard.astro';
 import { breadcrumbs } from '../../lib/jsonld';
 
-const entries = (await getCollection('use-cases')).sort((a, b) => a.data.title.localeCompare(b.data.title));
+// Newest first, the default sort. The script below re-sorts the same cards client-side.
+const entries = (await getCollection('use-cases')).sort(
+  (a, b) => b.data.publishedAt.getTime() - a.data.publishedAt.getTime() || a.data.title.localeCompare(b.data.title),
+);
 const categories = [...new Set(entries.map((e) => e.data.category))].sort();
+const industries = [...new Set(entries.flatMap((e) => e.data.industry))].sort();
+const primitives = ['Choice', 'Score', 'Noul'];
 ---
 
 <Base
   title="All Jev Use Cases by Category"
-  description="Every Jev use case on usejev.dev, grouped by category: routing, triage, moderation, scoring, re-ranking, and classification, each with verified code."
+  description="Every Jev use case on usejev.dev, filterable by category, question type, and industry: routing, triage, moderation, scoring, and re-ranking, each with verified code."
   jsonLd={[breadcrumbs([{ name: 'Home', path: '/' }, { name: 'Use cases', path: '/use-cases/' }])]}
 >
   <h1>All Jev use cases</h1>
@@ -18,17 +23,76 @@ const categories = [...new Set(entries.map((e) => e.data.category))].sort();
     {entries.length} worked examples of typed decisions with Jev. Each page has the question design, Python and
     TypeScript code checked against the official docs, decision logic, and a cost estimate.
   </p>
-  {categories.map((category) => (
-    <section aria-labelledby={category.toLowerCase().replace(/[^a-z]+/g, '-')}>
-      <h2 id={category.toLowerCase().replace(/[^a-z]+/g, '-')}>{category}</h2>
-      <ul class="grid">
-        {entries.filter((e) => e.data.category === category).map((e) => <UseCaseCard entry={e} />)}
-      </ul>
-    </section>
-  ))}
+
+  <div class="filters" id="filters">
+    <fieldset data-sort>
+      <legend>Sort</legend>
+      <button type="button" class="chip" aria-pressed="true" data-value="latest">Latest</button>
+      <button type="button" class="chip" aria-pressed="false" data-value="title">A to Z</button>
+    </fieldset>
+    <fieldset data-group="category">
+      <legend>Category</legend>
+      {categories.map((c) => <button type="button" class="chip" aria-pressed="false" data-value={c}>{c}</button>)}
+    </fieldset>
+    <fieldset data-group="primitives">
+      <legend>Question type</legend>
+      {primitives.map((p) => <button type="button" class="chip" aria-pressed="false" data-value={p}>{p}</button>)}
+    </fieldset>
+    <fieldset data-group="industries">
+      <legend>Industry</legend>
+      {industries.map((i) => <button type="button" class="chip" aria-pressed="false" data-value={i}>{i}</button>)}
+    </fieldset>
+  </div>
+  <p class="filter-status" id="filter-status" role="status" aria-live="polite"></p>
+  <ul class="grid" id="use-case-grid">
+    {entries.map((e) => <UseCaseCard entry={e} heading="h2" />)}
+  </ul>
+
   <h2>New to Jev?</h2>
   <p>
     Start with <a href="/guides/what-is-jev/">what Jev is and how System One models differ from LLMs</a>, then read
     <a href="/guides/confidence-thresholds/">how to gate actions on confidence</a>.
   </p>
 </Base>
+
+<script is:inline>
+  (() => {
+    const filters = document.getElementById('filters');
+    const status = document.getElementById('filter-status');
+    const grid = document.getElementById('use-case-grid');
+    if (!filters || !grid) return;
+    const cards = [...grid.querySelectorAll('.card')];
+    const active = { category: new Set(), primitives: new Set(), industries: new Set() };
+    const byTitle = (a, b) => a.dataset.title.localeCompare(b.dataset.title);
+    const sorters = {
+      latest: (a, b) => b.dataset.published.localeCompare(a.dataset.published) || byTitle(a, b),
+      title: byTitle,
+    };
+    filters.addEventListener('click', (event) => {
+      const chip = event.target.closest('.chip');
+      if (!chip) return;
+      const group = chip.parentElement;
+      if ('sort' in group.dataset) {
+        for (const c of group.querySelectorAll('.chip')) c.setAttribute('aria-pressed', String(c === chip));
+        grid.append(...cards.sort(sorters[chip.dataset.value]));
+        return;
+      }
+      const set = active[group.dataset.group];
+      const on = chip.getAttribute('aria-pressed') !== 'true';
+      chip.setAttribute('aria-pressed', String(on));
+      on ? set.add(chip.dataset.value) : set.delete(chip.dataset.value);
+      let shown = 0;
+      for (const card of cards) {
+        const match = Object.entries(active).every(([key, wanted]) => {
+          if (!wanted.size) return true;
+          const have = card.dataset[key].split('|');
+          return [...wanted].some((v) => have.includes(v));
+        });
+        card.hidden = !match;
+        if (match) shown++;
+      }
+      const filtered = Object.values(active).some((wanted) => wanted.size > 0);
+      status.textContent = filtered ? `Showing ${shown} of ${cards.length} use cases` : '';
+    });
+  })();
+</script>

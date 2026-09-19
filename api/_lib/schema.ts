@@ -37,8 +37,9 @@ export const sightingInput = z.strictObject({
   useCases: z.array(z.string()).max(4).default([]),
   primitives: z.array(z.enum(['Choice', 'Score', 'Noul'])).default([]),
   draft: z.boolean().default(false),
-  // "commit" publishes on the next deploy; "pr" opens a pull request for review.
-  mode: z.enum(['commit', 'pr']).default('commit'),
+  // "commit" publishes on the next deploy; "pr" opens a pull request for review; "auto" lets the
+  // Jev relevance ranking decide: publish, pull request, or refuse (needs TYPESAFE_API_KEY).
+  mode: z.enum(['commit', 'pr', 'auto']).default('commit'),
 });
 export type SightingInput = z.infer<typeof sightingInput>;
 

@@ -6,6 +6,7 @@ import { sightingInput, USE_CASE_SLUGS } from './_lib/schema.js';
 import { resolve } from './_lib/verify.js';
 import { commitFile, fileExists, openPullRequest, GitHubError } from './_lib/github.js';
 import { json, readJson, tokenMatches } from './_lib/http.js';
+import { rankPost, rankingEnabled, stored, markdownReport } from './_lib/relevance.js';
 
 export async function POST(request: Request): Promise<Response> {
   const bearer = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '') ?? null;
@@ -31,7 +32,17 @@ export async function POST(request: Request): Promise<Response> {
     if (!author || !text) return json(422, { error: 'author and text are required for sources other than X' });
     if (await fileExists(post.id)) return json(409, { error: 'This post is already on the site', id: post.id });
 
-    const { mode, ...rest } = input;
+    const relevance = await rankPost({ text, source: input.source ?? post.source, authorName: author.name, authorHandle: author.handle });
+
+    // "auto" is confidence-gated routing: publish, send to review, or refuse.
+    let { mode } = input;
+    if (mode === 'auto') {
+      if (!relevance) mode = 'pr'; // ranking unavailable: a person decides
+      else if (relevance.verdict === 'reject') return json(422, { error: 'Ranked as not about Jev; nothing was written', relevance });
+      else mode = relevance.verdict === 'publish' ? 'commit' : 'pr';
+    }
+
+    const { mode: _requested, ...rest } = input;
     const entry = {
       ...rest,
       source: input.source ?? post.source,
@@ -39,13 +50,14 @@ export async function POST(request: Request): Promise<Response> {
       author,
       postedAt: (input.postedAt ?? post.postedAt ?? new Date()).toISOString(),
       text,
+      ...(relevance ? { relevance: stored(relevance) } : {}),
     };
     const title = `Add post ${post.id}${author.handle ? ` by @${author.handle}` : ''}`;
     const result =
       mode === 'pr'
-        ? await openPullRequest(post.id, entry, title, `Submitted through the posting API.\n\nOriginal: ${post.url}`)
+        ? await openPullRequest(post.id, entry, title, `Submitted through the posting API.\n\nOriginal: ${post.url}\n\n${markdownReport(relevance)}`)
         : await commitFile(post.id, entry, title);
-    return json(201, { id: post.id, mode, verified: post.verified, entry, ...result });
+    return json(201, { id: post.id, mode, requestedMode: input.mode, verified: post.verified, relevance, entry, ...result });
   } catch (e) {
     if (e instanceof GitHubError) return json(e.status === 409 ? 409 : 502, { error: e.message });
     return json(500, { error: 'Unexpected error' });
@@ -58,4 +70,5 @@ export const GET = () =>
     auth: 'Authorization: Bearer <POSTS_API_TOKEN>',
     docs: 'https://github.com/Rassl/usejev/blob/main/docs/posting-api.md',
     useCases: USE_CASE_SLUGS,
+    ranking: rankingEnabled() ? 'enabled' : 'disabled (TYPESAFE_API_KEY not set)',
   });

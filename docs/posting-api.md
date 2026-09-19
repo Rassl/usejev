@@ -20,6 +20,8 @@ Set these environment variables on the Vercel project (Production):
 | --- | --- |
 | `GITHUB_TOKEN` | A fine-grained personal access token limited to the `Rassl/usejev` repository with **Contents: Read and write** and **Pull requests: Read and write**. Create it at https://github.com/settings/personal-access-tokens/new |
 | `POSTS_API_TOKEN` | A long random secret, e.g. `openssl rand -hex 32`. Callers send it as a bearer token. |
+| `TYPESAFE_API_KEY` | Optional. Turns on the Jev relevance ranking, see `docs/relevance-ranking.md`. |
+| `JEV_MODEL` | Optional. Defaults to `jev-latest`; set a versioned id to pin. |
 | `GITHUB_REPO`, `GITHUB_BRANCH` | Optional. Default to `Rassl/usejev` and `main`. |
 
 ```sh
@@ -61,13 +63,13 @@ and fills `author`, `text` (links stripped, mid-sentence links become `[link]`),
 | `postedAt` | ISO date | Optional override |
 | `source` | enum | Optional; inferred from the URL |
 | `draft` | boolean, default `false` | `true` keeps the card out of production |
-| `mode` | `commit` (default) \| `pr` | `pr` opens a pull request instead of committing to `main` |
+| `mode` | `commit` (default) \| `pr` \| `auto` | `pr` opens a pull request. `auto` lets the Jev ranking decide: publish, pull request, or refuse with `422` |
 
-Unknown fields are rejected.
+Unknown fields are rejected, including `relevance`: only the server can write a ranking.
 
 | Status | Meaning |
 | --- | --- |
-| `201` | Created. Body has `id`, the stored `entry`, and `file` + `commit` or `pullRequest`. |
+| `201` | Created. Body has `id`, `mode` (what happened), `relevance` (or `null`), the stored `entry`, and `file` + `commit` or `pullRequest`. |
 | `401` | Missing or wrong bearer token |
 | `409` | The post is already on the site, or already waiting for review |
 | `422` | Validation failed, unknown use-case slug, or X did not confirm the post |

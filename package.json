@@ -9,7 +9,10 @@
     "og": "node scripts/make-og.mjs",
     "indexnow": "node scripts/indexnow.mjs",
     "check:dist": "node scripts/check-dist.mjs",
-    "post": "node scripts/post.mjs"
+    "post": "node scripts/post.mjs",
+    "rank": "node scripts/rank.mjs",
+    "rank:eval": "node scripts/rank.mjs --eval",
+    "test:api": "esbuild api/posts.ts api/submit.ts api/_lib/relevance.ts --bundle --platform=node --format=esm --outdir=.scratch/build --log-level=error && node scripts/api.test.mjs"
   },
   "keywords": [],
   "author": "",

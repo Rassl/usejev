@@ -1,0 +1,13 @@
+{
+  "note": "Negative and borderline examples are SYNTHETIC, written for calibration. They are not real posts. Positive examples are read from src/content/sightings/ at run time.",
+  "examples": [
+    { "expect": "reject", "label": "person named Jev", "text": "Happy birthday to my brother Jev! 30 years old and still can't park a car. Love you man." },
+    { "expect": "reject", "label": "streamer nickname", "text": "jev just dropped a new rage compilation and I have not laughed this hard all year" },
+    { "expect": "reject", "label": "crypto spam", "text": "$JEV token is going to 100x!! TypeSafe AI coin presale is LIVE, connect your wallet now, first 500 get a free airdrop" },
+    { "expect": "reject", "label": "unrelated AI post", "text": "Spent the weekend fine-tuning a small LLM for ticket classification. Structured outputs plus a retry loop got us to acceptable accuracy." },
+    { "expect": "reject", "label": "TypeScript type safety, not TypeSafe AI", "text": "Type safe API clients are underrated. Generating types from the OpenAPI spec removed a whole class of bugs for us." },
+    { "expect": "review", "label": "opinion about Jev, no usage", "text": "Hot take: Jev from TypeSafe AI is the most interesting model launch this year. Decisions instead of text is the right abstraction for automation." },
+    { "expect": "review", "label": "tried it, no detail", "text": "Finally got access to Jev from @typesafeai. Going to play with it this weekend." },
+    { "expect": "review", "label": "hiring post", "text": "We're hiring engineers at TypeSafe AI to work on Jev and System One models. DM me if you like hard problems." }
+  ]
+}

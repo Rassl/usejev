@@ -25,6 +25,7 @@ Other scripts:
 | `npm run og` | Regenerates the shared Open Graph image `public/og.png` from `scripts/make-og.mjs` |
 | `npm run check:dist` | After a build, checks every page in `dist/`: titles, descriptions, canonicals, one `<h1>`, heading order, JSON-LD, internal links, click depth, word counts, sitemap, RSS |
 | `npm run post -- <url> [--title …]` | Publishes a community post through `/api/posts/` using the token in `.env.local` (see `docs/posting-api.md`) |
+| `npm run rank -- <url or text>`, `npm run rank:eval` | Rank a post with Jev, or run the calibration set (needs `TYPESAFE_API_KEY`) |
 | `npm run indexnow` | Submits every URL in the built sitemap to IndexNow (see below) |
 
 ## Project layout
@@ -38,6 +39,7 @@ public/<key>.txt            IndexNow key file
 scripts/indexnow.mjs        IndexNow submission
 api/                        Vercel functions: posts.ts (token API), submit.ts (public form), _lib/
 docs/posting-api.md         how to call the posting API and set its secrets
+docs/relevance-ranking.md   how Jev itself ranks whether a post is about Jev, and how to tune it
 src/content.config.ts       use-case frontmatter schema (strict; the build fails on violations)
 src/content/use-cases/      one .mdx file per use case
 src/content/sightings/      one .json file per community post (written by an external tracker)
@@ -140,7 +142,7 @@ advertises its Markdown twin with `<link rel="alternate" type="text/markdown">`.
    | `description` | 140 to 165 characters (aim for 150 to 160) |
    | `slug` | lowercase, hyphenated; becomes `/use-cases/<slug>/` |
    | `category` | one of the enum values in `src/content.config.ts` |
-   | `industry` | list; reuse existing values so the home page filter stays tidy |
+   | `industry` | list; reuse existing values so the `/use-cases/` filter stays tidy |
    | `primitives` | any of `Choice`, `Score`, `Noul` |
    | `difficulty` | `Beginner`, `Intermediate`, or `Advanced` |
    | `tokensPerItem` | input tokens per item; `<CostTable>` computes the dollar figures from it |
@@ -153,7 +155,7 @@ advertises its Markdown twin with `<link rel="alternate" type="text/markdown">`.
    `<CostTable tokens={frontmatter.tokensPerItem} unit="tickets" />` for costs. Never type dollar
    totals by hand.
 6. In MDX prose, avoid raw `<`, `>`, `{`, `}` outside code fences.
-7. `npm run build`. The page is added to the home grid, the index, the sitemap, and the RSS feed
+7. `npm run build`. The page is added to the home page (latest six), the `/use-cases/` index, the sitemap, and the RSS feed
    automatically.
 
 If TypeSafe changes its price, update `PRICE_PER_MTOK` in `src/lib/site.ts`.

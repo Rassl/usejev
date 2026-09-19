@@ -61,6 +61,17 @@ const sightings = defineCollection({
     summary: z.string().max(200).optional(),
     useCases: z.array(z.string()).default([]), // slugs from src/content/use-cases
     primitives: z.array(z.enum(['Choice', 'Score', 'Noul'])).default([]),
+    // Written by the posting API when TYPESAFE_API_KEY is set: Jev's own judgment of whether the
+    // post is about Jev. Informational; see api/_lib/relevance.ts.
+    relevance: z
+      .object({
+        score: z.number().min(0).max(1),
+        verdict: z.enum(['publish', 'review', 'reject']),
+        kind: z.string(),
+        model: z.string(),
+        checkedAt: z.coerce.date(),
+      })
+      .optional(),
     // Drafts render in `npm run dev` only and never reach the production build.
     draft: z.boolean().default(false),
   }),
