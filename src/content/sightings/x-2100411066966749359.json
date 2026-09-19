@@ -1,0 +1,24 @@
+{
+  "source": "x",
+  "url": "https://x.com/gregpr07/status/2100411066966749359",
+  "author": {
+    "name": "Gregor Zunic",
+    "handle": "gregpr07",
+    "url": "https://x.com/gregpr07"
+  },
+  "postedAt": "2026-09-17T12:00:00Z",
+  "title": "Browser agent that picks each action with Jev",
+  "category": "Agents",
+  "text": "Breaking: Browser Use + Jev = Ultrafast ⚡\n\nFindings flights took 7s and cost only $0.0039 🤯\n\n> new action space every step\n> DOM state space\n> small LLM fallback to type\n\n(this video is at 1x speed btw)\n\nBuilt a tiny open source browser agent. try it below ↓",
+  "summary": "An open source browser agent that asks Jev to choose the next action from the page state, with a small LLM used only for typing. Speed and cost figures are the author's.",
+  "useCases": [
+    "intent-routing-chatbots-agents"
+  ],
+  "primitives": [],
+  "draft": false,
+  "media": {
+    "type": "video",
+    "thumbnail": "https://pbs.twimg.com/amplify_video_thumb/2100410607807918080/img/lNfcykqoOvLoZHWa.jpg",
+    "alt": "Screen recording of a browser agent searching for flights"
+  }
+}

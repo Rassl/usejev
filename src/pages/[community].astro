@@ -21,6 +21,7 @@ for (const s of sightings) {
   }
 }
 const used = [...new Set(sightings.flatMap((s) => s.data.useCases))];
+const categories = [...new Set(sightings.map((s) => s.data.category).filter((c): c is string => Boolean(c)))].sort();
 ---
 
 <Base
@@ -35,17 +36,26 @@ const used = [...new Set(sightings.flatMap((s) => s.data.useCases))];
     verified by this site.
   </p>
 
-  {used.length > 1 && (
+  {(used.length > 1 || categories.length > 1) && (
     <div class="filters" id="sighting-filters">
-      <fieldset>
-        <legend>Use case</legend>
-        {used.map((slug) => <button type="button" class="chip" aria-pressed="false" data-value={slug}>{titles.get(slug)}</button>)}
-      </fieldset>
+      {categories.length > 1 && (
+        <fieldset data-group="category">
+          <legend>Category</legend>
+          {categories.map((c) => <button type="button" class="chip" aria-pressed="false" data-value={c}>{c}</button>)}
+        </fieldset>
+      )}
+      {used.length > 1 && (
+        <fieldset data-group="usecases">
+          <legend>Closest worked use case</legend>
+          {used.map((slug) => <button type="button" class="chip" aria-pressed="false" data-value={slug}>{titles.get(slug)}</button>)}
+        </fieldset>
+      )}
     </div>
   )}
+  <p class="filter-status" id="sighting-status" role="status" aria-live="polite"></p>
 
   <ul class="sightings" id="sightings">
-    {sightings.map((s) => <SightingCard sighting={s} titles={titles} />)}
+    {sightings.map((s) => <SightingCard sighting={s} titles={titles} heading="h2" />)}
   </ul>
 </Base>
 
@@ -53,18 +63,28 @@ const used = [...new Set(sightings.flatMap((s) => s.data.useCases))];
   (() => {
     const filters = document.getElementById('sighting-filters');
     if (!filters) return;
+    const status = document.getElementById('sighting-status');
     const cards = [...document.querySelectorAll('#sightings .sighting')];
-    const wanted = new Set();
+    const active = { category: new Set(), usecases: new Set() };
     filters.addEventListener('click', (event) => {
       const chip = event.target.closest('.chip');
       if (!chip) return;
+      const set = active[chip.parentElement.dataset.group];
       const on = chip.getAttribute('aria-pressed') !== 'true';
       chip.setAttribute('aria-pressed', String(on));
-      on ? wanted.add(chip.dataset.value) : wanted.delete(chip.dataset.value);
+      on ? set.add(chip.dataset.value) : set.delete(chip.dataset.value);
+      let shown = 0;
       for (const card of cards) {
-        const have = card.dataset.usecases.split('|');
-        card.hidden = wanted.size > 0 && ![...wanted].some((v) => have.includes(v));
+        const match = Object.entries(active).every(([group, wanted]) => {
+          if (!wanted.size) return true;
+          const have = card.dataset[group].split('|');
+          return [...wanted].some((v) => have.includes(v));
+        });
+        card.hidden = !match;
+        if (match) shown++;
       }
+      const filtered = active.category.size + active.usecases.size > 0;
+      status.textContent = filtered ? `Showing ${shown} of ${cards.length} posts` : '';
     });
   })();
 </script>

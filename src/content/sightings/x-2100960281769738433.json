@@ -1,0 +1,19 @@
+{
+  "source": "x",
+  "url": "https://x.com/dabit3/status/2100960281769738433",
+  "author": {
+    "name": "nader dabit",
+    "handle": "dabit3",
+    "url": "https://x.com/dabit3"
+  },
+  "postedAt": "2026-09-18T12:00:00Z",
+  "title": "Searching a Gmail inbox by intent",
+  "category": "Productivity",
+  "text": "Jev is really good at intent-based search!\n\nHow it looks in Gmail:\n\n(for a huge inbox you'd prob let semantic search / embeddings pull first but still much better experience)",
+  "summary": "Intent-based search over an inbox. The author notes that a large inbox would want a retrieval step first, which is the pattern in our re-ranking use case.",
+  "useCases": [
+    "search-result-reranking"
+  ],
+  "primitives": [],
+  "draft": false
+}

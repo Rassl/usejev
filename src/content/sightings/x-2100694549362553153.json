@@ -1,0 +1,19 @@
+{
+  "source": "x",
+  "url": "https://x.com/tamarajtran/status/2100694549362553153",
+  "author": {
+    "name": "tamara",
+    "handle": "tamarajtran",
+    "url": "https://x.com/tamarajtran"
+  },
+  "postedAt": "2026-09-17T12:00:00Z",
+  "title": "Context compaction by scoring tool calls",
+  "category": "Developer tools",
+  "text": "found the perfect use case for @typesafeai Jev: \n\ninstant compaction\n\nin 2026, why is compaction still a summarization prompt?\n\nJev can make it instant by scoring every tool call and dropping what’s irrelevant",
+  "summary": "Instead of summarizing an agent's history with an LLM, this scores each tool call for relevance and drops the irrelevant ones.",
+  "useCases": [
+    "llm-output-qa-agent-run-review"
+  ],
+  "primitives": [],
+  "draft": false
+}

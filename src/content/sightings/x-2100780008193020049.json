@@ -1,0 +1,24 @@
+{
+  "source": "x",
+  "url": "https://x.com/dabit3/status/2100780008193020049",
+  "author": {
+    "name": "nader dabit",
+    "handle": "dabit3",
+    "url": "https://x.com/dabit3"
+  },
+  "postedAt": "2026-09-18T12:00:00Z",
+  "title": "Spreadsheet columns that rate rows as you type",
+  "category": "Productivity",
+  "text": "Another crazy @typesafeai Jev example:\n\nPredictive spreadsheets\n\nSpreadsheets recalculate numbers, not meaning. Jev reads intent.\n\nType \"Urgency\" at the top of a column and, as you type, it figures out you want each row rated from \"no follow-up needed\" to \"urgent\" in ~100 ms.",
+  "summary": "A spreadsheet prototype where a column header such as \"Urgency\" becomes a rating scale that Jev applies to every row.",
+  "useCases": [
+    "email-triage-priority-scoring"
+  ],
+  "primitives": [],
+  "draft": false,
+  "media": {
+    "type": "video",
+    "thumbnail": "https://pbs.twimg.com/amplify_video_thumb/2100779722447667200/img/gvsEg2-3oD6FRZhc.jpg",
+    "alt": "Screen recording of a spreadsheet filling in urgency ratings"
+  }
+}

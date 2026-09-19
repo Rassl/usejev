@@ -43,6 +43,18 @@ const sightings = defineCollection({
       url: z.url().optional(),
     }),
     postedAt: z.coerce.date(),
+    // Our own short headline for the card (not the author's words).
+    title: z.string().max(70).optional(),
+    // Free-form grouping used by the /community/ filter, e.g. "Agents", "Developer tools".
+    category: z.string().max(40).optional(),
+    // Optional preview image, loaded lazily from the original host. Never copy media into the repo.
+    media: z
+      .object({
+        type: z.enum(['image', 'video']),
+        thumbnail: z.url(),
+        alt: z.string().min(1).max(200),
+      })
+      .optional(),
     // Short verbatim excerpt of the post. Keep it brief and always link to the original.
     text: z.string().min(1).max(600),
     // Our own neutral one-line description of what they built. No claims we cannot stand behind.

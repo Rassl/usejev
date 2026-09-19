@@ -660,13 +660,16 @@ h3 {
 .sighting blockquote {
   margin: 0.8rem 0 0.6rem;
   padding: 0;
-  font-size: 1.02rem;
-  line-height: 1.5;
+  font-size: 0.98rem;
+  line-height: 1.45;
   overflow-wrap: anywhere;
 }
 .sighting blockquote p {
   margin: 0;
   white-space: pre-line;
+}
+.sighting blockquote p + p {
+  margin-top: 0.45rem;
 }
 .sighting-summary {
   margin: 0 0 0.7rem;
@@ -920,4 +923,55 @@ pre code {
   margin-top: 3rem;
   padding-top: 0.5rem;
   border-top: 1px solid var(--line);
+}
+
+/* Sighting headline and media preview */
+.sighting .sighting-title {
+  margin: 0 0 0.75rem;
+  font-size: 1.2rem;
+  line-height: 1.2;
+}
+.sighting article {
+  display: flex;
+  flex-direction: column;
+}
+.sighting .sighting-title {
+  order: -2;
+}
+.sighting-media {
+  order: -1;
+  position: relative;
+  display: block;
+  margin: 0 0 0.9rem;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: var(--accent-soft);
+  aspect-ratio: 16 / 9;
+}
+.sighting-media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.sighting-play {
+  position: absolute;
+  left: 0.6rem;
+  bottom: 0.6rem;
+  font: 600 0.72rem var(--mono);
+  color: #ffffff;
+  background: rgb(16 24 28 / 0.82);
+  border-radius: 999px;
+  padding: 0.2rem 0.6rem 0.2rem 1.4rem;
+}
+.sighting-play::before {
+  content: '';
+  position: absolute;
+  left: 0.6rem;
+  top: 50%;
+  translate: 0 -50%;
+  border: 0.3rem solid transparent;
+  border-left: 0.5rem solid #ffffff;
+  border-right: 0;
 }

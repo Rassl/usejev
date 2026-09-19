@@ -1,0 +1,21 @@
+{
+  "source": "x",
+  "url": "https://x.com/ctatedev/status/2100584917092409479",
+  "author": {
+    "name": "Chris Tate",
+    "handle": "ctatedev",
+    "url": "https://x.com/ctatedev"
+  },
+  "postedAt": "2026-09-17T12:00:00Z",
+  "title": "A CLI that gives any agent harness Jev decisions",
+  "category": "Developer tools",
+  "text": "Every agent harness can now use Jev\n\nnpm install -g ai-cli\n\n→ ask yes/no questions\n→ choose between options\n→ score against your criteria",
+  "summary": "A command line tool that exposes yes/no, choice and score questions to coding agents.",
+  "useCases": [],
+  "primitives": [
+    "Noul",
+    "Choice",
+    "Score"
+  ],
+  "draft": false
+}

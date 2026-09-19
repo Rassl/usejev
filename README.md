@@ -62,6 +62,13 @@ the contract, and the build fails on invalid files.
   "url": "https://x.com/<handle>/status/<id>",
   "author": { "name": "Display Name", "handle": "handle", "url": "https://x.com/handle" },
   "postedAt": "2026-09-18T14:05:00Z",
+  "title": "Our own short headline for the card",
+  "category": "Developer tools",
+  "media": {
+    "type": "video",
+    "thumbnail": "https://pbs.twimg.com/...jpg",
+    "alt": "Screen recording of the demo"
+  },
   "text": "Short verbatim excerpt of the post (max 600 characters).",
   "summary": "Optional neutral one-line description of what they built (max 200 characters).",
   "useCases": ["support-ticket-routing"],
@@ -75,10 +82,19 @@ the contract, and the build fails on invalid files.
 | `source` | `x`, `hackernews`, `reddit`, `github`, `blog`, or `other` |
 | `url` | link to the original; every card links out with `rel="nofollow ugc"` |
 | `author.handle` | without the leading `@`; `handle` and `url` are optional |
+| `title` | optional, max 70 characters; our own headline, not the author's words |
+| `category` | optional free-form group used by the `/community/` filter, e.g. `Agents`; reuse existing values |
+| `media` | optional preview: `type` (`image` or `video`), `thumbnail` URL, `alt`. The thumbnail is hot-linked lazily from the original host with `referrerpolicy="no-referrer"` and is never copied into the repo |
 | `text` | keep it a short excerpt, never the full post; no media is copied or hot-linked |
 | `summary` | ours, not theirs: describe, do not endorse; omit rather than repeat an unverifiable claim |
+| `primitives` | omit unless the post itself states which question types it used; do not guess |
 | `useCases` | existing use-case slugs; the build fails on an unknown slug; may be empty |
 | `draft` | `true` shows the card in `npm run dev` only; it never reaches production |
+
+Verify every entry against the original post before publishing: author, handle, and text must
+match. X's oEmbed endpoint works without an API key:
+`https://publish.twitter.com/oembed?url=<post url>`. Do not alter a quote, except to replace a
+stripped link with `[link]`.
 
 File names become ids, so use something stable such as `x-<status id>.json`. `/community/` and
 its nav link only exist once at least one non-draft sighting is published.

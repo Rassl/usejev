@@ -45,7 +45,8 @@ Facts agents most often get wrong about Jev:
 - In MDX prose, avoid raw `<`, `>`, `{`, `}` outside code fences. No em dashes.
 - Community posts live in `src/content/sightings/*.json`; the schema and rules are in `README.md`
   under "Community sightings". Quote short excerpts only, always link the original, and never
-  restate a post's claims as fact.
+  restate a post's claims as fact. Do not alter a quote except to replace a stripped link with
+  "[link]", and verify each post against the original before publishing.
 - The "At a glance" panel on each use case is generated from that page's own `## Question design`
   and `## Example response` JSON blocks, so keep both as valid JSON.
 - To add a use case, follow "Adding a new use case" in `README.md`.

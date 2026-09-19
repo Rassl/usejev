@@ -1,0 +1,19 @@
+{
+  "source": "x",
+  "url": "https://x.com/iam_zachi/status/2100529273186472318",
+  "author": {
+    "name": "Zachi",
+    "handle": "iam_zachi",
+    "url": "https://x.com/iam_zachi"
+  },
+  "postedAt": "2026-09-17T12:00:00Z",
+  "title": "Ad blocker that classifies DOM elements",
+  "category": "Browser extensions",
+  "text": "I build an undetectable realtime adblocker extension with typesafe\n\nIt checks every dom element and classifies as ad/non-ad and removes it if true\n\nExtremely fun to work with, expecting an incredible shift in how AI is being used in the future",
+  "summary": "A browser extension that classifies each page element as ad or not ad and removes the ads.",
+  "useCases": [
+    "content-moderation-prompt-injection-screening"
+  ],
+  "primitives": [],
+  "draft": false
+}
