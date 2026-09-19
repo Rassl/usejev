@@ -1,0 +1,167 @@
+---
+import Base from '../layouts/Base.astro';
+import { breadcrumbs } from '../lib/jsonld';
+import { SITE } from '../lib/site';
+---
+
+<Base
+  title="Submit a Post About Using Jev"
+  description="Seen or built something with Jev? Submit the link to a public post. We verify it exists, review it, and add it to the community page with credit."
+  jsonLd={[breadcrumbs([{ name: 'Home', path: '/' }, { name: 'Submit a post', path: '/submit/' }])]}
+>
+  <div class="prose">
+    <h1>Submit a post</h1>
+    <p class="lede">
+      Built something with Jev, or seen a good example? Paste the link to the public post. We check that it exists,
+      review it by hand, and add it with credit and a link back to the original.
+    </p>
+
+    <form id="submit-form" class="submit-form" novalidate>
+      <label for="url">Link to the post</label>
+      <p class="hint" id="url-hint">An X post, Hacker News item, Reddit thread, GitHub repo, or blog post. It must be public.</p>
+      <input id="url" name="url" type="url" inputmode="url" required placeholder="https://x.com/name/status/123…" aria-describedby="url-hint" autocomplete="off" />
+
+      <label for="note">What does it show? <span class="optional">optional</span></label>
+      <textarea id="note" name="note" rows="3" maxlength="500"></textarea>
+
+      <label for="submitter">Your name or handle <span class="optional">optional</span></label>
+      <input id="submitter" name="submitter" type="text" maxlength="100" autocomplete="nickname" />
+
+      <div class="hp" aria-hidden="true">
+        <label for="website">Leave this field empty</label>
+        <input id="website" name="website" type="text" tabindex="-1" autocomplete="off" />
+      </div>
+
+      <button class="btn btn-primary" type="submit">Send for review</button>
+      <p id="submit-status" class="status" role="status" aria-live="polite"></p>
+    </form>
+
+    <h2>What happens next</h2>
+    <ul>
+      <li>Nothing is published automatically. Every submission is reviewed by a person.</li>
+      <li>We quote a short excerpt, credit the author, and link to the original. We do not copy media.</li>
+      <li>Your note and name are stored in a public pull request on <a href={SITE.repo}>the site's GitHub repository</a>. Do not include anything private.</li>
+      <li>Authors can ask for removal at any time by opening an issue on the repository.</li>
+    </ul>
+    <noscript><p class="note">This form needs JavaScript. You can also open an issue on the GitHub repository with the link.</p></noscript>
+  </div>
+</Base>
+
+<style>
+  .submit-form {
+    display: grid;
+    gap: 0.35rem;
+    margin-block: 2rem;
+    padding: 1.25rem;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+  }
+  label {
+    font-weight: 650;
+    margin-top: 0.75rem;
+  }
+  label:first-child {
+    margin-top: 0;
+  }
+  .optional {
+    font: 0.75rem var(--mono);
+    color: var(--muted);
+    font-weight: 400;
+    margin-left: 0.35rem;
+  }
+  .hint {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+  input,
+  textarea {
+    font: inherit;
+    color: var(--ink);
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 0.65rem 0.75rem;
+    width: 100%;
+  }
+  input:focus-visible,
+  textarea:focus-visible {
+    border-color: var(--accent);
+  }
+  .hp {
+    position: absolute;
+    left: -9999px;
+  }
+  button {
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    justify-self: start;
+    margin-top: 1rem;
+  }
+  button[disabled] {
+    opacity: 0.6;
+    cursor: progress;
+  }
+  .status {
+    min-height: 1.6em;
+    margin: 0.5rem 0 0;
+  }
+  .status[data-kind='error'] {
+    color: #b3261e;
+  }
+  @media (prefers-color-scheme: dark) {
+    .status[data-kind='error'] {
+      color: #ffb4ab;
+    }
+  }
+</style>
+
+<script is:inline>
+  (() => {
+    const form = document.getElementById('submit-form');
+    const status = document.getElementById('submit-status');
+    const button = form.querySelector('button');
+    const opened = Date.now();
+    const say = (text, kind) => {
+      status.textContent = text;
+      status.dataset.kind = kind || '';
+    };
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const data = Object.fromEntries(new FormData(form));
+      if (!form.url.checkValidity() || !/^https:\/\//.test(data.url)) {
+        say('Enter the full link to the post, starting with https://', 'error');
+        form.url.focus();
+        return;
+      }
+      button.disabled = true;
+      say('Checking that the post exists…');
+      try {
+        const res = await fetch('/api/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            url: data.url.trim(),
+            note: data.note.trim() || undefined,
+            submitter: data.submitter.trim() || undefined,
+            website: data.website || undefined,
+            elapsedMs: Date.now() - opened,
+          }),
+        });
+        const body = await res.json().catch(() => ({}));
+        if (res.ok) {
+          form.reset();
+          say('Sent for review. Thank you.');
+        } else {
+          say(body.error || 'That did not work. Please try again later.', 'error');
+        }
+      } catch {
+        say('Could not reach the server. Check your connection and try again.', 'error');
+      } finally {
+        button.disabled = false;
+      }
+    });
+  })();
+</script>

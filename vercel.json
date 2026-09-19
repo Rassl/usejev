@@ -77,5 +77,10 @@
         }
       ]
     }
-  ]
+  ],
+  "functions": {
+    "api/*.ts": {
+      "maxDuration": 20
+    }
+  }
 }
