@@ -1,0 +1,14 @@
+{
+  "source": "x",
+  "url": "https://x.com/tdinh_me/status/2100793777103466615",
+  "author": {
+    "name": "Tony Dinh",
+    "handle": "tdinh_me",
+    "url": "https://x.com/tdinh_me"
+  },
+  "postedAt": "2026-09-18T03:47:21.979Z",
+  "text": "Just trying out Jev, I made a Chrome extension that:\n\n- Listens to your YouTube audio (optional)\n- Detects if it gets to a sponsor segment\n- Skips it ➡️➡️➡️\n- All in real-time while costing ~$0.005 per video\n\nPrototype project, BYOK, open-source:",
+  "useCases": [],
+  "primitives": [],
+  "draft": true
+}
