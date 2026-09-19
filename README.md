@@ -35,6 +35,8 @@ vercel.json                 build settings, noindex for *.vercel.app, www redire
 public/robots.txt           allows all crawlers, points to the sitemap
 public/<key>.txt            IndexNow key file
 scripts/indexnow.mjs        IndexNow submission
+api/                        Vercel functions: posts.ts (token API), submit.ts (public form), _lib/
+docs/posting-api.md         how to call the posting API and set its secrets
 src/content.config.ts       use-case frontmatter schema (strict; the build fails on violations)
 src/content/use-cases/      one .mdx file per use case
 src/content/sightings/      one .json file per community post (written by an external tracker)
@@ -95,6 +97,9 @@ Verify every entry against the original post before publishing: author, handle, 
 match. X's oEmbed endpoint works without an API key:
 `https://publish.twitter.com/oembed?url=<post url>`. Do not alter a quote, except to replace a
 stripped link with `[link]`.
+
+Posts can also be added without touching git: `POST /api/posts` (token, for tools) and the
+public form at `/submit/` (opens a review pull request). See `docs/posting-api.md`.
 
 File names become ids, so use something stable such as `x-<status id>.json`. `/community/` and
 its nav link only exist once at least one non-draft sighting is published.
