@@ -1,0 +1,14 @@
+{
+  "url": "https://x.com/ssbrouhard/status/2101192698539511985",
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Stephen Brouhard",
+    "handle": "ssbrouhard",
+    "url": "https://x.com/ssbrouhard"
+  },
+  "postedAt": "2026-09-19T06:12:32.261Z",
+  "text": "Next layer on my @grok @bot build: \ntyped triage with @typesafeai Jev sitting in front of the Grok Ship by @kunchenguid  vs direct-handoff split.\n\nThe problem I’m trying to solve is routing the wrong kind of work to the wrong agent.\n\nMy Firstmate orchestrator has specialist bots…"
+}
