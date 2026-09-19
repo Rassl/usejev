@@ -1,0 +1,14 @@
+{
+  "url": "https://x.com/PawelHuryn/status/2101212560313757701",
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Paweł Huryn",
+    "handle": "PawelHuryn",
+    "url": "https://x.com/PawelHuryn"
+  },
+  "postedAt": "2026-09-19T07:31:27.677Z",
+  "text": "One developer’s list of projects built on Jev grew from 46 to 160 in three days. I wanted a measurement to go with the excitement.\n\nJev takes text, a question, and a list of possible answers. It picks one and reports its confidence.\n\nI tested the vendor’s showcase task: sorting…"
+}
