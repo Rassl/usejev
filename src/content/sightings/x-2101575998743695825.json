@@ -1,0 +1,27 @@
+{
+  "url": "https://x.com/prozpect_/status/2101575998743695825",
+  "category": "Games",
+  "media": {
+    "type": "video",
+    "thumbnail": "https://pbs.twimg.com/amplify_video_thumb/2101575746716340224/img/NzEFkr-MWUpU_1rh.jpg",
+    "alt": "Video from the post by Prozpect"
+  },
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Prozpect",
+    "handle": "prozpect_",
+    "url": "https://x.com/prozpect_"
+  },
+  "postedAt": "2026-09-20T07:35:38.151Z",
+  "text": "Finally got access to Jev — TypeSafe’s System One model.\n\nWanted to test: how quickly can AI make a decision?\n\nSo I made it play Flappy Bird 🐦\n\nGame State → Jev → FLAP / NOOP → Game\n\n536 requests · 303K tokens · $0.012#JEV #Ai",
+  "relevance": {
+    "score": 0.949,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-20T15:11:50.997Z"
+  }
+}
