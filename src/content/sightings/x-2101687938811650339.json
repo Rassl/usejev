@@ -1,0 +1,29 @@
+{
+  "url": "https://x.com/pinecone/status/2101687938811650339",
+  "category": "Search and data",
+  "media": {
+    "type": "video",
+    "thumbnail": "https://pbs.twimg.com/ext_tw_video_thumb/2101687923263332352/pu/img/mC8IAc0G3qbooBdO.jpg",
+    "alt": "Video from the post by Pinecone"
+  },
+  "useCases": [
+    "search-result-reranking"
+  ],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Pinecone",
+    "handle": "pinecone",
+    "url": "https://x.com/pinecone"
+  },
+  "postedAt": "2026-09-20T15:00:26.743Z",
+  "text": "Use @typesafeai's Jev model with Pinecone to rerank results with natural language criteria!\n\nUsually with rerankers, it's hard to cleanly specify what should and shouldn't be returned in results.\n\nJev resolves this by refactoring the problem into evaluating against distinct…",
+  "relevance": {
+    "score": 0.934,
+    "verdict": "publish",
+    "kind": "benchmark_or_comparison",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-20T15:11:22.749Z"
+  }
+}
