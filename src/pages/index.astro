@@ -1,34 +1,10 @@
 ---
 import Base from '../layouts/Base.astro';
 import CatalogCard from '../components/CatalogCard.astro';
-import Readout from '../components/Readout.astro';
+import FlowDiagram from '../components/FlowDiagram.astro';
 import { SITE, DOCS, GUIDES } from '../lib/site';
 import { getCatalog } from '../lib/catalog';
-import type { Answer } from '../lib/readout';
 
-
-// Illustrative numbers, the same example as /use-cases/support-ticket-routing/.
-const demoState = `{
-  "subject": "Charged twice this month",
-  "body": "Hi, I see two charges of $49 on my
-    card for September. Can you refund one?"
-}`;
-const demoAnswers: Record<string, Answer> = {
-  queue: {
-    type: 'choice',
-    choice: 'billing',
-    probabilities: { billing: 0.95, technical: 0.02, account_access: 0.01, sales: 0.01, other: 0.01 },
-    confidence: 0.9,
-  },
-  frustration: {
-    type: 'score',
-    score: 0.45,
-    legend: { '0': 'Calm', '1': 'Frustrated', '2': 'Very angry' },
-    probabilities: { '0': 0.6, '1': 0.35, '2': 0.05 },
-    confidence: 0.62,
-  },
-  is_outage_report: { type: 'noul', noul: 0.02 },
-};
 
 const catalog = await getCatalog();
 const projects = catalog.filter((i) => i.kind === 'project').length;
@@ -49,7 +25,7 @@ const jsonLd = [
 ---
 
 <Base title={SITE.name} description={SITE.description} jsonLd={jsonLd}>
-  <section class="hero">
+  <section class="hero hero-stack">
     <div class="hero-copy">
       <p class="eyebrow">Unofficial field guide to TypeSafe AI's Jev</p>
       <h1>What people build with Jev, <em>and how to build it</em></h1>
@@ -63,20 +39,11 @@ const jsonLd = [
         <a class="btn" href="/guides/what-is-jev/">What is Jev?</a>
       </div>
     </div>
-    <figure class="demo">
-      <div class="demo-state">
-        <span class="glance-label">state</span>
-        <pre><code>{demoState}</code></pre>
-      </div>
-      <div class="demo-answers">
-        <span class="glance-label">answers · 3 questions, 1 request</span>
-        <Readout answers={demoAnswers} />
-      </div>
-      <figcaption>
-        Illustrative numbers in the documented response shape. Worked through in the{' '}
-        <a href="/use-cases/support-ticket-routing/">support ticket routing use case</a>.
-      </figcaption>
-    </figure>
+  </section>
+
+  <section aria-labelledby="flow-heading" class="flow-section">
+    <h2 id="flow-heading" class="sr-only">How Jev fits into an app</h2>
+    <FlowDiagram />
   </section>
 
   <section aria-labelledby="grid-heading">
