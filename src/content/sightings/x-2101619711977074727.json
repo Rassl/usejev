@@ -1,0 +1,23 @@
+{
+  "url": "https://x.com/yanoshin_jp/status/2101619711977074727",
+  "headline": "I built a tool powered by Jev, the new System One model everyone's talking about that instantly judges corporate disclosures as posi / neutral / nega",
+  "category": "Trading and finance",
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Yanoshin",
+    "handle": "yanoshin_jp",
+    "url": "https://x.com/yanoshin_jp"
+  },
+  "postedAt": "2026-09-20T10:29:20.198Z",
+  "text": "I built a tool powered by Jev, the new System One model everyone's talking about that instantly judges corporate disclosures as posi / neutral / nega\nCovers both Japanese filings and US stocks . Claude digests each filing, Jev returns a calibrated verdict.",
+  "relevance": {
+    "score": 0.916,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-20T15:11:45.066Z"
+  }
+}
