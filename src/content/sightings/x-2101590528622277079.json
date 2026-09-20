@@ -1,0 +1,23 @@
+{
+  "url": "https://x.com/jevwatch/status/2101590528622277079",
+  "headline": "Callstack wired something in between: Jev picks the next UI action, and their open-source agent-device presses the button.",
+  "category": "Agents",
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Jev Watch",
+    "handle": "jevwatch",
+    "url": "https://x.com/jevwatch"
+  },
+  "postedAt": "2026-09-20T08:33:22.344Z",
+  "text": "Most automated tests either follow a rigid script or burn a full chat model on every tap. Callstack wired something in between: Jev picks the next UI action, and their open-source agent-device presses the button.\n\nHow it works: agent-device reads the app’s accessibility tree…",
+  "relevance": {
+    "score": 0.902,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-20T15:11:49.042Z"
+  }
+}
