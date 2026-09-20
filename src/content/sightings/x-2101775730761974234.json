@@ -1,0 +1,30 @@
+{
+  "url": "https://x.com/suvsahoo05/status/2101775730761974234",
+  "headline": "So I built a Chrome extension that filters my Twitter feed for AI slop, repeated stories, and content that’s actually irrelevant to me.",
+  "category": "Browser extensions",
+  "media": {
+    "type": "video",
+    "thumbnail": "https://pbs.twimg.com/amplify_video_thumb/2101775182876819456/img/UD_GwcP_co-uy7Jr.jpg",
+    "alt": "Video from the post by Suvendu Sekhar Sahoo"
+  },
+  "useCases": [
+    "news-relevance-filtering"
+  ],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Suvendu Sekhar Sahoo",
+    "handle": "suvsahoo05",
+    "url": "https://x.com/suvsahoo05"
+  },
+  "postedAt": "2026-09-20T20:49:17.975Z",
+  "text": "I wanted to make my doomscrolling a little more useful.\n\nSo I built a Chrome extension that filters my Twitter feed for AI slop, repeated stories, and content that’s actually irrelevant to me.\n\nBuilt with Jev by TypeSafe. Probabilities → code → verdict.",
+  "relevance": {
+    "score": 0.938,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-20T20:52:37.663Z"
+  }
+}
