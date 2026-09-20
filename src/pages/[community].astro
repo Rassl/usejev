@@ -33,10 +33,10 @@ const categories = [...new Set(sightings.map((s) => s.data.category).filter((c):
 >
   <h1>Jev in the wild</h1>
   <p class="lede">
-    Public posts showing how people use Jev,
+    Public posts showing how people use Jev,{' '}
     {ranked
       ? 'most relevant first: Jev itself rated how concretely each post shows the model in use, which is a model judgment and not an endorsement.'
-      : 'newest first.'}
+      : 'newest first.'}{' '}
     Each card quotes a short excerpt, links to the original, and points to the
     closest <a href="/use-cases/">worked use case</a>. Claims in these posts belong to their authors and are not
     verified by this site.
