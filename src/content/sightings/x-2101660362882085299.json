@@ -1,0 +1,29 @@
+{
+  "url": "https://x.com/ashutoshpuro97/status/2101660362882085299",
+  "category": "Agents",
+  "media": {
+    "type": "video",
+    "thumbnail": "https://pbs.twimg.com/amplify_video_thumb/2101659226607321089/img/iDIVp1YnUasEtGo9.jpg",
+    "alt": "Video from the post by Ashutosh Purohit"
+  },
+  "useCases": [
+    "intent-routing-chatbots-agents"
+  ],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Ashutosh Purohit",
+    "handle": "ashutoshpuro97",
+    "url": "https://x.com/ashutoshpuro97"
+  },
+  "postedAt": "2026-09-20T13:10:52.129Z",
+  "text": "I think I’ve found a pretty interesting use case for Jev (@typesafeai).\n\nAn always-on AI that knows when you’re talking to it and when you’re speaking to someone else\n\nA thing that frustrates me about Siri/Alexa and even ChatGPT live is that there are moments that make experience…",
+  "relevance": {
+    "score": 0.939,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-20T15:11:35.723Z"
+  }
+}
