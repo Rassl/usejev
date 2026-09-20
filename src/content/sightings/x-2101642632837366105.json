@@ -1,0 +1,17 @@
+{
+  "url": "https://x.com/twid/status/2101642632837366105",
+  "category": "Agents",
+  "useCases": [
+    "intent-routing-chatbots-agents"
+  ],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Todd Dailey",
+    "handle": "twid",
+    "url": "https://x.com/twid"
+  },
+  "postedAt": "2026-09-20T12:00:24.957Z",
+  "text": "Thoughts on Jev. This week my Discord bot started running every yes/no and \"which one?\" decision it makes through @typesafeai's Jev before anything else touches it. Decisions like: Is this a request for the weather? Is this a request for image generation? Is this a request for…"
+}
