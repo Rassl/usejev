@@ -1,0 +1,27 @@
+{
+  "url": "https://x.com/auxten/status/2101656770334937183",
+  "category": "Agents",
+  "media": {
+    "type": "image",
+    "thumbnail": "https://pbs.twimg.com/media/HSqVmDSaAAANRgQ.jpg",
+    "alt": "Image from the post by auxten"
+  },
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "auxten",
+    "handle": "auxten",
+    "url": "https://x.com/auxten"
+  },
+  "postedAt": "2026-09-20T12:56:35.599Z",
+  "text": "My Claude Code session hasn't written code in weeks. It's a director: every task goes to a local CLI worker in tmux, tracked by an on-disk ledger.\n\nNew: who gets the task and at what effort is decided by @typesafeai Jev — a decision model, not an LLM. 6 typed answers, ~1s.",
+  "relevance": {
+    "score": 0.946,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-20T15:11:38.421Z"
+  }
+}
