@@ -1,0 +1,17 @@
+{
+  "url": "https://x.com/thecoderpanda/status/2101657665835249905",
+  "category": "Developer tools",
+  "useCases": [
+    "llm-output-qa-agent-run-review"
+  ],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Shantanu Vishwanadha",
+    "handle": "thecoderpanda",
+    "url": "https://x.com/thecoderpanda"
+  },
+  "postedAt": "2026-09-20T13:00:09.103Z",
+  "text": "had a saturday. built a tiny thing that yells at me for shipping on fridays.\n\nit's called shipit-gate — a CLI that reads your git tree, asks TypeSafe's Jev model whether it's safe to ship, and exits non-zero when it isn't.\n\nno prompts. no JSON parsing. no vibes. just a typed…"
+}
