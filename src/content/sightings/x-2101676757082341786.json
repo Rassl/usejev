@@ -1,0 +1,30 @@
+{
+  "url": "https://x.com/0xMorlex/status/2101676757082341786",
+  "headline": "I built Agent X-Ray with @typesafeai JEV to turn messy agent traces into an exact repair plan:",
+  "category": "Developer tools",
+  "media": {
+    "type": "video",
+    "thumbnail": "https://pbs.twimg.com/amplify_video_thumb/2101676684072144896/img/PRNJHEo8DCieAdhL.jpg",
+    "alt": "Video from the post by Morlex"
+  },
+  "useCases": [
+    "llm-output-qa-agent-run-review"
+  ],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Morlex",
+    "handle": "0xMorlex",
+    "url": "https://x.com/0xMorlex"
+  },
+  "postedAt": "2026-09-20T14:16:00.811Z",
+  "text": "Now you can improve your agent in one click\n\nI built Agent X-Ray with @typesafeai JEV to turn messy agent traces into an exact repair plan:\n\nstep 1 → clone the GitHub repo and open the project folder\n\nstep 2 → create a TypeSafe API key and never paste it into chat or public…",
+  "relevance": {
+    "score": 0.912,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-20T15:11:28.229Z"
+  }
+}
