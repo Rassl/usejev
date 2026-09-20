@@ -7,6 +7,7 @@ export const SITE = {
   disclaimer: 'Unofficial community resource. Not affiliated with TypeSafe AI.',
   ogImage: '/og.png',
   repo: 'https://github.com/Rassl/usejev',
+  x: 'https://x.com/sahibjanli26889', // the maintainer's profile
 };
 
 export const DOCS = {

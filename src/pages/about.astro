@@ -1,6 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
-import { DOCS } from '../lib/site';
+import { DOCS, SITE } from '../lib/site';
 import { breadcrumbs } from '../lib/jsonld';
 ---
 
@@ -64,8 +64,9 @@ import { breadcrumbs } from '../lib/jsonld';
 
     <h2>Corrections</h2>
     <p>
-      If a sample is out of date or a claim is wrong, open an issue or pull request on the site's repository. Accuracy
-      matters more here than coverage.
+      If a sample is out of date or a claim is wrong, open an issue or pull request on
+      <a href={SITE.repo} rel="noopener">the site's GitHub repository</a>, or message
+      <a href={SITE.x} rel="noopener me">the maintainer on X</a>. Accuracy matters more here than coverage.
     </p>
   </div>
 </Base>

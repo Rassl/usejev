@@ -976,6 +976,28 @@ pre code {
   border-right: 0;
 }
 
+/* Header icon links (GitHub, X) */
+.site-header .nav-icons {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.site-header nav a.nav-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border-radius: 6px;
+  color: var(--muted);
+}
+.site-header nav a.nav-icon:hover {
+  color: var(--ink);
+  background: var(--line);
+  text-decoration: none;
+}
+
 /* Header call to action */
 .site-header nav a.nav-cta {
   border: 1.5px solid var(--accent);
