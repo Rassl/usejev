@@ -1,0 +1,28 @@
+{
+  "url": "https://x.com/xinqiliu888/status/2101678651062497369",
+  "headline": "I built a smarter Ctrl+F with Jev from @typesafeai and tried it on their own site.",
+  "category": "Search and data",
+  "media": {
+    "type": "video",
+    "thumbnail": "https://pbs.twimg.com/amplify_video_thumb/2101675700357132289/img/nMCRxJH2k67ndgZz.jpg",
+    "alt": "Video from the post by Xinqi Liu"
+  },
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Xinqi Liu",
+    "handle": "xinqiliu888",
+    "url": "https://x.com/xinqiliu888"
+  },
+  "postedAt": "2026-09-20T14:23:32.371Z",
+  "text": "I built a smarter Ctrl+F with Jev from @typesafeai and tried it on their own site.\n\n“How can I contact this team?”\n\nCtrl+F: no matches.\nSenseek: email + Discord, found and highlighted in 1s.\n\nFind what you mean, without guessing the exact words.\nOpen source 👇",
+  "relevance": {
+    "score": 0.907,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-20T15:11:26.602Z"
+  }
+}
