@@ -4,7 +4,7 @@
 import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import SightingCard from '../components/SightingCard.astro';
-import { getSightings } from '../lib/sightings';
+import { byRelevance, getSightings } from '../lib/sightings';
 import { breadcrumbs } from '../lib/jsonld';
 
 export async function getStaticPaths() {
@@ -12,7 +12,9 @@ export async function getStaticPaths() {
   return sightings.length ? [{ params: { community: 'community' } }] : [];
 }
 
-const sightings = await getSightings();
+// Most relevant first, the default sort. The script below re-sorts the same cards client-side.
+const sightings = (await getSightings()).sort(byRelevance);
+const ranked = sightings.some((s) => s.data.relevance);
 const useCases = await getCollection('use-cases');
 const titles = new Map(useCases.map((u) => [u.id, u.data.title.replace(/ with Jev$/, '')]));
 for (const s of sightings) {
@@ -31,14 +33,25 @@ const categories = [...new Set(sightings.map((s) => s.data.category).filter((c):
 >
   <h1>Jev in the wild</h1>
   <p class="lede">
-    Public posts showing how people use Jev, newest first. Each card quotes a short excerpt, links to the original, and points to the
+    Public posts showing how people use Jev,
+    {ranked
+      ? 'most relevant first: Jev itself rated how concretely each post shows the model in use, which is a model judgment and not an endorsement.'
+      : 'newest first.'}
+    Each card quotes a short excerpt, links to the original, and points to the
     closest <a href="/use-cases/">worked use case</a>. Claims in these posts belong to their authors and are not
     verified by this site.
   </p>
   <p class="cta-row"><a class="btn btn-primary" href="/submit/">Submit a post about using Jev</a></p>
 
-  {(used.length > 1 || categories.length > 1) && (
+  {(ranked || used.length > 1 || categories.length > 1) && (
     <div class="filters" id="sighting-filters">
+      {ranked && (
+        <fieldset data-sort>
+          <legend>Sort</legend>
+          <button type="button" class="chip" aria-pressed="true" data-value="relevance">Most relevant</button>
+          <button type="button" class="chip" aria-pressed="false" data-value="latest">Latest</button>
+        </fieldset>
+      )}
       {categories.length > 1 && (
         <fieldset data-group="category">
           <legend>Category</legend>
@@ -65,12 +78,24 @@ const categories = [...new Set(sightings.map((s) => s.data.category).filter((c):
     const filters = document.getElementById('sighting-filters');
     if (!filters) return;
     const status = document.getElementById('sighting-status');
-    const cards = [...document.querySelectorAll('#sightings .sighting')];
+    const list = document.getElementById('sightings');
+    const cards = [...list.querySelectorAll('.sighting')];
     const active = { category: new Set(), usecases: new Set() };
+    const byDate = (a, b) => b.dataset.posted.localeCompare(a.dataset.posted);
+    const sorters = {
+      relevance: (a, b) => b.dataset.relevance - a.dataset.relevance || byDate(a, b),
+      latest: byDate,
+    };
     filters.addEventListener('click', (event) => {
       const chip = event.target.closest('.chip');
       if (!chip) return;
-      const set = active[chip.parentElement.dataset.group];
+      const group = chip.parentElement;
+      if ('sort' in group.dataset) {
+        for (const c of group.querySelectorAll('.chip')) c.setAttribute('aria-pressed', String(c === chip));
+        list.append(...cards.sort(sorters[chip.dataset.value]));
+        return;
+      }
+      const set = active[group.dataset.group];
       const on = chip.getAttribute('aria-pressed') !== 'true';
       chip.setAttribute('aria-pressed', String(on));
       on ? set.add(chip.dataset.value) : set.delete(chip.dataset.value);

@@ -1,0 +1,46 @@
+# Watches X for posts about using Jev, ranks them with Jev, and sends them to the site.
+# See docs/watcher.md. Secrets: X_BEARER_TOKEN, TYPESAFE_API_KEY, POSTS_API_TOKEN.
+name: Watch X for Jev posts
+
+on:
+  schedule:
+    - cron: '17 */3 * * *' # every 3 hours; X bills per post read, so widen this before narrowing it
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Search and rank only; send nothing
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: watch
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24 # the script imports the API's TypeScript modules directly
+      # Cache entries are immutable, so each run saves under a new key and restores the latest.
+      - uses: actions/cache/restore@v4
+        with:
+          path: .scratch/watch-state.json
+          key: watch-state-${{ github.run_id }}
+          restore-keys: watch-state-
+      - run: node scripts/watch.mjs ${{ inputs.dry_run && '--dry-run' || '' }}
+        env:
+          X_BEARER_TOKEN: ${{ secrets.X_BEARER_TOKEN }}
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+          POSTS_API_TOKEN: ${{ secrets.POSTS_API_TOKEN }}
+      - uses: actions/cache/save@v4
+        if: always() && hashFiles('.scratch/watch-state.json') != ''
+        with:
+          path: .scratch/watch-state.json
+          key: watch-state-${{ github.run_id }}

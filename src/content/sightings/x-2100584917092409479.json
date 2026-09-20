@@ -17,5 +17,12 @@
     "Choice",
     "Score"
   ],
-  "draft": false
+  "draft": false,
+  "relevance": {
+    "score": 0.614,
+    "verdict": "review",
+    "kind": "tool_or_library",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-19T01:35:38.173Z"
+  }
 }

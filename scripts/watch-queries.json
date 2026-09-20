@@ -1,0 +1,12 @@
+{
+  "note": "X recent-search queries for the watcher (scripts/watch.mjs). `suffix` is appended to every query. 'Jev' alone is also a well-known nickname, so every query pairs it with a second signal; the Jev ranking removes what still slips through. Keep each query plus suffix under 512 characters.",
+  "suffix": "-is:retweet -is:reply lang:en",
+  "excludeHandles": ["typesafeai", "usejev"],
+  "queries": [
+    { "topic": "typesafe", "query": "typesafeai OR \"typesafe ai\" OR typesafe.ai OR @typesafeai" },
+    { "topic": "jev-model", "query": "\"jev model\" OR \"jev api\" OR \"jev-1\" OR \"jev-latest\" OR \"system one model\"" },
+    { "topic": "built-with-jev", "query": "jev (built OR building OR shipped OR made OR demo OR prototype OR hackathon OR \"open source\")" },
+    { "topic": "jev-usage", "query": "jev (agent OR classifier OR classification OR routing OR scoring OR moderation OR extension OR benchmark OR latency OR tokens)" },
+    { "topic": "primitives", "query": "jev (noul OR \"choice\" OR \"score\") (typesafe OR model OR api)" }
+  ]
+}

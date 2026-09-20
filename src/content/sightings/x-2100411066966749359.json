@@ -20,5 +20,12 @@
     "type": "video",
     "thumbnail": "https://pbs.twimg.com/amplify_video_thumb/2100410607807918080/img/lNfcykqoOvLoZHWa.jpg",
     "alt": "Screen recording of a browser agent searching for flights"
+  },
+  "relevance": {
+    "score": 0.834,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-19T01:35:37.474Z"
   }
 }

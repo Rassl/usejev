@@ -10,7 +10,7 @@ behaves as before and a person decides.
 | Guidance from docs.typesafe.ai | What the ranking does |
 | --- | --- |
 | Ask one snap judgment per question and combine in code ([primitives](https://docs.typesafe.ai/primitives), [composite scoring](https://docs.typesafe.ai/patterns/composite-scoring)) | Five atomic questions; weights and thresholds live in code |
-| Send every question that shares a state in one request ([fan-out](https://docs.typesafe.ai/patterns/fan-out)) | One call per post, about 600 input tokens, roughly $0.00003 |
+| Send every question that shares a state in one request ([fan-out](https://docs.typesafe.ai/patterns/fan-out)) | One call per post, about 1,000 input tokens (measured), roughly $0.00004 |
 | State is "the material you would present to a panel of experts"; use an object with named fields ([state](https://docs.typesafe.ai/concepts/state)) | `state = { background, post }`. `background` explains what Jev is, because the name is new and also a common nickname. Questions reference `` `post.text` `` and `` `background` `` by path |
 | Noul for yes/no with optional criteria; Score for a spectrum with described levels; Choice with a catch-all ([noul](https://docs.typesafe.ai/primitives/noul), [score](https://docs.typesafe.ai/primitives/score), [choice](https://docs.typesafe.ai/primitives/choice)) | See the question table below |
 | Noul has no `confidence`; threshold the value. Gate Choice and Score on `confidence`, with 0.5 as the "do not act" floor and a higher bar for riskier actions ([confidence](https://docs.typesafe.ai/confidence), [confidence routing](https://docs.typesafe.ai/patterns/confidence-routing)) | Publishing without review needs every gate to pass; anything uncertain becomes **review** |
@@ -48,7 +48,8 @@ These numbers are starting points, not measurements. Tune them with the calibrat
 | Public form, `POST /api/submit/` | **reject** → the visitor is told the post does not look like a use of Jev and no pull request is opened. Otherwise the pull request title gets `[likely 0.93]` or `[check 0.58]` and the body shows every signal |
 | `POST /api/posts/` with `"mode": "auto"` | **publish** → commit to `main`; **review** → pull request; **reject** → `422`, nothing written. If ranking is unavailable, falls back to a pull request |
 | `POST /api/posts/` with `commit` or `pr` | Ranking is recorded and returned but does not block: the token holder decides |
-| Stored entry | `relevance: { score, verdict, kind, model, checkedAt }`, which the site can later use for sorting |
+| Stored entry | `relevance: { score, verdict, kind, model, checkedAt }` |
+| `/community/` | Sorted by `relevance.score`, highest first, with a "Latest" toggle. Unranked posts go last. The comparator is `byRelevance` in `src/lib/sightings.ts` |
 
 If Jev cannot be reached (timeout, 5xx, exhausted retries on 429/529) the ranking is `null` and the
 flow continues without it. A ranking failure never loses a submission.
@@ -61,7 +62,12 @@ npx vercel env add TYPESAFE_API_KEY production            # the deployed API
 npm run rank -- https://x.com/someone/status/123          # rank one post
 npm run rank -- "text of a post"
 npm run rank:eval                                         # calibration table
+npm run rank:write                                        # rank published posts, store the score
+npm run rank:write -- --force                             # re-rank posts that already have one
 ```
+
+`rank:write` is how posts added by hand (or before ranking existed) get a score. It skips drafts
+and ignores the verdict: those posts were already reviewed by a person, so only the order changes.
 
 `rank:eval` runs the published posts in `src/content/sightings/` (real, expected to pass) and the
 synthetic negatives and borderline cases in `scripts/rank-fixtures.json`. It reports exact
@@ -69,6 +75,20 @@ matches and **harmful errors**: junk ranked *publish*, or a real post ranked *re
 results (publish vs review) only cost a manual look. When it misfires, read the per-signal values,
 then change the question wording first (the model reads literally) and the weights second. Add
 every surprising real post to the fixtures so the set grows with experience.
+
+## First run on the real model
+
+Run on 2026-09-19 against `jev-1.13.0` with the weights and thresholds above: 7 real posts and
+8 synthetic fixtures, 15,222 input tokens in total (about $0.0006).
+
+- 0 harmful errors. All 5 synthetic negatives were rejected (scores 0.00 to 0.12) and all
+  3 borderline fixtures landed in **review**.
+- Real posts scored 0.53 to 0.90. 3 of 7 ranked **publish**; the other 4 ranked **review**, either
+  for `about_jev_model` just under 0.85 or because the text is an announcement with little usage
+  detail. That is the safe direction, so the thresholds were left alone: 7 posts is too few to
+  tune on.
+- Scores are not perfectly repeatable. The same post moved by up to 0.03 between two runs minutes
+  apart, so treat differences that small as ties.
 
 ## Limits
 

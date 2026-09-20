@@ -26,6 +26,9 @@ Other scripts:
 | `npm run check:dist` | After a build, checks every page in `dist/`: titles, descriptions, canonicals, one `<h1>`, heading order, JSON-LD, internal links, click depth, word counts, sitemap, RSS |
 | `npm run post -- <url> [--title …]` | Publishes a community post through `/api/posts/` using the token in `.env.local` (see `docs/posting-api.md`) |
 | `npm run rank -- <url or text>`, `npm run rank:eval` | Rank a post with Jev, or run the calibration set (needs `TYPESAFE_API_KEY`) |
+| `npm run rank:write` | Rank every published post with Jev and store the score, which orders `/community/` (`-- --force` re-ranks) |
+| `npm run watch` | Searches X for posts about using Jev, ranks them with Jev, and publishes the high-confidence ones as complete cards (`-- --dry-run` sends nothing); see `docs/watcher.md` |
+| `npm run watch:ui` | Local page showing each watcher pass: funnel, score distribution, query yield, every post with Jev's signals |
 | `npm run indexnow` | Submits every URL in the built sitemap to IndexNow (see below) |
 
 ## Project layout
@@ -40,6 +43,7 @@ scripts/indexnow.mjs        IndexNow submission
 api/                        Vercel functions: posts.ts (token API), submit.ts (public form), _lib/
 docs/posting-api.md         how to call the posting API and set its secrets
 docs/relevance-ranking.md   how Jev itself ranks whether a post is about Jev, and how to tune it
+docs/watcher.md             the X watcher: search, rank with Jev, publish; runs from .github/workflows/watch.yml
 src/content.config.ts       use-case frontmatter schema (strict; the build fails on violations)
 src/content/use-cases/      one .mdx file per use case
 src/content/sightings/      one .json file per community post (written by an external tracker)
@@ -57,8 +61,8 @@ skills/jev-use-cases/       drop-in agent skill
 
 Posts that show how people use Jev are displayed as cards on `/community/`, on the home page
 (latest three), and under "Seen in the wild" on each matching use-case page. The site only
-displays them; finding them is the job of an external tracker, which just has to write one JSON
-file per post into `src/content/sightings/` and push. The schema in `src/content.config.ts` is
+displays them; finding them is the job of a tracker (ours is `scripts/watch.mjs`, see `docs/watcher.md`), which
+just has to get one JSON file per post into `src/content/sightings/`. The schema in `src/content.config.ts` is
 the contract, and the build fails on invalid files.
 
 ```json

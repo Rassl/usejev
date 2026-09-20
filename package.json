@@ -12,6 +12,9 @@
     "post": "node scripts/post.mjs",
     "rank": "node scripts/rank.mjs",
     "rank:eval": "node scripts/rank.mjs --eval",
+    "rank:write": "node scripts/rank.mjs --write",
+    "watch": "node scripts/watch.mjs",
+    "watch:ui": "node scripts/watch-ui.mjs",
     "test:api": "esbuild api/posts.ts api/submit.ts api/_lib/relevance.ts --bundle --platform=node --format=esm --outdir=.scratch/build --log-level=error && node scripts/api.test.mjs"
   },
   "keywords": [],

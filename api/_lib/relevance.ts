@@ -79,7 +79,7 @@ export const THRESHOLDS = {
   spamReview: 0.4,
   confidenceFloor: 0.5, // TypeSafe's "do not act" floor for Choice and Score
 };
-const USEFUL_KINDS = ['project_demo', 'tool_or_library', 'tutorial_or_explainer', 'benchmark_or_comparison'];
+export const USEFUL_KINDS = ['project_demo', 'tool_or_library', 'tutorial_or_explainer', 'benchmark_or_comparison'];
 
 export type Verdict = 'publish' | 'review' | 'reject';
 

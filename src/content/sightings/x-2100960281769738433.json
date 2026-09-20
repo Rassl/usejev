@@ -15,5 +15,12 @@
     "search-result-reranking"
   ],
   "primitives": [],
-  "draft": false
+  "draft": false,
+  "relevance": {
+    "score": 0.525,
+    "verdict": "review",
+    "kind": "opinion_or_news",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-19T01:35:39.262Z"
+  }
 }

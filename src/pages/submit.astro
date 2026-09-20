@@ -28,8 +28,9 @@ import { SITE } from '../lib/site';
       <input id="submitter" name="submitter" type="text" maxlength="100" autocomplete="nickname" />
 
       <div class="hp" aria-hidden="true">
-        <label for="website">Leave this field empty</label>
-        <input id="website" name="website" type="text" tabindex="-1" autocomplete="off" />
+        <label for="hp-field">Leave this field empty</label>
+        <!-- Not named "website": browsers autofill that, which silently dropped real submissions. -->
+        <input id="hp-field" name="hp_field" type="text" tabindex="-1" autocomplete="off" />
       </div>
 
       <button class="btn btn-primary" type="submit">Send for review</button>
@@ -139,6 +140,10 @@ import { SITE } from '../lib/site';
       button.disabled = true;
       say('Checking that the post exists…');
       try {
+        // The API silently drops anything sent within 2.5 s of opening the form. A fast person
+        // (paste, Enter) waits out the difference here instead of being treated as a bot.
+        const wait = 3000 - (Date.now() - opened);
+        if (wait > 0) await new Promise((r) => setTimeout(r, wait));
         const res = await fetch('/api/submit/', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -146,12 +151,15 @@ import { SITE } from '../lib/site';
             url: data.url.trim(),
             note: data.note.trim() || undefined,
             submitter: data.submitter.trim() || undefined,
-            website: data.website || undefined,
+            website: data.hp_field || undefined,
             elapsedMs: Date.now() - opened,
           }),
         });
         const body = await res.json().catch(() => ({}));
-        if (res.ok) {
+        if (res.status === 202) {
+          // Accepted but dropped by the anti-spam checks. Do not claim it was sent.
+          say('That was not sent. Reload the page and try once more.', 'error');
+        } else if (res.ok) {
           form.reset();
           say('Sent for review. Thank you.');
         } else {

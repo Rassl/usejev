@@ -3,8 +3,9 @@
 //   npm run rank -- "some post text"         rank one text
 //   npm run rank -- https://x.com/a/status/1  rank an X post (text fetched through oEmbed)
 //   npm run rank:eval                         run the calibration set and print a confusion table
-import { readFile, readdir } from 'node:fs/promises';
-import { rankPost, THRESHOLDS, WEIGHTS } from '../api/_lib/relevance.ts';
+//   npm run rank:write                        rank every post in src/content/sightings/ and store the result
+import { readFile, readdir, writeFile } from 'node:fs/promises';
+import { rankPost, stored, THRESHOLDS, WEIGHTS } from '../api/_lib/relevance.ts';
 import { resolve } from '../api/_lib/verify.ts';
 
 const env = await readFile(new URL('../.env.local', import.meta.url), 'utf8').catch(() => '');
@@ -16,6 +17,32 @@ if (!process.env.TYPESAFE_API_KEY) {
 
 const line = (label, r) =>
   `${(r?.verdict ?? 'ERROR').padEnd(8)} ${(r?.score ?? 0).toFixed(2)}  about ${r?.signals.aboutJevModel ?? '-'}  usage ${r?.signals.usageDepth ?? '-'}  spam ${r?.signals.isSpam ?? '-'}  ${(r?.kind ?? '').padEnd(24)} ${label}`;
+
+const dir = new URL('../src/content/sightings/', import.meta.url);
+
+// Backfill: store Jev's ranking on each post so the site can sort by it. Verdicts are not enforced
+// here; these posts were already reviewed by a person. `--force` re-ranks posts that have one.
+if (process.argv.includes('--write')) {
+  const force = process.argv.includes('--force');
+  let failed = 0;
+  for (const file of (await readdir(dir)).filter((f) => f.endsWith('.json')).sort()) {
+    const url = new URL(file, dir);
+    const d = JSON.parse(await readFile(url, 'utf8'));
+    if (d.draft) continue; // drafts are ranked by the API when they are submitted
+    if (d.relevance && !force) {
+      console.log(`kept     ${d.relevance.score.toFixed(2)}  ${file}`);
+      continue;
+    }
+    const r = await rankPost({ text: d.text, source: d.source, authorName: d.author.name, authorHandle: d.author.handle });
+    if (!r) failed++;
+    else {
+      d.relevance = stored(r);
+      await writeFile(url, `${JSON.stringify(d, null, 2)}\n`);
+    }
+    console.log(line(file, r));
+  }
+  process.exit(failed ? 1 : 0);
+}
 
 const arg = process.argv.slice(2).filter((a) => a !== '--eval').join(' ').trim();
 if (!process.argv.includes('--eval')) {
@@ -38,7 +65,6 @@ if (!process.argv.includes('--eval')) {
 }
 
 // Calibration: real published posts should not be rejected; synthetic negatives should be.
-const dir = new URL('../src/content/sightings/', import.meta.url);
 const positives = [];
 for (const file of await readdir(dir)) {
   const d = JSON.parse(await readFile(new URL(file, dir), 'utf8'));

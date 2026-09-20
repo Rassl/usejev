@@ -13,7 +13,13 @@ const date = d.postedAt.toLocaleDateString('en-US', { year: 'numeric', month: 's
 const initial = d.author.name.trim().charAt(0).toUpperCase();
 ---
 
-<li class="sighting" data-usecases={d.useCases.join('|')} data-category={d.category ?? ''}>
+<li
+  class="sighting"
+  data-usecases={d.useCases.join('|')}
+  data-category={d.category ?? ''}
+  data-posted={d.postedAt.toISOString()}
+  data-relevance={d.relevance?.score ?? -1}
+>
   <article>
     <header class="sighting-head">
       <span class="sighting-avatar" aria-hidden="true">{initial}</span>

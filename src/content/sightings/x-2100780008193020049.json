@@ -20,5 +20,12 @@
     "type": "video",
     "thumbnail": "https://pbs.twimg.com/amplify_video_thumb/2100779722447667200/img/gvsEg2-3oD6FRZhc.jpg",
     "alt": "Screen recording of a spreadsheet filling in urgency ratings"
+  },
+  "relevance": {
+    "score": 0.897,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-19T01:35:38.901Z"
   }
 }

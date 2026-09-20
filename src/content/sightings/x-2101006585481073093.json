@@ -15,5 +15,12 @@
     "lead-scoring"
   ],
   "primitives": [],
-  "draft": false
+  "draft": false,
+  "relevance": {
+    "score": 0.885,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-19T01:35:39.610Z"
+  }
 }

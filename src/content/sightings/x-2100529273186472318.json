@@ -15,5 +15,12 @@
     "content-moderation-prompt-injection-screening"
   ],
   "primitives": [],
-  "draft": false
+  "draft": false,
+  "relevance": {
+    "score": 0.819,
+    "verdict": "review",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-19T01:35:37.834Z"
+  }
 }

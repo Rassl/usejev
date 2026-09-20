@@ -8,6 +8,11 @@ export async function getSightings(): Promise<Sighting[]> {
   return all.sort((a, b) => b.data.postedAt.getTime() - a.data.postedAt.getTime());
 }
 
+// Most relevant first, by the score Jev gave the post (see docs/relevance-ranking.md). Posts that
+// were never ranked go last, and ties fall back to newest first.
+export const byRelevance = (a: Sighting, b: Sighting) =>
+  (b.data.relevance?.score ?? -1) - (a.data.relevance?.score ?? -1) || b.data.postedAt.getTime() - a.data.postedAt.getTime();
+
 export const SOURCE_LABEL: Record<Sighting['data']['source'], { short: string; name: string }> = {
   x: { short: 'X', name: 'X' },
   hackernews: { short: 'HN', name: 'Hacker News' },
