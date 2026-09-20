@@ -11,5 +11,12 @@
     "url": "https://x.com/Paiky16"
   },
   "postedAt": "2026-09-20T11:03:03.645Z",
-  "text": "TypeSafe AI's Jev kept coming up, so I decided to test it on a task using public medical literature.\nJev lets you describe a decision in natural language and get structured answers with probabilities. I used it to identify sentences reporting suspected adverse drug effects.\nIt…"
+  "text": "TypeSafe AI's Jev kept coming up, so I decided to test it on a task using public medical literature.\nJev lets you describe a decision in natural language and get structured answers with probabilities. I used it to identify sentences reporting suspected adverse drug effects.\nIt…",
+  "relevance": {
+    "score": 0.96,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-20T13:00:33.009Z"
+  }
 }

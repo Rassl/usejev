@@ -10,5 +10,12 @@
     "url": "https://x.com/ChannelJuanNews"
   },
   "postedAt": "2026-09-19T06:34:28.985Z",
-  "text": "So far the use case I have with @typesafeai's Jev model is to do lead scoring using all of our previously saved data, interactions, spend, etc then using @bot to select the highest level scores and send them automated offers according to what Jev thinks they would be most likely…"
+  "text": "So far the use case I have with @typesafeai's Jev model is to do lead scoring using all of our previously saved data, interactions, spend, etc then using @bot to select the highest level scores and send them automated offers according to what Jev thinks they would be most likely…",
+  "relevance": {
+    "score": 0.923,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-19T14:01:25.888Z"
+  }
 }

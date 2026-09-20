@@ -10,5 +10,12 @@
     "url": "https://x.com/adil_kadival"
   },
   "postedAt": "2026-09-19T13:09:25.523Z",
-  "text": "I used Jev to triage support tickets; its zero‑shot labeling cuts routing time by half."
+  "text": "I used Jev to triage support tickets; its zero‑shot labeling cuts routing time by half.",
+  "relevance": {
+    "score": 0.929,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-19T14:01:25.888Z"
+  }
 }

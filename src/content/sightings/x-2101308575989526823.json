@@ -10,5 +10,12 @@
     "url": "https://x.com/mehdiyarix"
   },
   "postedAt": "2026-09-19T13:52:59.598Z",
-  "text": "For the last three years, we've forced LLMs to act like conversational chatbots even when all our backend needed was a simple, structured decision. We begged models to output valid JSON, wrapped them in regex retries, and prayed they wouldn't hallucinate schema keys.\n\nIn my…"
+  "text": "For the last three years, we've forced LLMs to act like conversational chatbots even when all our backend needed was a simple, structured decision. We begged models to output valid JSON, wrapped them in regex retries, and prayed they wouldn't hallucinate schema keys.\n\nIn my…",
+  "relevance": {
+    "score": 0.926,
+    "verdict": "publish",
+    "kind": "benchmark_or_comparison",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-19T14:01:25.888Z"
+  }
 }

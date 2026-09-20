@@ -63,9 +63,10 @@ and fills `author`, `text` (links stripped, mid-sentence links become `[link]`),
 | `postedAt` | ISO date | Optional override |
 | `source` | enum | Optional; inferred from the URL |
 | `draft` | boolean, default `false` | `true` keeps the card out of production |
+| `relevance` | `{ score, verdict, kind, model, checkedAt }` | Optional. A ranking the caller already made from the full post; stored as is, and the server skips its own (which only sees the ~280-character excerpt). Ignored for `"mode": "auto"` |
 | `mode` | `commit` (default) \| `pr` \| `auto` | `pr` opens a pull request. `auto` lets the Jev ranking decide: publish, pull request, or refuse with `422` |
 
-Unknown fields are rejected, including `relevance`: only the server can write a ranking.
+Unknown fields are rejected. The public form cannot send `relevance`; only token holders can.
 
 | Status | Meaning |
 | --- | --- |

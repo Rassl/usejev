@@ -32,7 +32,9 @@ export async function POST(request: Request): Promise<Response> {
     if (!author || !text) return json(422, { error: 'author and text are required for sources other than X' });
     if (await fileExists(post.id)) return json(409, { error: 'This post is already on the site', id: post.id });
 
-    const relevance = await rankPost({ text, source: input.source ?? post.source, authorName: author.name, authorHandle: author.handle });
+    // A supplied ranking wins, except for "auto", where the server must make its own decision.
+    const supplied = input.mode === 'auto' ? undefined : input.relevance;
+    const relevance = supplied ? null : await rankPost({ text, source: input.source ?? post.source, authorName: author.name, authorHandle: author.handle });
 
     // "auto" is confidence-gated routing: publish, send to review, or refuse.
     let { mode } = input;
@@ -42,7 +44,7 @@ export async function POST(request: Request): Promise<Response> {
       else mode = relevance.verdict === 'publish' ? 'commit' : 'pr';
     }
 
-    const { mode: _requested, ...rest } = input;
+    const { mode: _requested, relevance: _supplied, ...rest } = input;
     const entry = {
       ...rest,
       source: input.source ?? post.source,
@@ -50,14 +52,14 @@ export async function POST(request: Request): Promise<Response> {
       author,
       postedAt: (input.postedAt ?? post.postedAt ?? new Date()).toISOString(),
       text,
-      ...(relevance ? { relevance: stored(relevance) } : {}),
+      ...(supplied ? { relevance: supplied } : relevance ? { relevance: stored(relevance) } : {}),
     };
     const title = `Add post ${post.id}${author.handle ? ` by @${author.handle}` : ''}`;
     const result =
       mode === 'pr'
         ? await openPullRequest(post.id, entry, title, `Submitted through the posting API.\n\nOriginal: ${post.url}\n\n${markdownReport(relevance)}`)
         : await commitFile(post.id, entry, title);
-    return json(201, { id: post.id, mode, requestedMode: input.mode, verified: post.verified, relevance, entry, ...result });
+    return json(201, { id: post.id, mode, requestedMode: input.mode, verified: post.verified, relevance: relevance ?? supplied ?? null, entry, ...result });
   } catch (e) {
     if (e instanceof GitHubError) return json(e.status === 409 ? 409 : 502, { error: e.message });
     return json(500, { error: 'Unexpected error' });

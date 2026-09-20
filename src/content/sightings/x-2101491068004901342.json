@@ -11,5 +11,12 @@
     "url": "https://x.com/singh_abinashi"
   },
   "postedAt": "2026-09-20T01:58:09.085Z",
-  "text": "Demo, no signup: [link]\nMost prompts don't need your most expensive model. But picking a cheaper one is a guess, so most of us just send everything to the top-tier model and pay for it on every call.\n\nI came across TypeSafe AI's Jev model recently, and it's a…"
+  "text": "Demo, no signup: [link]\nMost prompts don't need your most expensive model. But picking a cheaper one is a guess, so most of us just send everything to the top-tier model and pay for it on every call.\n\nI came across TypeSafe AI's Jev model recently, and it's a…",
+  "relevance": {
+    "score": 0.963,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-20T13:00:33.009Z"
+  }
 }

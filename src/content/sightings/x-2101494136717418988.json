@@ -20,5 +20,12 @@
     "url": "https://x.com/runzhuotao"
   },
   "postedAt": "2026-09-20T02:10:20.723Z",
-  "text": "Ok I tried the Jev model for a robotic simulation.\n\nObserve: MuJoCo provides depth points/ASCII maps, object locations, joint positions, velocities, actuator loads, finger contact and slip measurements.\n\nInterpret in parallel: separate Jev calls assess the task, geometry and…"
+  "text": "Ok I tried the Jev model for a robotic simulation.\n\nObserve: MuJoCo provides depth points/ASCII maps, object locations, joint positions, velocities, actuator loads, finger contact and slip measurements.\n\nInterpret in parallel: separate Jev calls assess the task, geometry and…",
+  "relevance": {
+    "score": 0.957,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-20T13:54:30.449Z"
+  }
 }

@@ -10,5 +10,12 @@
     "url": "https://x.com/jack_gor"
   },
   "postedAt": "2026-09-19T06:51:37.413Z",
-  "text": "I wired TypeSafe Jev into Codex and ZCode for model routing — not chat, just cheap decisions.\n\nMost of what agents spend money on is not “writing code.”\n\nIt is the selection loops around the work: which model to use this turn, whether a tool result matters, whether to open a…"
+  "text": "I wired TypeSafe Jev into Codex and ZCode for model routing — not chat, just cheap decisions.\n\nMost of what agents spend money on is not “writing code.”\n\nIt is the selection loops around the work: which model to use this turn, whether a tool result matters, whether to open a…",
+  "relevance": {
+    "score": 0.971,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-19T14:01:25.888Z"
+  }
 }

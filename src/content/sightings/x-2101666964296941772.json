@@ -16,5 +16,12 @@
     "url": "https://x.com/DokasIoann59897"
   },
   "postedAt": "2026-09-20T13:37:06.029Z",
-  "text": "I got early access to @typesafeai jev  and built a demo with it based on a of importance to systems safey idea: an adaptive system is still acting while the world is changing. You need to know, right now, how close that system is to a hazardous state that can lead to looses and…"
+  "text": "I got early access to @typesafeai jev  and built a demo with it based on a of importance to systems safey idea: an adaptive system is still acting while the world is changing. You need to know, right now, how close that system is to a hazardous state that can lead to looses and…",
+  "relevance": {
+    "score": 0.97,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-20T13:54:30.449Z"
+  }
 }

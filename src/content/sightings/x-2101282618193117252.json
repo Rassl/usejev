@@ -11,5 +11,12 @@
     "url": "https://x.com/PositiveGamma"
   },
   "postedAt": "2026-09-19T12:09:50.777Z",
-  "text": "I am surprised by how cheap Jev has made a certain kind of intelligence (classifiers?). \n\nI was able to vibe code a CLI app & rank a bunch of documents (40 1 pagers) on a set of criteria. The total cost was just $0.004.  @typesafeai"
+  "text": "I am surprised by how cheap Jev has made a certain kind of intelligence (classifiers?). \n\nI was able to vibe code a CLI app & rank a bunch of documents (40 1 pagers) on a set of criteria. The total cost was just $0.004.  @typesafeai",
+  "relevance": {
+    "score": 0.954,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-20T13:54:30.449Z"
+  }
 }

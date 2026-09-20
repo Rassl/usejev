@@ -119,7 +119,8 @@ async function send(post, mode) {
   const res = await fetch(`${API}/api/posts/`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${process.env.POSTS_API_TOKEN}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ url: post.url, mode, media: post.media ?? undefined, category: post.card?.category, useCases: post.card?.useCases, primitives: post.card?.primitives }),
+    // The score goes along: it was made from the full post, and the server only sees the excerpt.
+    body: JSON.stringify({ url: post.url, mode, relevance: { score: post.rank.score, verdict: post.rank.verdict, kind: post.rank.kind, model: post.rank.model ?? process.env.JEV_MODEL ?? 'jev-latest', checkedAt: post.rank.checkedAt ?? new Date().toISOString() }, media: post.media ?? undefined, category: post.card?.category, useCases: post.card?.useCases, primitives: post.card?.primitives }),
     signal: AbortSignal.timeout(30000),
   });
   const out = await res.json().catch(() => ({}));
@@ -177,7 +178,7 @@ for (const post of candidates.values()) {
       continue;
     }
     tokens += r.inputTokens;
-    post.rank = { score: r.score, verdict: r.verdict, kind: r.kind, reasons: r.reasons.join('; '), signals: r.signals };
+    post.rank = { score: r.score, verdict: r.verdict, kind: r.kind, reasons: r.reasons.join('; '), signals: r.signals, model: r.model, checkedAt: r.checkedAt };
   }
   const { verdict, score, kind, reasons } = post.rank;
   // A pull request costs a person's attention. Commentary about Jev is plentiful and is not what

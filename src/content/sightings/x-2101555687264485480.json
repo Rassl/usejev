@@ -11,5 +11,12 @@
     "url": "https://x.com/tokifyi"
   },
   "postedAt": "2026-09-20T06:14:55.517Z",
-  "text": "this is wild. i used @typesafeai's jev model to build a policy evaluator for an open-source project tracking illegal airbnb listings in vancouver \n\nit analyzed 20 live listings and flagged 7 potential violations \n\nthis is what ai for public good looks like. imagine the…"
+  "text": "this is wild. i used @typesafeai's jev model to build a policy evaluator for an open-source project tracking illegal airbnb listings in vancouver \n\nit analyzed 20 live listings and flagged 7 potential violations \n\nthis is what ai for public good looks like. imagine the…",
+  "relevance": {
+    "score": 0.96,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-20T13:00:33.009Z"
+  }
 }

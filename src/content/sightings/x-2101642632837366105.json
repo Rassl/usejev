@@ -13,5 +13,12 @@
     "url": "https://x.com/twid"
   },
   "postedAt": "2026-09-20T12:00:24.957Z",
-  "text": "Thoughts on Jev. This week my Discord bot started running every yes/no and \"which one?\" decision it makes through @typesafeai's Jev before anything else touches it. Decisions like: Is this a request for the weather? Is this a request for image generation? Is this a request for…"
+  "text": "Thoughts on Jev. This week my Discord bot started running every yes/no and \"which one?\" decision it makes through @typesafeai's Jev before anything else touches it. Decisions like: Is this a request for the weather? Is this a request for image generation? Is this a request for…",
+  "relevance": {
+    "score": 0.982,
+    "verdict": "publish",
+    "kind": "benchmark_or_comparison",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-20T13:00:33.009Z"
+  }
 }

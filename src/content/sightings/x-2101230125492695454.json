@@ -10,5 +10,12 @@
     "url": "https://x.com/YashChaudhary"
   },
   "postedAt": "2026-09-19T08:41:15.542Z",
-  "text": "typesafe-computer-use (Show HN): drive a Mac toward a plain-English goal without screenshot→frontier-model loops.\n\n• OCR (Vision) + Accessibility tree → TypeSafe Jev Choice classifier → click/type; writer model only for free text\n• Author-measured vs Claude Opus 5 bare…"
+  "text": "typesafe-computer-use (Show HN): drive a Mac toward a plain-English goal without screenshot→frontier-model loops.\n\n• OCR (Vision) + Accessibility tree → TypeSafe Jev Choice classifier → click/type; writer model only for free text\n• Author-measured vs Claude Opus 5 bare…",
+  "relevance": {
+    "score": 0.965,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-19T14:01:25.888Z"
+  }
 }

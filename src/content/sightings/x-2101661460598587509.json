@@ -16,5 +16,12 @@
     "url": "https://x.com/m_lagnajit09"
   },
   "postedAt": "2026-09-20T13:15:13.845Z",
-  "text": "Got an early access to @typesafeai  Jev and tried it with something real:\n\nI built sgrep — semantic grep powered by Jev.\n\nThe idea:\n(improve context engineering)\nsemantic locate → read only what's relevant → give it to the LLM\n\nInstead of making Claude read large portions of a…"
+  "text": "Got an early access to @typesafeai  Jev and tried it with something real:\n\nI built sgrep — semantic grep powered by Jev.\n\nThe idea:\n(improve context engineering)\nsemantic locate → read only what's relevant → give it to the LLM\n\nInstead of making Claude read large portions of a…",
+  "relevance": {
+    "score": 0.962,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-20T13:54:30.449Z"
+  }
 }

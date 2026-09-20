@@ -13,5 +13,12 @@
     "url": "https://x.com/thecoderpanda"
   },
   "postedAt": "2026-09-20T13:00:09.103Z",
-  "text": "had a saturday. built a tiny thing that yells at me for shipping on fridays.\n\nit's called shipit-gate — a CLI that reads your git tree, asks TypeSafe's Jev model whether it's safe to ship, and exits non-zero when it isn't.\n\nno prompts. no JSON parsing. no vibes. just a typed…"
+  "text": "had a saturday. built a tiny thing that yells at me for shipping on fridays.\n\nit's called shipit-gate — a CLI that reads your git tree, asks TypeSafe's Jev model whether it's safe to ship, and exits non-zero when it isn't.\n\nno prompts. no JSON parsing. no vibes. just a typed…",
+  "relevance": {
+    "score": 0.965,
+    "verdict": "publish",
+    "kind": "tool_or_library",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-20T13:00:33.009Z"
+  }
 }

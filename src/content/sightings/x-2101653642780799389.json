@@ -11,5 +11,12 @@
     "url": "https://x.com/milonspace"
   },
   "postedAt": "2026-09-20T12:44:09.932Z",
-  "text": "Jev didn't make my agents smarter.\n\nIt made the boring decisions cheap enough to run at every step.\n\nThat's the unlock. Not AGI. Not \"replacing Claude.\" A typed yes/no decision you can afford to ask 200 times in one session.\n\nI spent the week running it in a real loop, not a…"
+  "text": "Jev didn't make my agents smarter.\n\nIt made the boring decisions cheap enough to run at every step.\n\nThat's the unlock. Not AGI. Not \"replacing Claude.\" A typed yes/no decision you can afford to ask 200 times in one session.\n\nI spent the week running it in a real loop, not a…",
+  "relevance": {
+    "score": 0.961,
+    "verdict": "publish",
+    "kind": "tutorial_or_explainer",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-20T13:00:33.009Z"
+  }
 }

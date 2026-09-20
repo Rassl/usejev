@@ -10,5 +10,12 @@
     "url": "https://x.com/ssbrouhard"
   },
   "postedAt": "2026-09-19T06:12:32.261Z",
-  "text": "Next layer on my @grok @bot build: \ntyped triage with @typesafeai Jev sitting in front of the Grok Ship by @kunchenguid  vs direct-handoff split.\n\nThe problem I’m trying to solve is routing the wrong kind of work to the wrong agent.\n\nMy Firstmate orchestrator has specialist bots…"
+  "text": "Next layer on my @grok @bot build: \ntyped triage with @typesafeai Jev sitting in front of the Grok Ship by @kunchenguid  vs direct-handoff split.\n\nThe problem I’m trying to solve is routing the wrong kind of work to the wrong agent.\n\nMy Firstmate orchestrator has specialist bots…",
+  "relevance": {
+    "score": 0.973,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-19T14:01:25.888Z"
+  }
 }

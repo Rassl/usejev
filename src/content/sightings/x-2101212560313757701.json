@@ -10,5 +10,12 @@
     "url": "https://x.com/PawelHuryn"
   },
   "postedAt": "2026-09-19T07:31:27.677Z",
-  "text": "One developer’s list of projects built on Jev grew from 46 to 160 in three days. I wanted a measurement to go with the excitement.\n\nJev takes text, a question, and a list of possible answers. It picks one and reports its confidence.\n\nI tested the vendor’s showcase task: sorting…"
+  "text": "One developer’s list of projects built on Jev grew from 46 to 160 in three days. I wanted a measurement to go with the excitement.\n\nJev takes text, a question, and a list of possible answers. It picks one and reports its confidence.\n\nI tested the vendor’s showcase task: sorting…",
+  "relevance": {
+    "score": 0.963,
+    "verdict": "publish",
+    "kind": "benchmark_or_comparison",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-19T14:01:25.888Z"
+  }
 }

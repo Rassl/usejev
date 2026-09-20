@@ -10,5 +10,12 @@
     "url": "https://x.com/richard_epsilla"
   },
   "postedAt": "2026-09-20T10:30:19.922Z",
-  "text": "Weekend plan: rest.\nActual weekend: built SystemOneHarness, an open source harness for System 1 models like #Jev from @typesafeai. Then, to test it, taught it to play Mario.\n\nNo chain of thought. No reflection. Just vibes at 60 decisions per second. It's better than me now, which…"
+  "text": "Weekend plan: rest.\nActual weekend: built SystemOneHarness, an open source harness for System 1 models like #Jev from @typesafeai. Then, to test it, taught it to play Mario.\n\nNo chain of thought. No reflection. Just vibes at 60 decisions per second. It's better than me now, which…",
+  "relevance": {
+    "score": 0.954,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-20T13:00:33.009Z"
+  }
 }
