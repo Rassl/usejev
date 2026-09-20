@@ -1,0 +1,27 @@
+{
+  "url": "https://x.com/hijaidev/status/2101679778801893685",
+  "category": "Developer tools",
+  "media": {
+    "type": "video",
+    "thumbnail": "https://pbs.twimg.com/amplify_video_thumb/2101679740520390656/img/McXbM1E9CZgvK-MZ.jpg",
+    "alt": "Video from the post by jaidev"
+  },
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "jaidev",
+    "handle": "hijaidev",
+    "url": "https://x.com/hijaidev"
+  },
+  "postedAt": "2026-09-20T14:28:01.245Z",
+  "text": "Jev CLI is out.\n\njev puts TypeSafe's Jev model on the command line.\n\nWhat it does:\n• verify: check claims against evidence, verdict + probabilities per claim\n\n• screen: flag prompt injection, filler, and off-topic text before an agent reads it\n\n• classify: single, multi, or…",
+  "relevance": {
+    "score": 0.917,
+    "verdict": "publish",
+    "kind": "tool_or_library",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-20T15:11:40.140Z"
+  }
+}
