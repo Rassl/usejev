@@ -1,0 +1,26 @@
+{
+  "url": "https://x.com/SadAlbert10/status/2101598960926527741",
+  "media": {
+    "type": "image",
+    "thumbnail": "https://pbs.twimg.com/media/HSphBZkawAAlvV0.jpg",
+    "alt": "Image from the post by Sad AlbertX"
+  },
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Sad AlbertX",
+    "handle": "SadAlbert10",
+    "url": "https://x.com/SadAlbert10"
+  },
+  "postedAt": "2026-09-20T09:06:52.762Z",
+  "text": "Made a simple TRUE/FALSE workflow using TypeSafe AI Jev-latest model. \n\nIt says there is only 22% chance of World WAR 3 happening by 2035, with a 78% chance of it NOT happening by 2035. \nyay",
+  "relevance": {
+    "score": 0.948,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-20T15:11:47.558Z"
+  }
+}
