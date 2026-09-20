@@ -1,0 +1,14 @@
+{
+  "url": "https://x.com/richard_epsilla/status/2101619962477781446",
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Renchu Song",
+    "handle": "richard_epsilla",
+    "url": "https://x.com/richard_epsilla"
+  },
+  "postedAt": "2026-09-20T10:30:19.922Z",
+  "text": "Weekend plan: rest.\nActual weekend: built SystemOneHarness, an open source harness for System 1 models like #Jev from @typesafeai. Then, to test it, taught it to play Mario.\n\nNo chain of thought. No reflection. Just vibes at 60 decisions per second. It's better than me now, which…"
+}
