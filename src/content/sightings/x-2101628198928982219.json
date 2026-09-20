@@ -1,0 +1,15 @@
+{
+  "url": "https://x.com/Paiky16/status/2101628198928982219",
+  "category": "Search and data",
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Praneeth Paikray",
+    "handle": "Paiky16",
+    "url": "https://x.com/Paiky16"
+  },
+  "postedAt": "2026-09-20T11:03:03.645Z",
+  "text": "TypeSafe AI's Jev kept coming up, so I decided to test it on a task using public medical literature.\nJev lets you describe a decision in natural language and get structured answers with probabilities. I used it to identify sentences reporting suspected adverse drug effects.\nIt…"
+}

@@ -1,0 +1,20 @@
+{
+  "url": "https://x.com/m_lagnajit09/status/2101661460598587509",
+  "category": "Developer tools",
+  "media": {
+    "type": "image",
+    "thumbnail": "https://pbs.twimg.com/media/HSqOWRMaMAAQ52N.jpg",
+    "alt": "Image from the post by lagnajit."
+  },
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "lagnajit.",
+    "handle": "m_lagnajit09",
+    "url": "https://x.com/m_lagnajit09"
+  },
+  "postedAt": "2026-09-20T13:15:13.845Z",
+  "text": "Got an early access to @typesafeai  Jev and tried it with something real:\n\nI built sgrep — semantic grep powered by Jev.\n\nThe idea:\n(improve context engineering)\nsemantic locate → read only what's relevant → give it to the LLM\n\nInstead of making Claude read large portions of a…"
+}

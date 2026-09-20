@@ -1,0 +1,15 @@
+{
+  "url": "https://x.com/3MindedScholar/status/2101629754571174059",
+  "category": "Moderation and safety",
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Akhil",
+    "handle": "3MindedScholar",
+    "url": "https://x.com/3MindedScholar"
+  },
+  "postedAt": "2026-09-20T11:09:14.539Z",
+  "text": "Playing with TypeSafe's Jev, a typed probabilistic model that returns predictions + probability distributions instead of completions.\n\nBuilt a pre-post checker for tone, virality and cringe risk in one call.\n\ndemo: [link]\n\nConfidence becomes application logic."
+}

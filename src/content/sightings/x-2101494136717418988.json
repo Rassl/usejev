@@ -1,0 +1,24 @@
+{
+  "url": "https://x.com/runzhuotao/status/2101494136717418988",
+  "category": "Robotics",
+  "media": {
+    "type": "video",
+    "thumbnail": "https://pbs.twimg.com/amplify_video_thumb/2101493695854043136/img/TqXsGZN1A2jaOTJy.jpg",
+    "alt": "Video from the post by Zhuo Tao"
+  },
+  "useCases": [],
+  "primitives": [
+    "Choice",
+    "Score",
+    "Noul"
+  ],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Zhuo Tao",
+    "handle": "runzhuotao",
+    "url": "https://x.com/runzhuotao"
+  },
+  "postedAt": "2026-09-20T02:10:20.723Z",
+  "text": "Ok I tried the Jev model for a robotic simulation.\n\nObserve: MuJoCo provides depth points/ASCII maps, object locations, joint positions, velocities, actuator loads, finger contact and slip measurements.\n\nInterpret in parallel: separate Jev calls assess the task, geometry and…"
+}

@@ -1,0 +1,15 @@
+{
+  "url": "https://x.com/tokifyi/status/2101555687264485480",
+  "category": "Moderation and safety",
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "toki",
+    "handle": "tokifyi",
+    "url": "https://x.com/tokifyi"
+  },
+  "postedAt": "2026-09-20T06:14:55.517Z",
+  "text": "this is wild. i used @typesafeai's jev model to build a policy evaluator for an open-source project tracking illegal airbnb listings in vancouver \n\nit analyzed 20 live listings and flagged 7 potential violations \n\nthis is what ai for public good looks like. imagine the…"
+}

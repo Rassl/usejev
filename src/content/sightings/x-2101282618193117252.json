@@ -1,0 +1,15 @@
+{
+  "url": "https://x.com/PositiveGamma/status/2101282618193117252",
+  "category": "Search and data",
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Krishna Hegde",
+    "handle": "PositiveGamma",
+    "url": "https://x.com/PositiveGamma"
+  },
+  "postedAt": "2026-09-19T12:09:50.777Z",
+  "text": "I am surprised by how cheap Jev has made a certain kind of intelligence (classifiers?). \n\nI was able to vibe code a CLI app & rank a bunch of documents (40 1 pagers) on a set of criteria. The total cost was just $0.004.  @typesafeai"
+}

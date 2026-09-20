@@ -1,0 +1,14 @@
+{
+  "url": "https://x.com/LuigiProof/status/2101310173767987561",
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Luigi",
+    "handle": "LuigiProof",
+    "url": "https://x.com/LuigiProof"
+  },
+  "postedAt": "2026-09-19T13:59:20.538Z",
+  "text": "I built a project that makes Jev talk.\n\nJev (TypeSafe's decision model) can't generate a single word. JevSpeak has it answer 13 semantic questions in parallel — intent, stance, claim, tone — each as a probability distribution, then a deterministic compiler turns those decisions…"
+}
