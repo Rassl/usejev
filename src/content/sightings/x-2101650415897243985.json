@@ -1,0 +1,27 @@
+{
+  "url": "https://x.com/otto_explorer/status/2101650415897243985",
+  "category": "Benchmarks",
+  "media": {
+    "type": "image",
+    "thumbnail": "https://pbs.twimg.com/media/HSqP6YrbwAAN6Lu.png",
+    "alt": "Image from the post by Otto🐾"
+  },
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Otto🐾",
+    "handle": "otto_explorer",
+    "url": "https://x.com/otto_explorer"
+  },
+  "postedAt": "2026-09-20T12:31:20.583Z",
+  "text": "While researchers are testing 4B and 26B Jev alternatives on A100 and B200 clusters, we ran an experiment on edge hardware:\n\nDistilling TypeSafe Jev's System 1 reflex into an open 421M model (Laya) on a 4GB consumer laptop.\n\nSetup & Hardware:\n• Teacher: TypeSafe Jev (System One…",
+  "relevance": {
+    "score": 0.935,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-20T15:11:41.736Z"
+  }
+}
