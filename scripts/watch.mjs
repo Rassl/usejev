@@ -131,6 +131,7 @@ async function send(post, mode) {
 const candidates = new Map(state.retry.map((p) => [p.id, p]));
 const newest = {};
 const searches = [];
+const searchErrors = [];
 let failed = 0;
 for (const q of config.queries) {
   try {
@@ -146,6 +147,7 @@ for (const q of config.queries) {
     console.log(`search   ${String(r.found.length).padStart(3)} posts  ${q.topic}`);
   } catch (e) {
     failed++;
+    searchErrors.push(e.message.slice(0, 240));
     console.error(e.message);
   }
 }
@@ -270,11 +272,11 @@ if (!dryRun) {
 // a post Jev timed out on stays queued, and a query that failed keeps its position.
 const ranked = lines.filter((l) => l.type === 'post').length;
 const problems = [
-  failed === config.queries.length && 'every X search failed (token, credits or rate limit)',
+  failed === config.queries.length && `every X search failed (token, credits or rate limit): ${searchErrors[0]}`,
   counts.siteErrors > 0 && `the site refused ${counts.siteErrors} post(s) with an unexpected error (posting token, GitHub token or an outage)`,
   counts.jevErrors > Math.max(5, ranked * 0.2) && `Jev could not be reached for ${counts.jevErrors} of ${ranked} posts`,
 ].filter(Boolean);
-const notes = [failed > 0 && failed < config.queries.length && `${failed} X search(es) failed and will be retried`, counts.jevErrors > 0 && !problems.some((p) => p.startsWith('Jev')) && `${counts.jevErrors} post(s) wait for Jev and will be retried`].filter(Boolean);
+const notes = [failed > 0 && failed < config.queries.length && `${failed} X search(es) failed and will be retried: ${searchErrors.join(' | ')}`, counts.jevErrors > 0 && !problems.some((p) => p.startsWith('Jev')) && `${counts.jevErrors} post(s) wait for Jev and will be retried`].filter(Boolean);
 for (const n of notes) console.log(`note     ${n}`);
 for (const p of problems) console.error(`PROBLEM  ${p}`);
 if (process.env.GITHUB_STEP_SUMMARY && (notes.length || problems.length)) await appendFile(process.env.GITHUB_STEP_SUMMARY, `\n${[...problems.map((p) => `**Problem:** ${p}`), ...notes.map((n) => `Note: ${n}`)].join('  \n')}\n`);
