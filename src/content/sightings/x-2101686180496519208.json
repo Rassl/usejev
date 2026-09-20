@@ -1,0 +1,27 @@
+{
+  "url": "https://x.com/Z_K_F_/status/2101686180496519208",
+  "category": "Trading and finance",
+  "media": {
+    "type": "image",
+    "thumbnail": "https://pbs.twimg.com/media/HSqwF5nXIAAW3Uq.jpg",
+    "alt": "Image from the post by Kiwon"
+  },
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Kiwon",
+    "handle": "Z_K_F_",
+    "url": "https://x.com/Z_K_F_"
+  },
+  "postedAt": "2026-09-20T14:53:27.528Z",
+  "text": "I built K-DECK with Jev.\n\nA live Trading Decision Terminal. Jev is TypeSafe’s System One model. It doesn’t write analysis. It doesn’t hallucinate a thesis.\n\nYou give it market state and a closed set of questions. It comes back with typed decisions, probabilities, and confidence —…",
+  "relevance": {
+    "score": 0.939,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-20T15:11:39.079Z"
+  }
+}
