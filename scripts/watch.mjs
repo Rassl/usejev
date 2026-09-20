@@ -7,7 +7,8 @@
 //   npm run watch -- --dry-run         search and rank, send nothing, keep the state untouched
 //   npm run watch -- --pr              never commit: every non-rejected post becomes a pull request
 //   npm run watch -- --since-hours 48  how far back to look when a query has no saved position (max 168)
-//   npm run watch -- --max 200         posts to read per query (X bills per post read)
+//   npm run watch -- --max 200         most posts to read per query (the daily budget can lower it)
+//   npm run watch -- --daily-reads 170 --reads-per-pass 40   X read budget (defaults: watch-queries.json)
 //   npm run watch -- --max-publish 3   commits per pass (default 5); the rest wait in the backlog for the next pass
 //   npm run watch -- --max-review 3    also open up to 3 pull requests per pass for near-misses (default 0: none)
 //   npm run watch -- --publish-floor 0.9 --confidence-floor 0.8   the bar for going live without a person (defaults)
@@ -25,7 +26,7 @@ const num = (name, fallback) => {
 };
 const dryRun = flag('--dry-run');
 const sinceHours = Math.min(num('--since-hours', 24), 167);
-const maxPerQuery = num('--max', 100);
+const maxPerQueryFlag = num('--max', 100);
 const maxPublish = num('--max-publish', 5);
 const maxReview = num('--max-review', 0); // content pull requests are opt-in: by default a post goes live complete, or not at all
 const reviewFloor = num('--review-floor', 0.75);
@@ -56,7 +57,18 @@ const excluded = new Set(config.excludeHandles.map((h) => h.toLowerCase()));
 // State is a convenience, not the source of truth: without it a pass re-reads the last
 // `--since-hours`, and the site's own de-duplication (409) keeps the result the same.
 const stateUrl = new URL('../.scratch/watch-state.json', import.meta.url);
-const state = { sinceId: {}, seen: [], retry: [], ...JSON.parse(await readFile(stateUrl, 'utf8').catch(() => '{}')) };
+const state = { sinceId: {}, seen: [], retry: [], reads: {}, ...JSON.parse(await readFile(stateUrl, 'utf8').catch(() => '{}')) };
+
+// X bills per post read (about $0.0048), so reading is budgeted per UTC day and split across the
+// queries. X will not return fewer than 10 per request; when less than that is left for each
+// query, this pass reads nothing and only publishes from the backlog.
+const today = new Date().toISOString().slice(0, 10);
+const dailyReads = num('--daily-reads', config.dailyReads ?? Infinity);
+const readToday = state.reads.day === today ? state.reads.count : 0;
+const share = Math.floor((dailyReads - readToday) / config.queries.length);
+const perPass = Math.floor(num('--reads-per-pass', config.readsPerPass ?? Infinity) / config.queries.length);
+const maxPerQuery = Math.min(maxPerQueryFlag, share, perPass);
+const canSearch = maxPerQuery >= 10;
 const seen = new Set(state.seen);
 for (const f of await readdir(new URL('../src/content/sightings/', import.meta.url))) seen.add(f.replace(/\.json$/, ''));
 
@@ -81,6 +93,8 @@ async function search({ topic, query }) {
 
   let newest;
   while (found.length < maxPerQuery) {
+    // Never ask for more than the budget allows; 10 is the smallest page X serves.
+    params.set('max_results', String(Math.min(100, Math.max(10, maxPerQuery - found.length))));
     const res = await fetch(`https://api.x.com/2/tweets/search/recent?${params}`, {
       headers: { Authorization: `Bearer ${process.env.X_BEARER_TOKEN}` },
       signal: AbortSignal.timeout(15000),
@@ -133,11 +147,14 @@ const newest = {};
 const searches = [];
 const searchErrors = [];
 let failed = 0;
-for (const q of config.queries) {
+const readIds = new Set();
+if (!canSearch) console.log(`note     daily X budget used (${readToday} of ${dailyReads} posts read today): publishing from the backlog only`);
+for (const q of canSearch ? config.queries : []) {
   try {
     const r = await search(q);
+    for (const p of r.found) readIds.add(p.id);
     if (r.newest) newest[q.topic] = r.newest;
-    // A post found by two queries is billed twice by X; `topics` keeps that visible.
+    // X bills a post once however many queries return it; `topics` shows which queries overlap.
     for (const p of r.found) {
       const known = candidates.get(p.id);
       if (known) known.topics = [...new Set([...(known.topics ?? [known.topic]), p.topic])];
@@ -252,7 +269,8 @@ for (const post of queue) {
   report.push(`| ${publish ? 'published' : 'pull request'} | ${post.rank.score.toFixed(2)} | ${post.rank.kind} | ${post.url} | ${post.text.slice(0, 80).replace(/[\n|]/g, ' ')} |`);
 }
 
-const summary = `${counts.publish} published, ${counts.review} sent for review, ${counts.waiting} waiting in the backlog, ${counts.held} not worth a review, ${counts.reject} rejected, ${counts.skipped} already known, ${counts.error} errors; ${tokens} Jev input tokens (~$${((tokens * 0.042) / 1e6).toFixed(5)})${dryRun ? ' [dry run, nothing sent]' : ''}`;
+const budgetNote = Number.isFinite(dailyReads) ? `; X reads ${readIds.size} this pass, ${readToday + readIds.size} of ${dailyReads} today (~$${((readToday + readIds.size) * 0.0048).toFixed(2)})` : '';
+const summary = `${counts.publish} published, ${counts.review} sent for review, ${counts.waiting} waiting in the backlog, ${counts.held} not worth a review, ${counts.reject} rejected, ${counts.skipped} already known, ${counts.error} errors; ${tokens} Jev input tokens (~$${((tokens * 0.042) / 1e6).toFixed(5)})${budgetNote}${dryRun ? ' [dry run, nothing sent]' : ''}`;
 console.log(`\n${summary}`);
 if (process.env.GITHUB_STEP_SUMMARY) {
   const table = report.length ? `\n\n| Verdict | Score | Kind | Post | Text |\n| --- | --- | --- | --- | --- |\n${report.join('\n')}` : '';
@@ -260,19 +278,25 @@ if (process.env.GITHUB_STEP_SUMMARY) {
 }
 
 await mkdir(new URL('./', stateUrl), { recursive: true });
-lines.push({ type: 'pass', pass, dryRun, prOnly: flag('--pr'), searches, counts, tokens, settings: { maxPublish, maxReview, reviewFloor, publishFloor, confidenceFloor, publish: THRESHOLDS.publish, review: THRESHOLDS.review } });
+lines.push({ type: 'pass', pass, dryRun, prOnly: flag('--pr'), searches, counts, tokens, reads: { thisPass: readIds.size, today: readToday + readIds.size, dailyBudget: Number.isFinite(dailyReads) ? dailyReads : null }, settings: { maxPublish, maxReview, reviewFloor, publishFloor, confidenceFloor, publish: THRESHOLDS.publish, review: THRESHOLDS.review } });
 await appendFile(new URL('./watch-runs.jsonl', stateUrl), lines.map((l) => `${JSON.stringify(l)}\n`).join(''));
 
+const reads = { day: today, count: readToday + readIds.size };
+if (dryRun && readIds.size) {
+  // A dry run sends nothing and keeps its place, but it did read posts, and X bills for them.
+  const kept = JSON.parse(await readFile(stateUrl, 'utf8').catch(() => '{}'));
+  await writeFile(stateUrl, `${JSON.stringify({ ...kept, reads }, null, 2)}\n`);
+}
 if (!dryRun) {
   // Rejected ids are remembered so overlapping queries and passes do not pay to rank them again.
-  const next = { sinceId: { ...state.sinceId, ...newest }, seen: [...seen].filter((id) => /^x-\d+$/.test(id) && !tooOld(id.slice(2))).slice(-5000), retry };
+  const next = { reads, sinceId: { ...state.sinceId, ...newest }, seen: [...seen].filter((id) => /^x-\d+$/.test(id) && !tooOld(id.slice(2))).slice(-5000), retry };
   await writeFile(stateUrl, `${JSON.stringify(next, null, 2)}\n`);
 }
 // Exit non-zero only for what needs a person. Single failures are retried next pass on their own:
 // a post Jev timed out on stays queued, and a query that failed keeps its position.
 const ranked = lines.filter((l) => l.type === 'post').length;
 const problems = [
-  failed === config.queries.length && `every X search failed (token, credits or rate limit): ${searchErrors[0]}`,
+  canSearch && failed === config.queries.length && `every X search failed (token, credits or rate limit): ${searchErrors[0]}`,
   counts.siteErrors > 0 && `the site refused ${counts.siteErrors} post(s) with an unexpected error (posting token, GitHub token or an outage)`,
   counts.jevErrors > Math.max(5, ranked * 0.2) && `Jev could not be reached for ${counts.jevErrors} of ${ranked} posts`,
 ].filter(Boolean);

@@ -1,7 +1,7 @@
 # The X watcher
 
 `scripts/watch.mjs` finds posts about using Jev on X, asks Jev whether each one is worth showing,
-and sends the good ones to the site. It runs every 3 hours from `.github/workflows/watch.yml`,
+and sends the good ones to the site. It runs 4 times a day from `.github/workflows/watch.yml`,
 or by hand with `npm run watch`.
 
 ```
@@ -32,6 +32,28 @@ npm run watch -- --max-review 3    # opt back in to pull requests for near-misse
 
 The ranking happens in the watcher, not with `"mode": "auto"`, so rejected posts never reach the
 site's API and the watcher works whether or not ranking is switched on in production.
+
+## What it costs, and the read budget
+
+Jev is nearly free (about $0.00004 per post ranked). X is the bill: measured on 2026-09-20,
+**$5 bought 1,033 posts read, about $0.0048 each**, billed once per post however many queries
+return it. While Jev is new, 600 or more posts a day match the queries, which would be about $90 a
+month to read in full, for roughly 60 publishable posts a day: more than the site shows.
+
+So reading is budgeted in `scripts/watch-queries.json`:
+
+| Setting | Default | Meaning |
+| --- | --- | --- |
+| `dailyReads` | 170 | Hard cap on posts read per UTC day, about $25 a month. Counted in the state file; dry runs count too, because X bills them |
+| `readsPerPass` | 40 | Spread over the day: 10 per query, the smallest page X serves, for 4 scheduled passes |
+
+Each query reads only its newest posts since the last pass, so the watcher samples the stream
+rather than reading all of it; about 9% of what it reads clears the auto-publish bar. When the
+day's budget is used, a pass reads nothing and publishes from the backlog. To spend more or less,
+change the two numbers (and the cron in the workflow if you change the number of passes). Set a
+matching **spend cap** in the X developer console as the backstop.
+
+The `jev-usage` query was dropped on 2026-09-20: of 149 posts only it found, 3 were publishable.
 
 ## Safeguards
 
@@ -75,10 +97,10 @@ each run's summary.
 
 ## Setup
 
-1. X API access: create an app at https://developer.x.com and copy its **bearer token**. Recent
-   search is not in the free tier. X bills per post read, so cost follows `--max` (posts per
-   query, default 100) times the number of queries times passes per day; the Jev side is about
-   $0.00004 per post.
+1. X API access: create an app at https://developer.x.com inside a **Pay Per Use** project (an
+   app in a legacy free project answers `403 client-not-enrolled`), buy credits, and copy the
+   app's **bearer token**. `402 credits depleted` means the balance ran out. See the read budget
+   above for what it costs.
 2. Locally, add the three keys to `.env.local`:
    ```sh
    X_BEARER_TOKEN=...

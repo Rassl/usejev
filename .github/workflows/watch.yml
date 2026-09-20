@@ -4,7 +4,7 @@ name: Watch X for Jev posts
 
 on:
   schedule:
-    - cron: '17 */3 * * *' # every 3 hours; X bills per post read, so widen this before narrowing it
+    - cron: '17 */6 * * *' # 4 runs a day; the read budget itself is dailyReads in scripts/watch-queries.json
   workflow_dispatch:
     inputs:
       dry_run:
