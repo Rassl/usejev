@@ -1,0 +1,20 @@
+{
+  "url": "https://x.com/DokasIoann59897/status/2101666964296941772",
+  "category": "Robotics",
+  "media": {
+    "type": "video",
+    "thumbnail": "https://pbs.twimg.com/amplify_video_thumb/2101663222151487488/img/AvibC3BPSysZFmQ7.jpg",
+    "alt": "Video from the post by Ioannis Dokas"
+  },
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Ioannis Dokas",
+    "handle": "DokasIoann59897",
+    "url": "https://x.com/DokasIoann59897"
+  },
+  "postedAt": "2026-09-20T13:37:06.029Z",
+  "text": "I got early access to @typesafeai jev  and built a demo with it based on a of importance to systems safey idea: an adaptive system is still acting while the world is changing. You need to know, right now, how close that system is to a hazardous state that can lead to looses and…"
+}
