@@ -1,6 +1,8 @@
 {
   "url": "https://x.com/adil_kadival/status/2101297611764589008",
-  "useCases": [],
+  "useCases": [
+    "support-ticket-routing"
+  ],
   "primitives": [],
   "draft": false,
   "source": "x",
@@ -17,5 +19,6 @@
     "kind": "project_demo",
     "model": "jev-1.13.0",
     "checkedAt": "2026-09-19T14:01:25.888Z"
-  }
+  },
+  "headline": "I used Jev to triage support tickets; its zero‑shot labeling cuts routing time by half."
 }

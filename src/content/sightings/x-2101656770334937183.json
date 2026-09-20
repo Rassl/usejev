@@ -23,5 +23,6 @@
     "kind": "project_demo",
     "model": "jev-1.13.0",
     "checkedAt": "2026-09-20T15:11:38.421Z"
-  }
+  },
+  "headline": "New: who gets the task and at what effort is decided by @typesafeai Jev — a decision model, not an LLM."
 }

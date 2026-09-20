@@ -1,6 +1,8 @@
 {
   "url": "https://x.com/ssbrouhard/status/2101192698539511985",
-  "useCases": [],
+  "useCases": [
+    "intent-routing-chatbots-agents"
+  ],
   "primitives": [],
   "draft": false,
   "source": "x",
@@ -17,5 +19,7 @@
     "kind": "project_demo",
     "model": "jev-1.13.0",
     "checkedAt": "2026-09-19T14:01:25.888Z"
-  }
+  },
+  "headline": "One System One call takes the ask + source and returns structured judgments:",
+  "category": "Agents"
 }

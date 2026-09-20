@@ -1,6 +1,8 @@
 {
   "url": "https://x.com/jack_gor/status/2101202534819868710",
-  "useCases": [],
+  "useCases": [
+    "intent-routing-chatbots-agents"
+  ],
   "primitives": [],
   "draft": false,
   "source": "x",
@@ -17,5 +19,7 @@
     "kind": "project_demo",
     "model": "jev-1.13.0",
     "checkedAt": "2026-09-19T14:01:25.888Z"
-  }
+  },
+  "headline": "I wired TypeSafe Jev into Codex and ZCode for model routing — not chat, just cheap decisions.",
+  "category": "Agents"
 }

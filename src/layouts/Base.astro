@@ -1,7 +1,6 @@
 ---
 import '../styles/global.css';
 import { SITE, DOCS } from '../lib/site';
-import { getSightings } from '../lib/sightings';
 import Analytics from '../components/Analytics.astro';
 import displayFont from '@fontsource-variable/bricolage-grotesque/files/bricolage-grotesque-latin-wght-normal.woff2?url';
 
@@ -23,13 +22,9 @@ const fullTitle = title.includes(SITE.shortName) || (title + suffix).length > 60
 const canonical = new URL(Astro.url.pathname, SITE.url).href;
 const ogImage = new URL(SITE.ogImage, SITE.url).href;
 const path = Astro.url.pathname;
-const hasCommunity = (await getSightings()).length > 0;
 const nav = [
   { href: '/use-cases/', label: 'Use cases' },
-  { href: '/guides/what-is-jev/', label: 'What is Jev?' },
-  { href: '/guides/jev-vs-llm-classification/', label: 'Jev vs LLMs' },
-  { href: '/guides/confidence-thresholds/', label: 'Confidence' },
-  ...(hasCommunity ? [{ href: '/community/', label: 'In the wild' }] : []),
+  { href: '/guides/', label: 'Learn' },
   { href: '/about/', label: 'About' },
 ];
 ---
@@ -114,7 +109,6 @@ const nav = [
           <li><a href="/guides/what-is-jev/">What is Jev?</a></li>
           <li><a href="/guides/jev-vs-llm-classification/">Jev vs LLMs for classification</a></li>
           <li><a href="/guides/confidence-thresholds/">Confidence thresholds</a></li>
-          {hasCommunity && <li><a href="/community/">Jev in the wild</a></li>}
           <li><a href="/submit/">Submit a post about Jev</a></li>
           <li><a href="/about/">About this site</a></li>
           <li><a href="/rss.xml">RSS feed</a></li>

@@ -92,3 +92,42 @@ export async function classifyPost(text: string, useCases: UseCaseOption[]): Pro
   }
   return null;
 }
+
+// A headline without generating text: Jev picks, from the author's own sentences, the one that
+// best says what was built. Sentence splitting and clipping stay in code.
+export function sentencesOf(text: string): string[] {
+  return text
+    .replace(/https?:\/\/\S+|\[link\]/g, ' ')
+    .split(/(?<=[.!?…])\s+|\s*\n+\s*/)
+    .map((s) => s.replace(/^[\s\-–•*>\d.)]+/, '').replace(/\s+/g, ' ').trim())
+    .filter((s) => s.length >= 25 && s.length <= 160 && s.split(' ').length >= 5)
+    .slice(0, 24);
+}
+
+export async function pickHeadline(text: string): Promise<{ headline: string; confidence: number; inputTokens: number } | null> {
+  const key = process.env.TYPESAFE_API_KEY;
+  const options = sentencesOf(text);
+  if (!key || options.length === 0) return null;
+  if (options.length === 1) return { headline: options[0]!, confidence: 1, inputTokens: 0 };
+  const body = JSON.stringify({
+    model: process.env.JEV_MODEL ?? 'jev-latest',
+    state: { post: text.slice(0, 4000) },
+    questions: {
+      headline: {
+        type: 'choice',
+        instructions:
+          'Each option is a sentence from `post`. Which one, read on its own as a headline, best tells a stranger what the author built or did with the Jev model? Prefer the sentence that names the concrete thing and what it does over greetings, opinions, hype, or general statements about AI.',
+        criteria: Object.fromEntries(options.map((s, i) => [`s${i + 1}`, s])),
+      },
+    },
+  });
+  try {
+    const res = await fetch(ENDPOINT, { method: 'POST', headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' }, body, signal: AbortSignal.timeout(8000) });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { answers: { headline: { choice: string; confidence: number } }; usage?: { input_tokens?: number } };
+    const picked = options[Number(data.answers.headline.choice.slice(1)) - 1];
+    return picked ? { headline: picked, confidence: data.answers.headline.confidence, inputTokens: data.usage?.input_tokens ?? 0 } : null;
+  } catch {
+    return null;
+  }
+}

@@ -17,5 +17,7 @@
     "kind": "benchmark_or_comparison",
     "model": "jev-1.13.0",
     "checkedAt": "2026-09-19T14:01:25.888Z"
-  }
+  },
+  "headline": "Evaluating structured decisions in parallel was 3.2x faster and slashed forward passes by 96.8% with 0% schema hallucination.",
+  "category": "Benchmarks"
 }

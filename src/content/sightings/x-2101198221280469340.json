@@ -1,6 +1,8 @@
 {
   "url": "https://x.com/ChannelJuanNews/status/2101198221280469340",
-  "useCases": [],
+  "useCases": [
+    "lead-scoring"
+  ],
   "primitives": [],
   "draft": false,
   "source": "x",
@@ -17,5 +19,7 @@
     "kind": "project_demo",
     "model": "jev-1.13.0",
     "checkedAt": "2026-09-19T14:01:25.888Z"
-  }
+  },
+  "headline": "Maybe this is too simplistic but its working for me.",
+  "category": "Agents"
 }

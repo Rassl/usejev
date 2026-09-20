@@ -18,5 +18,6 @@
     "kind": "project_demo",
     "model": "jev-1.13.0",
     "checkedAt": "2026-09-20T13:00:33.009Z"
-  }
+  },
+  "headline": "JevPick checks those requirements against OpenAI, Anthropic and Google models, and recommends the cheapest one that should be capable of handling it."
 }

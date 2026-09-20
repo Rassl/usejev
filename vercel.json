@@ -15,6 +15,16 @@
       ],
       "destination": "https://usejev.dev/$1",
       "statusCode": 301
+    },
+    {
+      "source": "/community/",
+      "destination": "/use-cases/?show=project",
+      "permanent": true
+    },
+    {
+      "source": "/community",
+      "destination": "/use-cases/?show=project",
+      "permanent": true
     }
   ],
   "headers": [

@@ -23,5 +23,6 @@
     "kind": "project_demo",
     "model": "jev-1.13.0",
     "checkedAt": "2026-09-20T15:11:28.364Z"
-  }
+  },
+  "headline": "@typesafeai's Jev as a DuckDB UDF (User Defined Function) on flight destinations:"
 }

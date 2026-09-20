@@ -20,5 +20,6 @@
     "kind": "tool_or_library",
     "model": "jev-1.13.0",
     "checkedAt": "2026-09-20T13:00:33.009Z"
-  }
+  },
+  "headline": "it's called shipit-gate — a CLI that reads your git tree, asks TypeSafe's Jev model whether it's safe to ship, and exits non-zero when it isn't."
 }

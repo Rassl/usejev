@@ -1,6 +1,8 @@
 {
   "url": "https://x.com/PawelHuryn/status/2101212560313757701",
-  "useCases": [],
+  "useCases": [
+    "invoice-document-classification"
+  ],
   "primitives": [],
   "draft": false,
   "source": "x",
@@ -17,5 +19,7 @@
     "kind": "benchmark_or_comparison",
     "model": "jev-1.13.0",
     "checkedAt": "2026-09-19T14:01:25.888Z"
-  }
+  },
+  "headline": "I tested the vendor’s showcase task: sorting invoices.",
+  "category": "Benchmarks"
 }

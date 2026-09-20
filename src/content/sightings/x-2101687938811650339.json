@@ -25,5 +25,6 @@
     "kind": "benchmark_or_comparison",
     "model": "jev-1.13.0",
     "checkedAt": "2026-09-20T15:11:22.749Z"
-  }
+  },
+  "headline": "Use @typesafeai's Jev model with Pinecone to rerank results with natural language criteria!"
 }

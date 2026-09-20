@@ -15,7 +15,7 @@
 //   npm run watch -- --review-floor 0.8  lowest 'review' score worth a pull request (default 0.75)
 import { appendFile, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import { rankPost, THRESHOLDS, USEFUL_KINDS } from '../api/_lib/relevance.ts';
-import { classifyPost } from '../api/_lib/classify.ts';
+import { classifyPost, pickHeadline } from '../api/_lib/classify.ts';
 import { identify } from '../api/_lib/verify.ts';
 
 const args = process.argv.slice(2);
@@ -134,7 +134,7 @@ async function send(post, mode) {
     method: 'POST',
     headers: { Authorization: `Bearer ${process.env.POSTS_API_TOKEN}`, 'Content-Type': 'application/json' },
     // The score goes along: it was made from the full post, and the server only sees the excerpt.
-    body: JSON.stringify({ url: post.url, mode, relevance: { score: post.rank.score, verdict: post.rank.verdict, kind: post.rank.kind, model: post.rank.model ?? process.env.JEV_MODEL ?? 'jev-latest', checkedAt: post.rank.checkedAt ?? new Date().toISOString() }, media: post.media ?? undefined, category: post.card?.category, useCases: post.card?.useCases, primitives: post.card?.primitives }),
+    body: JSON.stringify({ url: post.url, mode, relevance: { score: post.rank.score, verdict: post.rank.verdict, kind: post.rank.kind, model: post.rank.model ?? process.env.JEV_MODEL ?? 'jev-latest', checkedAt: post.rank.checkedAt ?? new Date().toISOString() }, media: post.media ?? undefined, headline: post.card?.headline, category: post.card?.category, useCases: post.card?.useCases, primitives: post.card?.primitives }),
     signal: AbortSignal.timeout(30000),
   });
   const out = await res.json().catch(() => ({}));
@@ -241,6 +241,12 @@ for (const post of queue) {
     }
   }
   post.card ??= { useCases: [], primitives: [] };
+  if (!post.card.headline) {
+    // The card headline: the author's own sentence that best says what was built, chosen by Jev.
+    const h = await pickHeadline(post.text);
+    if (h) tokens += h.inputTokens;
+    if (h && h.confidence >= 0.4) post.card.headline = h.headline;
+  }
   // Backlog posts ranked before the watcher asked X for media: look the preview up now (one read).
   if (post.media === undefined) post.media = await lookupMedia(post).catch(() => null);
   let outcome = `would ${publish ? 'publish' : 'open a pull request'}`;

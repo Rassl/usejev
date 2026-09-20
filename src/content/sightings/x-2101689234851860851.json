@@ -22,5 +22,6 @@
     "kind": "project_demo",
     "model": "jev-1.13.0",
     "checkedAt": "2026-09-20T15:11:21.667Z"
-  }
+  },
+  "headline": "My jevchat connects jev to a repo of ~7 million documents and uses IR+jev to select the best facts to piece together for an answer."
 }

@@ -25,5 +25,6 @@
     "kind": "project_demo",
     "model": "jev-1.13.0",
     "checkedAt": "2026-09-20T15:11:35.723Z"
-  }
+  },
+  "headline": "So here's a small demo called Toothless - where Jev figures out in real time whether something you’re saying is directed at the AI or someone else."
 }

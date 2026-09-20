@@ -23,5 +23,6 @@
     "kind": "project_demo",
     "model": "jev-1.13.0",
     "checkedAt": "2026-09-20T15:11:41.736Z"
-  }
+  },
+  "headline": "Distilling TypeSafe Jev's System 1 reflex into an open 421M model (Laya) on a 4GB consumer laptop."
 }

@@ -45,7 +45,10 @@ const sightings = defineCollection({
     postedAt: z.coerce.date(),
     // Our own short headline for the card (not the author's words).
     title: z.string().max(70).optional(),
-    // Free-form grouping used by the /community/ filter, e.g. "Agents", "Developer tools".
+    // The author's own sentence that best says what was built, picked by Jev (api/_lib/classify.ts).
+    // Shown as the card headline when there is no hand-written `title`.
+    headline: z.string().max(160).optional(),
+    // Topic used by the /use-cases/ filter, e.g. "Agents", "Developer tools".
     category: z.string().max(40).optional(),
     // Optional preview image, loaded lazily from the original host. Never copy media into the repo.
     media: z

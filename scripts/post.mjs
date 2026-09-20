@@ -46,4 +46,4 @@ if (!res.ok) {
 console.log(`${out.mode === 'pr' ? 'Pull request opened' : 'Published'}: ${out.id}`);
 console.log(`  by ${out.entry.author.name}: "${out.entry.text.slice(0, 80).replace(/\n/g, ' ')}…"`);
 console.log(`  ${out.pullRequest ?? out.file}`);
-if (out.mode !== 'pr') console.log('  Live at https://usejev.dev/community/ in about a minute.');
+if (out.mode !== 'pr') console.log('  Live at https://usejev.dev/use-cases/ in about a minute.');

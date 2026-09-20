@@ -17,5 +17,7 @@
     "kind": "project_demo",
     "model": "jev-1.13.0",
     "checkedAt": "2026-09-19T14:01:25.888Z"
-  }
+  },
+  "headline": "OCR (Vision) + Accessibility tree → TypeSafe Jev Choice classifier → click/type; writer model only for free text",
+  "category": "Agents"
 }

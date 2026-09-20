@@ -1,0 +1,34 @@
+---
+// One card shape for both kinds of use case. Built to be scanned: picture, who, one headline,
+// at most three lines of detail, one topic.
+import type { CatalogItem } from '../lib/catalog';
+
+interface Props {
+  item: CatalogItem;
+  heading?: 'h2' | 'h3';
+}
+const { item, heading: H = 'h3' } = Astro.props;
+const link = item.external ? { rel: 'noopener nofollow ugc' } : {};
+---
+
+<li class:list={['ucard', `ucard-${item.kind}`]} data-kind={item.kind} data-topic={item.topic}>
+  {item.media ? (
+    <div class="ucard-media">
+      <img src={item.media.thumbnail} alt={item.media.alt} width="640" height="360" loading="lazy" decoding="async" referrerpolicy="no-referrer" />
+      {item.media.type === 'video' && <span class="ucard-play" aria-hidden="true">▶ Video</span>}
+    </div>
+  ) : item.kind === 'guide' ? (
+    <div class="ucard-media ucard-code" aria-hidden="true">
+      {item.primitives.map((p) => <span>{p}</span>)}
+    </div>
+  ) : null}
+  <div class="ucard-body">
+    <p class="ucard-label">{item.label}</p>
+    <H class="ucard-title"><a href={item.href} {...link}>{item.headline}</a></H>
+    {item.blurb && <p class="ucard-blurb">{item.blurb}</p>}
+    <p class="ucard-foot">
+      <span class="tag">{item.topic}</span>
+      <span class="ucard-go">{item.kind === 'guide' ? 'Read the guide →' : 'See the post ↗'}</span>
+    </p>
+  </div>
+</li>

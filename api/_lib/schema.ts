@@ -28,6 +28,7 @@ export const sightingInput = z.strictObject({
     .optional(), // filled from X oEmbed when omitted
   postedAt: z.coerce.date().optional(),
   title: z.string().min(1).max(70).optional(),
+  headline: z.string().min(1).max(160).optional(), // the author's sentence that says what was built
   category: z.string().min(1).max(40).optional(),
   media: z
     .strictObject({ type: z.enum(['image', 'video']), thumbnail: httpsUrl, alt: z.string().min(1).max(200) })

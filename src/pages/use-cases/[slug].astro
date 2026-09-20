@@ -75,8 +75,8 @@ const d = entry.data;
 
   {sightings.length > 0 && (
     <section class="related" slot="after" aria-labelledby="wild-heading">
-      <h2 id="wild-heading">Seen in the wild</h2>
-      <p class="meta">Public posts about this pattern. Claims belong to their authors. <a href="/community/">See all posts about Jev in the wild</a> or <a href="/submit/">submit one you have seen</a>.</p>
+      <h2 id="wild-heading">Real projects like this</h2>
+      <p class="meta">Public posts about this pattern. Claims belong to their authors. <a href="/use-cases/?show=project">See all posts about Jev in the wild</a> or <a href="/submit/">submit one you have seen</a>.</p>
       <ul class="sightings">
         {sightings.slice(0, 4).map((x) => <SightingCard sighting={x} />)}
       </ul>

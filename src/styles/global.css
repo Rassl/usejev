@@ -1012,3 +1012,147 @@ pre code {
   color: var(--accent-ink);
   text-decoration: none;
 }
+
+/* Unified use-case cards: real projects and guides share one scannable shape */
+.ugrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 18.5rem), 1fr));
+  gap: 1.1rem;
+  align-items: start; /* a text-only card next to one with a picture should not stretch into blank space */
+  list-style: none;
+  padding: 0;
+  margin: 1.25rem 0;
+}
+.ucard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.ucard[hidden] {
+  display: none;
+}
+.ucard:hover {
+  border-color: var(--accent);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ucard:hover {
+    transform: translateY(-2px);
+  }
+}
+.ucard-media {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background: var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.ucard-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.ucard-play {
+  position: absolute;
+  left: 0.6rem;
+  bottom: 0.6rem;
+  font: 600 0.72rem var(--mono);
+  color: #fff;
+  background: rgb(16 24 28 / 0.8);
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+}
+/* Guides have no screenshot: the question types they use stand in for one */
+.ucard-code {
+  aspect-ratio: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding: 0.9rem 1.1rem;
+  background: var(--accent-soft);
+  border-bottom-color: transparent;
+}
+.ucard-code span {
+  font: 600 0.78rem var(--mono);
+  color: var(--accent);
+  background: var(--surface);
+  border-radius: 4px;
+  padding: 0.1rem 0.5rem;
+}
+.ucard-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0.95rem 1.1rem 1rem;
+  flex: 1;
+}
+.ucard-label {
+  margin: 0;
+  font: 600 0.72rem var(--mono);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ucard-guide .ucard-label {
+  color: var(--accent);
+}
+.ucard-title {
+  margin: 0;
+  font: 700 1.08rem/1.3 var(--display);
+}
+.ucard-title {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.ucard-title a {
+  color: var(--ink);
+  text-decoration: none;
+}
+.ucard-title a::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+.ucard:hover .ucard-title a {
+  color: var(--accent);
+}
+.ucard-blurb {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.ucard-foot {
+  margin: auto 0 0;
+  padding-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+}
+.ucard-go {
+  color: var(--muted);
+  white-space: nowrap;
+}
+.ucard:hover .ucard-go {
+  color: var(--accent);
+}
+.chip-n {
+  opacity: 0.6;
+  font-size: 0.85em;
+}

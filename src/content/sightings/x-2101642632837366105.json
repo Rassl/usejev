@@ -20,5 +20,6 @@
     "kind": "benchmark_or_comparison",
     "model": "jev-1.13.0",
     "checkedAt": "2026-09-20T13:00:33.009Z"
-  }
+  },
+  "headline": "This week my Discord bot started running every yes/no and \"which one?\" decision it makes through @typesafeai's Jev before anything else touches it."
 }

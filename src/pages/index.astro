@@ -1,14 +1,11 @@
 ---
-import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
-import UseCaseCard from '../components/UseCaseCard.astro';
+import CatalogCard from '../components/CatalogCard.astro';
 import Readout from '../components/Readout.astro';
-import SightingCard from '../components/SightingCard.astro';
 import { SITE, DOCS, GUIDES } from '../lib/site';
-import { getSightings } from '../lib/sightings';
+import { getCatalog } from '../lib/catalog';
 import type { Answer } from '../lib/readout';
 
-const latestSightings = (await getSightings()).slice(0, 3);
 
 // Illustrative numbers, the same example as /use-cases/support-ticket-routing/.
 const demoState = `{
@@ -33,10 +30,10 @@ const demoAnswers: Record<string, Answer> = {
   is_outage_report: { type: 'noul', noul: 0.02 },
 };
 
-const entries = (await getCollection('use-cases')).sort(
-  (a, b) => b.data.publishedAt.getTime() - a.data.publishedAt.getTime() || a.data.title.localeCompare(b.data.title),
-);
-const latest = entries.slice(0, 6);
+const catalog = await getCatalog();
+const projects = catalog.filter((i) => i.kind === 'project').length;
+// The first screen of the full list: the best-rated projects with a guide after every third.
+const top = catalog.slice(0, 12);
 
 const jsonLd = [
   {
@@ -55,15 +52,14 @@ const jsonLd = [
   <section class="hero">
     <div class="hero-copy">
       <p class="eyebrow">Unofficial field guide to TypeSafe AI's Jev</p>
-      <h1>Practical Jev use cases, <em>with working code</em></h1>
+      <h1>What people build with Jev, <em>and how to build it</em></h1>
       <p class="lede">
-        <a href={DOCS.vendor}>Jev</a> is a "System One" model: you send a <code>state</code> (an email, a log line, a
-        ticket, any JSON) plus a list of typed questions. It answers every question in parallel with a Choice, a Score,
-        or a Noul (yes/no) value, each backed by probabilities, instead of generated text. Your code branches on those
-        answers and uses confidence to decide when to act and when to escalate.
+        <a href={DOCS.vendor}>Jev</a> is a model that answers typed questions about your data (pick one, rate it, yes
+        or no) with probabilities instead of text, in milliseconds. Below: {projects} real projects, rated by Jev
+        itself, and guides with working code.
       </p>
       <div class="cta-row">
-        <a class="btn btn-primary" href="/use-cases/">Browse all use cases</a>
+        <a class="btn btn-primary" href="/use-cases/">See all {catalog.length} use cases</a>
         <a class="btn" href="/guides/what-is-jev/">What is Jev?</a>
       </div>
     </div>
@@ -84,30 +80,18 @@ const jsonLd = [
   </section>
 
   <section aria-labelledby="grid-heading">
-    <h2 id="grid-heading">Latest use cases</h2>
-    <ul class="grid">
-      {latest.map((e) => <UseCaseCard entry={e} />)}
+    <h2 id="grid-heading">Use cases</h2>
+    <ul class="ugrid">
+      {top.map((i) => <CatalogCard item={i} />)}
     </ul>
     <p class="cta-row">
-      <a class="btn btn-primary" href="/use-cases/">Browse and filter all {entries.length} use cases</a>
+      <a class="btn btn-primary" href="/use-cases/">See all {catalog.length} use cases</a>
+      <a class="btn" href="/submit/">Submit yours</a>
     </p>
   </section>
 
-  {latestSightings.length > 0 && (
-    <section aria-labelledby="wild-heading">
-      <h2 id="wild-heading">Jev in the wild</h2>
-      <ul class="sightings">
-        {latestSightings.map((x) => <SightingCard sighting={x} />)}
-      </ul>
-      <p class="cta-row">
-        <a class="btn" href="/community/">See all posts about Jev in the wild</a>
-        <a class="btn btn-primary" href="/submit/">Submit your own</a>
-      </p>
-    </section>
-  )}
-
   <section aria-labelledby="guides-heading">
-    <h2 id="guides-heading">Guides</h2>
+    <h2 id="guides-heading">Learn the basics</h2>
     <ul class="grid">
       {GUIDES.map((g) => (
         <li class="card">
