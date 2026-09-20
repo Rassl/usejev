@@ -42,7 +42,10 @@ site's API and the watcher works whether or not ranking is switched on in produc
   *review*, 33 *reject*.
 - **`--pr`** turns off committing entirely; *publish* verdicts then share the pull-request cap. Use it after changing queries or thresholds.
 - **Nothing is lost on failure.** If Jev or the site cannot be reached, the post is kept in
-  `retry` and tried first on the next pass; the run exits non-zero so the workflow shows red.
+  `retry` and tried first on the next pass. The run only exits non-zero (a red workflow and an
+  email) for what needs a person: every X search failed, the site refused a post with an
+  unexpected error, or Jev was unreachable for more than a fifth of the posts. Anything less is a
+  note in the run summary.
 - **State is disposable.** `.scratch/watch-state.json` (positions, ranked ids, retries) travels
   between workflow runs through the Actions cache. If it disappears, the next pass re-reads the
   last 24 hours and the site's de-duplication keeps the result the same.

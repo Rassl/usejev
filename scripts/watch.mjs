@@ -151,7 +151,7 @@ for (const q of config.queries) {
 }
 
 // 2. Rank everything first, so the caps below keep the best posts rather than the first ones.
-const counts = { publish: 0, review: 0, reject: 0, held: 0, waiting: 0, skipped: 0, error: 0 };
+const counts = { publish: 0, review: 0, reject: 0, held: 0, waiting: 0, skipped: 0, error: 0, jevErrors: 0, siteErrors: 0 };
 const retry = [];
 const report = [];
 const queue = [];
@@ -172,6 +172,7 @@ for (const post of candidates.values()) {
     if (!r) {
       // Jev unreachable: keep the post for the next pass instead of guessing.
       counts.error++;
+      counts.jevErrors++;
       retry.push(post);
       record(post, 'error', 'Jev could not be reached');
       log('ERROR', post, 'Jev could not be reached');
@@ -235,6 +236,7 @@ for (const post of queue) {
       continue;
     } else {
       counts.error++;
+      counts.siteErrors++;
       retry.push(post);
       record(post, 'error', `site answered ${sent.status}`);
       log('ERROR', post, `site answered ${sent.status}: ${sent.where}`);
@@ -264,4 +266,16 @@ if (!dryRun) {
   const next = { sinceId: { ...state.sinceId, ...newest }, seen: [...seen].filter((id) => /^x-\d+$/.test(id) && !tooOld(id.slice(2))).slice(-5000), retry };
   await writeFile(stateUrl, `${JSON.stringify(next, null, 2)}\n`);
 }
-process.exit(failed || counts.error ? 1 : 0);
+// Exit non-zero only for what needs a person. Single failures are retried next pass on their own:
+// a post Jev timed out on stays queued, and a query that failed keeps its position.
+const ranked = lines.filter((l) => l.type === 'post').length;
+const problems = [
+  failed === config.queries.length && 'every X search failed (token, credits or rate limit)',
+  counts.siteErrors > 0 && `the site refused ${counts.siteErrors} post(s) with an unexpected error (posting token, GitHub token or an outage)`,
+  counts.jevErrors > Math.max(5, ranked * 0.2) && `Jev could not be reached for ${counts.jevErrors} of ${ranked} posts`,
+].filter(Boolean);
+const notes = [failed > 0 && failed < config.queries.length && `${failed} X search(es) failed and will be retried`, counts.jevErrors > 0 && !problems.some((p) => p.startsWith('Jev')) && `${counts.jevErrors} post(s) wait for Jev and will be retried`].filter(Boolean);
+for (const n of notes) console.log(`note     ${n}`);
+for (const p of problems) console.error(`PROBLEM  ${p}`);
+if (process.env.GITHUB_STEP_SUMMARY && (notes.length || problems.length)) await appendFile(process.env.GITHUB_STEP_SUMMARY, `\n${[...problems.map((p) => `**Problem:** ${p}`), ...notes.map((n) => `Note: ${n}`)].join('  \n')}\n`);
+process.exit(problems.length ? 1 : 0);
