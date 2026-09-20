@@ -1,0 +1,27 @@
+{
+  "url": "https://x.com/smhumair/status/2101676418040266818",
+  "category": "Search and data",
+  "media": {
+    "type": "video",
+    "thumbnail": "https://pbs.twimg.com/amplify_video_thumb/2101675836139331584/img/x9Zg7vvP7BhixPRL.jpg",
+    "alt": "Video from the post by Syed"
+  },
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Syed",
+    "handle": "smhumair",
+    "url": "https://x.com/smhumair"
+  },
+  "postedAt": "2026-09-20T14:14:39.977Z",
+  "text": "@typesafeai's Jev as a DuckDB UDF (User Defined Function) on flight destinations:\n\nSELECT destination,\n  jev(destination, 'has a beach and mountains\n      with vegan food and cold weather') AS score\nFROM flights\nORDER BY score DESC;\n\n218 rows. 4 seconds. No embeddings, no vector…",
+  "relevance": {
+    "score": 0.942,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-20T15:11:28.364Z"
+  }
+}
