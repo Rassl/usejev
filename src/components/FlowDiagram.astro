@@ -1,12 +1,13 @@
 ---
-// How Jev fits into an app, as a picture: an angry customer writes in, Jev answers three typed
-// questions, and the app routes the ticket on its own. Few words on purpose.
+// How Jev fits into an app, as a picture. Read left to right: a customer message comes in, you
+// ask Jev three typed questions about it, Jev gives one typed answer per question (same row,
+// same icon), and your app acts on the answers. Few words on purpose.
 // Numbers are illustrative and match /use-cases/support-ticket-routing/.
 ---
 
 <figure class="flow" aria-labelledby="flow-caption">
   <div class="flow-track">
-    <!-- 1. the customer -->
+    <!-- the message -->
     <div class="flow-node">
       <div class="flow-bubble">“I was charged twice!”</div>
       <div class="flow-disc flow-disc-customer">
@@ -22,35 +23,40 @@
       <p class="flow-name">Customer</p>
     </div>
 
-    <div class="flow-wire" aria-hidden="true"><i></i><span>message + 3 questions</span></div>
+    <div class="flow-wire" aria-hidden="true"><i></i></div>
 
-    <!-- 2. the model -->
-    <div class="flow-node flow-node-model">
+    <!-- what you ask -->
+    <div class="flow-col">
+      <p class="flow-head">You ask Jev</p>
+      <ul class="flow-lanes flow-in">
+        <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 13l3-8h12l3 8v6H3z M3 13h5l1.5 3h5L16 13h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" /></svg><span>Which queue?</span><small>Choice</small></li>
+        <li><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2" /><path d="M8 9.5l2.5 1M16 9.5l-2.5 1M8.5 16c2-1.8 5-1.8 7 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg><span>How frustrated?</span><small>Score</small></li>
+        <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 19v-6a6 6 0 0 1 12 0v6M4 19h16M12 3v2M4.5 6.5 6 8M19.5 6.5 18 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg><span>Is it an outage?</span><small>Noul</small></li>
+      </ul>
+    </div>
+
+    <!-- the model -->
+    <div class="flow-jev">
       <div class="flow-disc flow-disc-model">
         <span class="flow-mark">?:</span>
         <svg class="flow-bolt" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h6l-1 8 9-12h-6z" fill="currentColor" /></svg>
       </div>
       <p class="flow-name">Jev</p>
-      <ul class="flow-chips" aria-label="Jev's answers">
-        <li>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 13l3-8h12l3 8v6H3z M3 13h5l1.5 3h5L16 13h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" /></svg>
-          <span>Queue</span><b>Billing</b><em>95%</em>
-        </li>
-        <li>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2" /><path d="M8 9.5l2.5 1M16 9.5l-2.5 1M8.5 16c2-1.8 5-1.8 7 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
-          <span>Mood</span>
-          <span class="flow-meter" role="img" aria-label="Frustration 0.45 on a scale of 0 to 2"><i style="left:22.5%"></i></span>
-        </li>
-        <li>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 19v-6a6 6 0 0 1 12 0v6M4 19h16M12 3v2M4.5 6.5 6 8M19.5 6.5 18 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
-          <span>Outage?</span><b>No</b><em>2%</em>
-        </li>
+    </div>
+
+    <!-- what comes back -->
+    <div class="flow-col">
+      <p class="flow-head">Jev answers</p>
+      <ul class="flow-lanes flow-out">
+        <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 13l3-8h12l3 8v6H3z M3 13h5l1.5 3h5L16 13h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" /></svg><b>Billing</b><em>95% sure</em></li>
+        <li><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2" /><path d="M8 9.5l2.5 1M16 9.5l-2.5 1M8.5 16c2-1.8 5-1.8 7 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg><span class="flow-meter" role="img" aria-label="Frustration 0.45 on a scale of 0 to 2"><i style="left:22.5%"></i></span><em>0.45 of 2</em></li>
+        <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 19v-6a6 6 0 0 1 12 0v6M4 19h16M12 3v2M4.5 6.5 6 8M19.5 6.5 18 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg><b>No</b><em>2% chance</em></li>
       </ul>
     </div>
 
-    <div class="flow-wire" aria-hidden="true"><i></i><span>answers, not text</span></div>
+    <div class="flow-wire" aria-hidden="true"><i></i></div>
 
-    <!-- 3. the outcome -->
+    <!-- what your app does -->
     <div class="flow-node">
       <div class="flow-disc flow-disc-done">
         <svg viewBox="0 0 64 64" aria-hidden="true">
@@ -62,7 +68,7 @@
         </svg>
       </div>
       <p class="flow-name">Billing team</p>
-      <p class="flow-sub">routed automatically</p>
+      <p class="flow-sub">your app routes it</p>
       <p class="flow-else">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="2" /><path d="M4 21c1-5 4-7 8-7s7 2 8 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
         not sure? a person decides
@@ -70,7 +76,7 @@
     </div>
   </div>
   <figcaption id="flow-caption">
-    Illustrative numbers. <a href="/use-cases/support-ticket-routing/">See this example with code →</a>
+    One request, no generated text. Illustrative numbers. <a href="/use-cases/support-ticket-routing/">See this example with code →</a>
   </figcaption>
 </figure>
 
@@ -78,6 +84,8 @@
   .flow {
     --ok: #1f8a4c;
     --hot: #d4483b;
+    --lane: 2.9rem; /* height of one question/answer row */
+    --lane-gap: 0.7rem;
     margin: 0;
     background: var(--surface);
     border: 1px solid var(--line);
@@ -88,19 +96,21 @@
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     justify-items: center;
-    gap: 0.25rem;
+    gap: 1rem;
   }
-  .flow-node {
+  .flow-node,
+  .flow-jev {
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
-    min-width: 0;
   }
+
+  /* the round pictures */
   .flow-disc {
     position: relative;
-    width: 8rem;
-    height: 8rem;
+    width: 7rem;
+    height: 7rem;
     border-radius: 50%;
     display: grid;
     place-items: center;
@@ -108,8 +118,8 @@
     background: color-mix(in srgb, currentColor 8%, var(--surface));
   }
   .flow-disc svg {
-    width: 4.9rem;
-    height: 4.9rem;
+    width: 4.3rem;
+    height: 4.3rem;
   }
   .flow-disc-customer {
     color: var(--hot);
@@ -118,16 +128,15 @@
     color: var(--ink);
   }
   .flow-disc-model {
-    color: var(--accent);
-    width: 9rem;
-    height: 9rem;
+    width: 7.5rem;
+    height: 7.5rem;
     border-radius: 28%;
     background: var(--accent);
     border-color: var(--accent);
     box-shadow: 0 0 0 6px var(--accent-soft);
   }
   .flow-mark {
-    font: 800 3.1rem var(--mono);
+    font: 800 2.6rem var(--mono);
     color: #10181c;
     background: var(--mark);
     border-radius: 10px;
@@ -136,10 +145,10 @@
   }
   .flow-bolt {
     position: absolute;
-    right: -0.8rem;
-    top: -0.8rem;
-    width: 2.4rem !important;
-    height: 2.4rem !important;
+    right: -0.75rem;
+    top: -0.75rem;
+    width: 2.2rem !important;
+    height: 2.2rem !important;
     padding: 0.35rem;
     color: #10181c;
     background: var(--mark);
@@ -147,8 +156,8 @@
     border-radius: 50%;
   }
   .flow-name {
-    margin: 0.7rem 0 0;
-    font: 700 1.3rem var(--display);
+    margin: 0.6rem 0 0;
+    font: 700 1.2rem var(--display);
     color: var(--ink);
   }
   .flow-sub {
@@ -158,82 +167,113 @@
     color: var(--ok);
   }
   .flow-else {
-    margin: 0.7rem 0 0;
+    margin: 0.6rem 0 0;
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
-    font-size: 0.78rem;
+    font-size: 0.76rem;
     color: var(--muted);
     border: 1px dashed var(--line);
     border-radius: 99px;
     padding: 0.2rem 0.65rem 0.2rem 0.45rem;
+    white-space: nowrap;
   }
   .flow-else svg {
     width: 1rem;
     height: 1rem;
   }
-
-  /* what the customer said */
   .flow-bubble {
     position: relative;
-    margin-bottom: 0.9rem;
-    padding: 0.45rem 0.9rem;
+    margin-bottom: 0.85rem;
+    padding: 0.4rem 0.85rem;
     border-radius: 14px;
     background: var(--hot);
     color: #fff;
-    font: 700 1.05rem var(--display);
+    font: 700 1rem var(--display);
     white-space: nowrap;
   }
   .flow-bubble::after {
     content: '';
     position: absolute;
     left: 50%;
-    bottom: -0.45rem;
-    width: 0.9rem;
-    height: 0.9rem;
+    bottom: -0.4rem;
+    width: 0.85rem;
+    height: 0.85rem;
     background: inherit;
     transform: translateX(-50%) rotate(45deg);
     border-radius: 2px;
   }
 
-  /* what Jev said */
-  .flow-chips {
-    list-style: none;
-    margin: 0.8rem 0 0;
-    padding: 0;
-    display: grid;
-    gap: 0.4rem;
-    width: min(100%, 15.5rem);
+  /* questions in, answers out: same rows, same icons */
+  .flow-col {
+    width: min(100%, 17rem);
   }
-  .flow-chips li {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.35rem 0.7rem;
-    border-radius: 99px;
-    background: var(--accent-soft);
-    font-size: 0.88rem;
+  .flow-head {
+    margin: 0 0 0.6rem;
+    font: 700 0.78rem var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    text-align: center;
     color: var(--muted);
   }
-  .flow-chips svg {
-    width: 1.15rem;
-    height: 1.15rem;
-    color: var(--accent);
+  .flow-lanes {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--lane-gap);
+  }
+  .flow-lanes li {
+    position: relative;
+    height: var(--lane);
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0 0.8rem;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    white-space: nowrap;
+  }
+  .flow-lanes svg {
+    width: 1.3rem;
+    height: 1.3rem;
     flex: none;
   }
-  .flow-chips b {
+  .flow-in li {
+    border: 2px solid var(--line);
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .flow-in svg {
+    color: var(--muted);
+  }
+  .flow-in small {
     margin-left: auto;
+    font: 600 0.66rem var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+  }
+  .flow-out li {
+    background: var(--accent-soft);
+    border: 2px solid var(--accent);
     color: var(--ink);
   }
-  .flow-chips em {
+  .flow-out svg {
+    color: var(--accent);
+  }
+  .flow-out b {
+    font-size: 1.05rem;
+  }
+  .flow-out em {
+    margin-left: auto;
     font: 600 0.78rem var(--mono);
     font-style: normal;
     color: var(--accent);
   }
   .flow-meter {
     position: relative;
-    margin-left: auto;
-    width: 5.5rem;
+    width: 5rem;
     height: 0.5rem;
     border-radius: 99px;
     background: linear-gradient(to right, var(--ok), #e0a526, var(--hot));
@@ -249,74 +289,115 @@
     transform: translate(-50%, -50%);
   }
 
-  /* the wires between the three */
-  .flow-wire {
-    position: relative;
-    display: grid;
-    justify-items: center;
-    gap: 0.3rem;
-    padding-block: 0.4rem;
-    font: 600 0.72rem var(--mono);
-    letter-spacing: 0.03em;
-    color: var(--muted);
-  }
+  /* wires */
   .flow-wire i {
     display: block;
     width: 3px;
-    height: 2.2rem;
-    border-radius: 3px;
+    height: 1.6rem;
     background: repeating-linear-gradient(to bottom, var(--accent) 0 6px, transparent 6px 12px);
     background-size: 3px 12px;
   }
-  .flow-wire span {
-    order: -1;
-  }
-  @media (min-width: 56rem) {
+
+  @media (min-width: 62rem) {
     .flow {
-      padding: 2rem 2rem 1.2rem;
+      padding: 2rem 1.75rem 1.2rem;
     }
     .flow-track {
-      grid-template-columns: minmax(0, 1fr) minmax(5rem, 0.8fr) minmax(0, 1.25fr) minmax(5rem, 0.8fr) minmax(0, 1fr);
-      align-items: start;
+      grid-template-columns: auto 3.5rem minmax(0, 1fr) auto minmax(0, 1fr) 3.5rem auto;
+      align-items: center;
       gap: 0;
     }
-    /* line the three pictures up on one axis whatever sits above or below them */
-    .flow-node {
-      padding-top: 2.7rem; /* 9rem block: centre at 7.2rem, level with the customer */
-    }
-    .flow-node:first-child {
-      padding-top: 0;
-    }
-    .flow-node:last-child {
-      padding-top: 3.2rem;
-    }
-    .flow-wire {
-      padding: calc(7.2rem - 2px) 0 0;
-      gap: 0.45rem;
-    }
-    .flow-wire span {
-      order: 0;
-      text-align: center;
-      line-height: 1.25;
-    }
-    .flow-wire i {
+    .flow-col {
       width: 100%;
-      height: 4px;
+    }
+    /* headings sit above the rows without pushing them off the shared centre line */
+    .flow-col,
+    .flow-node,
+    .flow-jev {
+      position: relative;
+    }
+    .flow-head {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 100%;
+    }
+    .flow-jev .flow-name,
+    .flow-node:last-child .flow-name {
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      white-space: nowrap;
+    }
+    .flow-node:last-child .flow-sub,
+    .flow-node:last-child .flow-else {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      white-space: nowrap;
+    }
+    .flow-node:last-child .flow-sub { top: calc(100% + 2.2rem); }
+    .flow-node:last-child .flow-else { top: calc(100% + 3.6rem); }
+    .flow-node:first-child .flow-bubble {
+      position: absolute;
+      bottom: 100%;
+      margin-bottom: 0.75rem;
+    }
+    .flow-node:first-child .flow-name {
+      position: absolute;
+      top: 100%;
+    }
+    .flow-track {
+      padding-block: 3.4rem 5.6rem; /* room for the bubble above and the labels below */
+    }
+    .flow-jev {
+      margin-inline: 2.25rem;
+    }
+    /* wide enough for the bubble above and the labels below, so they never touch a neighbour */
+    .flow-node {
+      min-width: 11rem;
+    }
+    /* each row is wired to the model: question -> Jev -> answer */
+    .flow-in li::after,
+    .flow-out li::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      width: 2.25rem;
+      height: 3px;
+      margin-top: -1.5px;
       background: repeating-linear-gradient(to right, var(--accent) 0 6px, transparent 6px 12px);
       background-size: 12px 3px;
+    }
+    .flow-in li::after { left: 100%; margin-left: 2px; }
+    .flow-out li::before { right: 100%; margin-right: 2px; }
+    .flow-wire i {
+      width: 100%;
+      height: 3px;
+      background: repeating-linear-gradient(to right, var(--accent) 0 6px, transparent 6px 12px);
+      background-size: 12px 3px;
+    }
+    .flow-wire {
+      position: relative;
+      padding-inline: 0.3rem;
     }
     .flow-wire::after {
       content: '';
       position: absolute;
-      right: -2px;
-      top: calc(7.2rem - 7.5px);
-      border: 7px solid transparent;
-      border-left: 10px solid var(--accent);
+      right: 0;
+      top: 50%;
+      margin-top: -6px;
+      border: 6px solid transparent;
+      border-left: 9px solid var(--accent);
       border-right: 0;
     }
   }
+
   @media (prefers-reduced-motion: no-preference) {
-    .flow-wire i {
+    .flow-wire i,
+    .flow-in li::after,
+    .flow-out li::before {
       animation: flow-march 0.6s linear infinite;
     }
     .flow-disc-customer {
@@ -325,12 +406,12 @@
     .flow-disc-model {
       animation: flow-pulse 2.2s ease-in-out infinite;
     }
-    .flow-chips li {
+    .flow-out li {
       animation: flow-pop 0.5s both;
     }
-    .flow-chips li:nth-child(1) { animation-delay: 0.5s; }
-    .flow-chips li:nth-child(2) { animation-delay: 0.65s; }
-    .flow-chips li:nth-child(3) { animation-delay: 0.8s; }
+    .flow-out li:nth-child(1) { animation-delay: 0.5s; }
+    .flow-out li:nth-child(2) { animation-delay: 0.7s; }
+    .flow-out li:nth-child(3) { animation-delay: 0.9s; }
   }
   @keyframes flow-march {
     to { background-position: 12px 12px; }
@@ -345,10 +426,10 @@
     50% { box-shadow: 0 0 0 11px var(--accent-soft); }
   }
   @keyframes flow-pop {
-    from { opacity: 0; transform: translateY(6px) scale(0.96); }
+    from { opacity: 0; transform: translateX(-8px); }
   }
   figcaption {
-    margin-top: 1.3rem;
+    margin-top: 1rem;
     text-align: center;
     font-size: 0.8rem;
     color: var(--muted);
