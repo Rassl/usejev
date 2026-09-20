@@ -1,0 +1,201 @@
+---
+// The home page's explainer: the picture and the code for the same example, side by side in one
+// switcher, so nobody has to leave the page to see what calling Jev looks like. The full guide
+// (question design, thresholds, cost) stays one click away.
+// Samples stay inside the API shape verified in docs/jev-api-notes.md.
+import { Code } from 'astro:components';
+import FlowDiagram from './FlowDiagram.astro';
+
+const themes = { light: 'github-light-high-contrast', dark: 'github-dark' } as const;
+
+const python = `from typesafe_sdk import Choice, Noul, Score, TypeSafeClient
+
+client = TypeSafeClient()  # reads TYPESAFE_API_KEY
+
+response = client.system_one(
+    state={
+        "subject": "Charged twice this month",
+        "body": "Hi, I see two charges of $49 on my card for September. Can you refund one?",
+    },
+    questions={
+        "queue": Choice(
+            instructions="Which support team should handle the ticket in \`subject\` and \`body\`?",
+            criteria={
+                "billing": "Charges, invoices, refunds, payment methods",
+                "technical": "Bugs, errors, outages, API problems",
+                "other": "Anything that does not fit the teams above",
+            },
+        ),
+        "frustration": Score(
+            instructions="How frustrated is the customer in \`body\`?",
+            criteria=["Calm", "Frustrated", "Very angry"],
+        ),
+        "is_outage_report": Noul(
+            instructions="Does \`body\` report that the product is down right now?",
+        ),
+    },
+)
+
+queue = response.answers["queue"]        # .choice == "billing", .confidence == 0.90
+if queue.confidence >= 0.8:              # your code decides, not the model
+    route_to(queue.choice)               # your own function
+else:
+    send_to_a_person(response)           # your own function`;
+
+const ts = `import { choice, noul, score, TypeSafeClient } from "@typesafe-ai/sdk";
+
+const client = new TypeSafeClient(); // reads TYPESAFE_API_KEY
+
+const response = await client.systemOne({
+  state: {
+    subject: "Charged twice this month",
+    body: "Hi, I see two charges of $49 on my card for September. Can you refund one?",
+  },
+  questions: {
+    queue: choice("Which support team should handle the ticket in \`subject\` and \`body\`?", {
+      billing: "Charges, invoices, refunds, payment methods",
+      technical: "Bugs, errors, outages, API problems",
+      other: "Anything that does not fit the teams above",
+    }),
+    frustration: score("How frustrated is the customer in \`body\`?", ["Calm", "Frustrated", "Very angry"]),
+    is_outage_report: noul("Does \`body\` report that the product is down right now?"),
+  },
+});
+
+const { queue } = response.answers; // queue.choice === "billing", queue.confidence === 0.9
+if (queue.confidence >= 0.8) {
+  routeTo(queue.choice); // your code decides, not the model
+} else {
+  sendToAPerson(response);
+}`;
+
+const http = `curl https://api.typesafe.ai/v1/systemone \\
+  -H "Authorization: Bearer $TYPESAFE_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "model": "jev-latest",
+    "state": {
+      "subject": "Charged twice this month",
+      "body": "Hi, I see two charges of $49 on my card for September. Can you refund one?"
+    },
+    "questions": {
+      "queue": {
+        "type": "choice",
+        "instructions": "Which support team should handle the ticket in \`subject\` and \`body\`?",
+        "criteria": {
+          "billing": "Charges, invoices, refunds, payment methods",
+          "technical": "Bugs, errors, outages, API problems",
+          "other": "Anything that does not fit the teams above"
+        }
+      },
+      "frustration": {
+        "type": "score",
+        "instructions": "How frustrated is the customer in \`body\`?",
+        "criteria": ["Calm", "Frustrated", "Very angry"]
+      },
+      "is_outage_report": {
+        "type": "noul",
+        "instructions": "Does \`body\` report that the product is down right now?"
+      }
+    }
+  }'
+
+# -> { "answers": { "queue": { "choice": "billing", "confidence": 0.90, ... },
+#                   "frustration": { "score": 0.45, ... },
+#                   "is_outage_report": { "noul": 0.02 } } }`;
+
+const tabs = [
+  { id: 'picture', label: 'How it works' },
+  { id: 'python', label: 'Python' },
+  { id: 'ts', label: 'TypeScript' },
+  { id: 'http', label: 'HTTP' },
+];
+---
+
+<div class="how">
+  {tabs.map((t, i) => <input type="radio" name="how" id={`how-${t.id}`} checked={i === 0} />)}
+  <div class="how-bar">
+    <div class="how-tabs" role="presentation">
+      {tabs.map((t) => <label for={`how-${t.id}`}>{t.label}</label>)}
+    </div>
+    <a class="how-more" href="/use-cases/support-ticket-routing/">Read the full guide →</a>
+  </div>
+  <section class="how-panel" aria-label="How it works, as a picture"><FlowDiagram /></section>
+  <section class="how-panel how-code" aria-label="The same example in Python"><Code code={python} lang="python" themes={themes} /></section>
+  <section class="how-panel how-code" aria-label="The same example in TypeScript"><Code code={ts} lang="ts" themes={themes} /></section>
+  <section class="how-panel how-code" aria-label="The same example as an HTTP request"><Code code={http} lang="bash" themes={themes} /></section>
+</div>
+
+<style>
+  .how > input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .how-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem 1rem;
+    margin-bottom: 0.75rem;
+  }
+  .how-tabs {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.2rem;
+    padding: 0.25rem;
+    border-radius: 99px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+  }
+  .how-tabs label {
+    cursor: pointer;
+    padding: 0.4rem 1rem;
+    border-radius: 99px;
+    font-weight: 600;
+    font-size: 0.92rem;
+    color: var(--muted);
+  }
+  .how-tabs label:hover {
+    color: var(--ink);
+  }
+  .how-more {
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-decoration: none;
+  }
+  .how-more:hover {
+    text-decoration: underline;
+  }
+  .how-panel {
+    display: none;
+  }
+  .how > input:nth-of-type(1):checked ~ .how-panel:nth-of-type(1),
+  .how > input:nth-of-type(2):checked ~ .how-panel:nth-of-type(2),
+  .how > input:nth-of-type(3):checked ~ .how-panel:nth-of-type(3),
+  .how > input:nth-of-type(4):checked ~ .how-panel:nth-of-type(4) {
+    display: block;
+  }
+  .how > input:nth-of-type(1):checked ~ .how-bar label:nth-of-type(1),
+  .how > input:nth-of-type(2):checked ~ .how-bar label:nth-of-type(2),
+  .how > input:nth-of-type(3):checked ~ .how-bar label:nth-of-type(3),
+  .how > input:nth-of-type(4):checked ~ .how-bar label:nth-of-type(4) {
+    background: var(--accent);
+    color: var(--accent-ink);
+  }
+  .how > input:focus-visible ~ .how-bar .how-tabs {
+    outline: 3px solid var(--mark);
+    outline-offset: 2px;
+  }
+  .how-code :global(pre) {
+    margin: 0;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 1.25rem 1.4rem;
+    font-size: 0.86rem;
+    line-height: 1.55;
+    overflow-x: auto;
+    max-height: 40rem; /* tall enough to show the decision at the end without scrolling */
+  }
+</style>

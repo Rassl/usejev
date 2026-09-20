@@ -1,7 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import CatalogCard from '../components/CatalogCard.astro';
-import FlowDiagram from '../components/FlowDiagram.astro';
+import HowItWorks from '../components/HowItWorks.astro';
 import { SITE, DOCS, GUIDES } from '../lib/site';
 import { getCatalog } from '../lib/catalog';
 
@@ -43,7 +43,7 @@ const jsonLd = [
 
   <section aria-labelledby="flow-heading" class="flow-section">
     <h2 id="flow-heading" class="sr-only">How Jev fits into an app</h2>
-    <FlowDiagram />
+    <HowItWorks />
   </section>
 
   <section aria-labelledby="grid-heading">
