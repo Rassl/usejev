@@ -1,0 +1,26 @@
+{
+  "url": "https://x.com/amirhusain_tx/status/2101689234851860851",
+  "media": {
+    "type": "video",
+    "thumbnail": "https://pbs.twimg.com/amplify_video_thumb/2101689209899868160/img/4J9q0Jb6IBwyXvXW.jpg",
+    "alt": "Video from the post by Amir Husain"
+  },
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Amir Husain",
+    "handle": "amirhusain_tx",
+    "url": "https://x.com/amirhusain_tx"
+  },
+  "postedAt": "2026-09-20T15:05:35.743Z",
+  "text": "Chat with @typesafeai's Jev. My jevchat connects jev to a repo of ~7 million documents and uses IR+jev to select the best facts to piece together for an answer. @CompleteSkeptic says jev is not made for chat, but maybe it is. More below. For now, here's a quick demo:",
+  "relevance": {
+    "score": 0.929,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-20T15:11:21.667Z"
+  }
+}
