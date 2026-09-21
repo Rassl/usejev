@@ -1,0 +1,30 @@
+{
+  "url": "https://x.com/Chrisondesk/status/2101894289475485849",
+  "headline": "I moderated 100 comments in real time for $0.002171.",
+  "category": "Moderation and safety",
+  "media": {
+    "type": "video",
+    "thumbnail": "https://pbs.twimg.com/amplify_video_thumb/2101894146361544704/img/EQlsE8F9W9WPTBuY.jpg",
+    "alt": "Video from the post by Chris"
+  },
+  "useCases": [
+    "content-moderation-prompt-injection-screening"
+  ],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Chris",
+    "handle": "Chrisondesk",
+    "url": "https://x.com/Chrisondesk"
+  },
+  "postedAt": "2026-09-21T04:40:24.575Z",
+  "text": "I moderated 100 comments in real time for $0.002171.\n\nA fifth of a cent. But this isn't a post about the demo. It's about the choice you're making when you add AI to a product: LLM or decision model.\n\nThe model is Jev, by TypeSafe AI. Not a chatbot. A \"System One\" model. You send…",
+  "relevance": {
+    "score": 0.966,
+    "verdict": "publish",
+    "kind": "benchmark_or_comparison",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-21T05:01:38.684Z"
+  }
+}
