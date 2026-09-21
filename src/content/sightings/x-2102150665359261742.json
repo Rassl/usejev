@@ -1,0 +1,28 @@
+{
+  "url": "https://x.com/nautahakk/status/2102150665359261742",
+  "headline": "@typesafeai's Jev picks a Codex model and effort per prompt.",
+  "category": "Agents",
+  "media": {
+    "type": "video",
+    "thumbnail": "https://pbs.twimg.com/amplify_video_thumb/2102149163353796610/img/2VhdOAkDNVYEwEwZ.jpg",
+    "alt": "Video from the post by Róbert N"
+  },
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Róbert N",
+    "handle": "nautahakk",
+    "url": "https://x.com/nautahakk"
+  },
+  "postedAt": "2026-09-21T21:39:09.349Z",
+  "text": "Jev Codex Router is live for DeepSeek Harness. @typesafeai's Jev picks a Codex model and effort per prompt. You set the max model and which Astra effort levels require approval. The actual route shows under each reply.\nCode + demo:",
+  "relevance": {
+    "score": 0.923,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-21T22:00:32.110Z"
+  }
+}
