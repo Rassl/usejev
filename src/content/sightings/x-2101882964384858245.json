@@ -1,0 +1,23 @@
+{
+  "url": "https://x.com/jedi_lus/status/2101882964384858245",
+  "headline": "Quick, non-professional test—reference only: local Laya on RX 6800 XT vs Jev API.",
+  "category": "Benchmarks",
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Jedilus",
+    "handle": "jedi_lus",
+    "url": "https://x.com/jedi_lus"
+  },
+  "postedAt": "2026-09-21T03:55:24.463Z",
+  "text": "Quick, non-professional test—reference only: local Laya on RX 6800 XT vs Jev API.\n• Single-query latency: 20 vs 262 ms\n• Chinese classification: 61.7% vs 82.8%\n• Chinese NLI: 72.2% vs 74.0%\n1,140 public test examples. Local vs remote latency; no overall winner claim.",
+  "relevance": {
+    "score": 0.934,
+    "verdict": "publish",
+    "kind": "benchmark_or_comparison",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-21T05:01:39.859Z"
+  }
+}
