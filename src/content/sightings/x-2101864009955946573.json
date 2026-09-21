@@ -1,0 +1,28 @@
+{
+  "url": "https://x.com/Arbistocks/status/2101864009955946573",
+  "headline": "arbistocks is putting jev in front of the engine.",
+  "category": "Trading and finance",
+  "media": {
+    "type": "video",
+    "thumbnail": "https://pbs.twimg.com/amplify_video_thumb/2099925575637057536/img/l4J_ZhkaxAe8FJXv.jpg",
+    "alt": "Video from the post by ArbiStocks"
+  },
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "ArbiStocks",
+    "handle": "Arbistocks",
+    "url": "https://x.com/Arbistocks"
+  },
+  "postedAt": "2026-09-21T02:40:05.375Z",
+  "text": "Huge thanks to @typesafeai for LLM developer access. \n\narbistocks is putting jev in front of the engine.\n\nhere is why that pairing makes sense. every decision inside an arbitrage cycle is a closed question. is this gap real or is it a thin pool lying to me. which of the six…",
+  "relevance": {
+    "score": 0.906,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-21T05:01:44.432Z"
+  }
+}
