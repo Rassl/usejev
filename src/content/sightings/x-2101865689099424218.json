@@ -1,0 +1,30 @@
+{
+  "url": "https://x.com/QiaoGeorge/status/2101865689099424218",
+  "headline": "A Change Stream fires on that insert and hands the document to Jev, which sorts it into a topic bucket with a confidence score.",
+  "category": "Search and data",
+  "media": {
+    "type": "video",
+    "thumbnail": "https://pbs.twimg.com/amplify_video_thumb/2101864208883433472/img/4c7OSj5dsLt71abN.jpg",
+    "alt": "Video from the post by George Qiao"
+  },
+  "useCases": [
+    "support-ticket-routing"
+  ],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "George Qiao",
+    "handle": "QiaoGeorge",
+    "url": "https://x.com/QiaoGeorge"
+  },
+  "postedAt": "2026-09-21T02:46:45.714Z",
+  "text": "I got access to Jev, a new low-latency LLM from TypeSafe, so I built something real to find out what it's actually good for: a live customer care triage dashboard called Care Desk Live.\n\nHere's the loop: a customer complaint lands and gets \n\nwritten to MongoDB. A Change Stream…",
+  "relevance": {
+    "score": 0.911,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-21T05:01:44.239Z"
+  }
+}
