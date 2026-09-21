@@ -1,0 +1,30 @@
+{
+  "url": "https://x.com/cyrilXBT/status/2101854380408672401",
+  "headline": "A tiny open source browser agent using Jev instead of an LLM for every click.",
+  "category": "Agents",
+  "media": {
+    "type": "video",
+    "thumbnail": "https://pbs.twimg.com/amplify_video_thumb/2100410607807918080/img/lNfcykqoOvLoZHWa.jpg",
+    "alt": "Video from the post by CyrilXBT"
+  },
+  "useCases": [],
+  "primitives": [
+    "Choice"
+  ],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "CyrilXBT",
+    "handle": "cyrilXBT",
+    "url": "https://x.com/cyrilXBT"
+  },
+  "postedAt": "2026-09-21T02:01:49.512Z",
+  "text": "A tiny open source browser agent using Jev instead of an LLM for every click.\n\nFound a flight search in 7 SECONDS.\n\nTotal cost: $0.0039.\n\nHere's why that's not a typo.\n\nA normal browser agent asks a chat model \"what should I click\" on every single step. That's a full generation…",
+  "relevance": {
+    "score": 0.917,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-21T05:01:45.041Z"
+  }
+}
