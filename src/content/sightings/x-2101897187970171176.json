@@ -1,0 +1,30 @@
+{
+  "url": "https://x.com/zohaibtanwir/status/2101897187970171176",
+  "headline": "Jev is incredible - built an email classifier that is capable of classifying 50 emails in under 2 secs.",
+  "category": "Productivity",
+  "media": {
+    "type": "video",
+    "thumbnail": "https://pbs.twimg.com/amplify_video_thumb/2101896594950066178/img/FA6bjTgb6HEh9hxQ.jpg",
+    "alt": "Video from the post by Zohaib Tanwir"
+  },
+  "useCases": [
+    "email-triage-priority-scoring"
+  ],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Zohaib Tanwir",
+    "handle": "zohaibtanwir",
+    "url": "https://x.com/zohaibtanwir"
+  },
+  "postedAt": "2026-09-21T04:51:55.630Z",
+  "text": "Jev is incredible - built an email classifier that is capable of classifying 50 emails in under 2 secs. That too, when Jev is hosted in us-west, and I am in India. \n\nIdea credit - @ryanvogel @typesafeai  #Jev",
+  "relevance": {
+    "score": 0.938,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-21T05:01:38.372Z"
+  }
+}
