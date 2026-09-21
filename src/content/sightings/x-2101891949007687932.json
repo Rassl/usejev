@@ -1,0 +1,28 @@
+{
+  "url": "https://x.com/DevItaliya22/status/2101891949007687932",
+  "headline": "I made 2 jev model play chess , either both will get the rules or none will.",
+  "category": "Games",
+  "media": {
+    "type": "image",
+    "thumbnail": "https://pbs.twimg.com/media/HStrOc5aIAAGi4h.png",
+    "alt": "Image from the post by @devitaliya"
+  },
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "@devitaliya",
+    "handle": "DevItaliya22",
+    "url": "https://x.com/DevItaliya22"
+  },
+  "postedAt": "2026-09-21T04:31:06.564Z",
+  "text": "I made 2 jev model play chess , either both will get the rules or none will. \n\nThis were the results.\n\nGames are really fast but many time it takes desicion with highest prob. is not as per chess rules.\n\nMaybe the model is not trained well for chess rules.",
+  "relevance": {
+    "score": 0.907,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-21T05:01:39.191Z"
+  }
+}
