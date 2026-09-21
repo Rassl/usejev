@@ -1,0 +1,23 @@
+{
+  "url": "https://x.com/aaronedell/status/2101897023800918285",
+  "headline": "The stack is rules → Laya → Jev → @ollama 27B → cloud.",
+  "category": "Benchmarks",
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Aaron Edell",
+    "handle": "aaronedell",
+    "url": "https://x.com/aaronedell"
+  },
+  "postedAt": "2026-09-21T04:51:16.489Z",
+  "text": "Benchmarked @mizorewww’s Laya-MLX against @FeatherlessAI Simple Jev on my M4 Pro inside @OpenClaw:\n\nLaya: 85% @ 27.8ms\nJev/Qwen3-4B: 90% @ 1,167.6ms\n\nThe stack is rules → Laya → Jev → @ollama 27B → cloud. 14/20 decisions resolved before Jev. @typesafeai was right about System…",
+  "relevance": {
+    "score": 0.933,
+    "verdict": "publish",
+    "kind": "benchmark_or_comparison",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-21T05:01:38.544Z"
+  }
+}
