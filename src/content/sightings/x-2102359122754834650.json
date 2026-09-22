@@ -1,0 +1,28 @@
+{
+  "url": "https://x.com/fazlerocks/status/2102359122754834650",
+  "headline": "jev helped me build my own ad blocker - apple safari-inspired thanos snap …",
+  "category": "Browser extensions",
+  "media": {
+    "type": "video",
+    "thumbnail": "https://pbs.twimg.com/amplify_video_thumb/2102358577184948225/img/-UBKj8uzsn75a_v1.jpg",
+    "alt": "Video from the post by Fazle Rahman"
+  },
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Fazle Rahman",
+    "handle": "fazlerocks",
+    "url": "https://x.com/fazlerocks"
+  },
+  "postedAt": "2026-09-22T11:27:29.465Z",
+  "text": "jev helped me build my own ad blocker - apple safari-inspired thanos snap … INSANE!\n\nw/o any hardcoded filter lists.\nlooks at each element and decides: ad or not\n\nin one article:\n16 ads gone, ~20k tokens, $0.0008\n\ncached for next visit\n\nopen source, byok, repo below @typesafeai",
+  "relevance": {
+    "score": 0.923,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-22T11:44:25.953Z"
+  }
+}
