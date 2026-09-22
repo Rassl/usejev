@@ -1,0 +1,28 @@
+{
+  "url": "https://x.com/dhruv_ko/status/2102258860925038625",
+  "headline": "So I built it a chess harness 🧵",
+  "category": "Games",
+  "media": {
+    "type": "video",
+    "thumbnail": "https://pbs.twimg.com/amplify_video_thumb/2102258453490372608/img/rdAQ2EFUSvSBBgLM.jpg",
+    "alt": "Video from the post by Dhruv"
+  },
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Dhruv",
+    "handle": "dhruv_ko",
+    "url": "https://x.com/dhruv_ko"
+  },
+  "postedAt": "2026-09-22T04:49:05.182Z",
+  "text": "1/ Jev has a chess rating now. 1023 Elo.\n\nJev is TypeSafe's \"System One\" decision model. No search, no planning. You hand it a situation and options, it picks one with a confidence score. Built for routing and classification. Not games.\n\nSo I built it a chess harness 🧵",
+  "relevance": {
+    "score": 0.943,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-22T05:02:39.608Z"
+  }
+}
