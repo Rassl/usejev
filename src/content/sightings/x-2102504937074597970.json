@@ -1,0 +1,27 @@
+{
+  "url": "https://x.com/jcurtis/status/2102504937074597970",
+  "category": "Search and data",
+  "media": {
+    "type": "image",
+    "thumbnail": "https://pbs.twimg.com/media/HS2YR94XQAAeZo_.jpg",
+    "alt": "Image from the post by John Curtis"
+  },
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "John Curtis",
+    "handle": "jcurtis",
+    "url": "https://x.com/jcurtis"
+  },
+  "postedAt": "2026-09-22T21:06:54.308Z",
+  "text": "Was inspired to combine my favorite search provider @p0 with the new JEV hotness from @typesafeai I bring you this fun demo [link]  Jev gives a yes/no with real probabilities and Parallel does the hard work on finding sources.",
+  "relevance": {
+    "score": 0.905,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-22T21:22:46.091Z"
+  }
+}
