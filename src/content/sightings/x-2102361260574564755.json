@@ -1,0 +1,27 @@
+{
+  "url": "https://x.com/Kacper95682155/status/2102361260574564755",
+  "category": "Agents",
+  "media": {
+    "type": "video",
+    "thumbnail": "https://pbs.twimg.com/amplify_video_thumb/2102361070086049792/img/ZJqHglQ-pw2KK8JO.jpg",
+    "alt": "Video from the post by Kacper Włodarczyk"
+  },
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Kacper Włodarczyk",
+    "handle": "Kacper95682155",
+    "url": "https://x.com/Kacper95682155"
+  },
+  "postedAt": "2026-09-22T11:35:59.161Z",
+  "text": "A browser action as a choice from a list, not a string the model writes.\n\nAgenticOS's browser_choice shipped in v0.0.479. Jev picks the operation and the target, reached through Pydantic AI's typesafe extra.\n\nAsked it for two Wikipedia pages and it ran two browsers at once. 🧭",
+  "relevance": {
+    "score": 0.921,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-22T11:44:27.988Z"
+  }
+}
