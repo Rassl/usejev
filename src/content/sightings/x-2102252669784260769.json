@@ -1,0 +1,28 @@
+{
+  "url": "https://x.com/dannylivshits/status/2102252669784260769",
+  "headline": "What I built - a proof of concept for suspicious email classification aimed at scam emails: Scam Signal Lens.",
+  "category": "Moderation and safety",
+  "media": {
+    "type": "video",
+    "thumbnail": "https://pbs.twimg.com/amplify_video_thumb/2102237653802553344/img/Ekhzz0BFZR_H1jtP.jpg",
+    "alt": "Video from the post by Danny Livshits"
+  },
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Danny Livshits",
+    "handle": "dannylivshits",
+    "url": "https://x.com/dannylivshits"
+  },
+  "postedAt": "2026-09-22T04:24:29.099Z",
+  "text": "I was exploring Jev by @typesafeai  AI for safety use cases and it is an impressive and useful model, however don't expect it to magically auto classify any data without proper parameters and thresholds (see finding below). I open-sourced a scam-email classification where you can…",
+  "relevance": {
+    "score": 0.969,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-22T05:02:37.468Z"
+  }
+}
