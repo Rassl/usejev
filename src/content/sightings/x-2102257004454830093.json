@@ -1,0 +1,27 @@
+{
+  "url": "https://x.com/Avisolei/status/2102257004454830093",
+  "headline": "(indicators of good wrong answer) Then I show the best top 3 as the wrong answers.",
+  "media": {
+    "type": "image",
+    "thumbnail": "https://pbs.twimg.com/media/HSy13HRbcAAZSrz.png",
+    "alt": "Image from the post by Alex"
+  },
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Alex",
+    "handle": "Avisolei",
+    "url": "https://x.com/Avisolei"
+  },
+  "postedAt": "2026-09-22T04:41:42.565Z",
+  "text": "Built something with Jev I'm pretty happy with. \n\nTo be honest, I really don't know how to code. I just have my own vibe-coded Quizlet clone that I run. Quizlet has a Learn mode for learning flashcards, and part of that is selecting incorrect answers to quiz you with. They use…",
+  "relevance": {
+    "score": 0.952,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-22T05:02:40.373Z"
+  }
+}
