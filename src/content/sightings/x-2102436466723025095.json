@@ -1,0 +1,22 @@
+{
+  "url": "https://x.com/tryAlanAI/status/2102436466723025095",
+  "headline": ",518 applications through a Jev powered first pass in 4:54 for $0.4125.",
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Alan AI",
+    "handle": "tryAlanAI",
+    "url": "https://x.com/tryAlanAI"
+  },
+  "postedAt": "2026-09-22T16:34:49.704Z",
+  "text": "3,518 applications through a Jev powered first pass in 4:54 for $0.4125. 20 surfaced for our team to review.\n\nthis is how we build at Alan: find the real problem, ship a working system, keep interview decisions human\n\nBrilliant technology from @typesafeai and @CompleteSkeptic",
+  "relevance": {
+    "score": 0.953,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-22T16:59:58.077Z"
+  }
+}
