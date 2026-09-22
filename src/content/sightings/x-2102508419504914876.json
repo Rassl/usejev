@@ -1,0 +1,23 @@
+{
+  "url": "https://x.com/trevin/status/2102508419504914876",
+  "headline": "Fun little @typesafeai jev demo to analyze book plots of the top 250 sci-fi and fantasy books to help you find your next read.",
+  "category": "Search and data",
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Trevin Chow",
+    "handle": "trevin",
+    "url": "https://x.com/trevin"
+  },
+  "postedAt": "2026-09-22T21:20:44.584Z",
+  "text": "Fun little @typesafeai jev demo to analyze book plots of the top 250 sci-fi and fantasy books to help you find your next read.\n\nAsk stuff about the story, like  \"protoganist named david\", \"class warfare\", etc.\n\nIt reads each Wikipedia plot — not the book — and keeps the matches.…",
+  "relevance": {
+    "score": 0.927,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-22T21:22:45.459Z"
+  }
+}
