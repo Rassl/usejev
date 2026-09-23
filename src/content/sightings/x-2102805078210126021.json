@@ -1,0 +1,30 @@
+{
+  "url": "https://x.com/KaranVaidya6/status/2102805078210126021",
+  "headline": "It then picks the best agent for the job, and that agent writes the reply or takes the action",
+  "category": "Agents",
+  "media": {
+    "type": "video",
+    "thumbnail": "https://pbs.twimg.com/amplify_video_thumb/2102805046086012928/img/81f-17NG4MAABrh1.jpg",
+    "alt": "Video from the post by Karan Vaidya"
+  },
+  "useCases": [
+    "intent-routing-chatbots-agents"
+  ],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Karan Vaidya",
+    "handle": "KaranVaidya6",
+    "url": "https://x.com/KaranVaidya6"
+  },
+  "postedAt": "2026-09-23T16:59:33.531Z",
+  "text": "Agent Routing with Jev at scale\n\nYou can't have expensive agents process 10000 emails everyday, Jev makes it so much more scalable\n\nHere's how it works:\n- Triggers are set up for Gmail, Typeform, Slack, Discord and X with Composio\n- As soon the queries come in, Jev looks at the…",
+  "relevance": {
+    "score": 0.921,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-23T17:06:51.259Z"
+  }
+}
