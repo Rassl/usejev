@@ -1,0 +1,28 @@
+{
+  "url": "https://x.com/gkvoelkl/status/2102719563573989397",
+  "headline": "New project: an ant colony in #rust + #bevy, driven by #typesafe #Jev .",
+  "category": "Games",
+  "media": {
+    "type": "image",
+    "thumbnail": "https://pbs.twimg.com/media/HS5cTHJXAAAnygA.jpg",
+    "alt": "Image from the post by Gerhard Völkl 🐘 @gkvoelkl@sueden.social"
+  },
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Gerhard Völkl 🐘 @gkvoelkl@sueden.social",
+    "handle": "gkvoelkl",
+    "url": "https://x.com/gkvoelkl"
+  },
+  "postedAt": "2026-09-23T11:19:45.253Z",
+  "text": "New project: an ant colony in #rust + #bevy, driven by #typesafe #Jev . 🐜\n\nPlay: you're the queen with one text field, 20 ants interpret your orders.\n\nLearn: click any ant to see its exact Jev request and answer, or reword the question live.",
+  "relevance": {
+    "score": 0.919,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-23T11:43:09.724Z"
+  }
+}
