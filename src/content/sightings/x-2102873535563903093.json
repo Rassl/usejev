@@ -1,0 +1,25 @@
+{
+  "url": "https://x.com/drinkzima/status/2102873535563903093",
+  "headline": "Same accuracy as Haiku on 1,000 product classifications, in 0.9 seconds instead of 82.",
+  "category": "Benchmarks",
+  "useCases": [
+    "hierarchical-product-categorization"
+  ],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Colin Zima",
+    "handle": "drinkzima",
+    "url": "https://x.com/drinkzima"
+  },
+  "postedAt": "2026-09-23T21:31:35.036Z",
+  "text": "1/ General intelligence is a hammer.  It can do almost anything, but it isn't built for anything in particular.\n\nSo we gave Jev a whirl in Omni.  Same accuracy as Haiku on 1,000 product classifications, in 0.9 seconds instead of 82.",
+  "relevance": {
+    "score": 0.903,
+    "verdict": "publish",
+    "kind": "benchmark_or_comparison",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-23T21:32:43.713Z"
+  }
+}
