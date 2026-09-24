@@ -1,0 +1,27 @@
+{
+  "url": "https://x.com/zhongming_yu/status/2102980331939008816",
+  "headline": "We tested Jev as a code reranker on 100 GitHub issues.",
+  "category": "Benchmarks",
+  "useCases": [
+    "search-result-reranking"
+  ],
+  "primitives": [
+    "Score"
+  ],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Zhongming Yu",
+    "handle": "zhongming_yu",
+    "url": "https://x.com/zhongming_yu"
+  },
+  "postedAt": "2026-09-24T04:35:57.276Z",
+  "text": "We tested Jev as a code reranker on 100 GitHub issues. Model-planned grep + Jev was our best route, though the choice of retrieval route mattered more than the choice of reranker.\n\nThe benchmark is CodeNib Base: 25 repos across C/C++, Go, Python, Rust and TS/JS. The query is the…",
+  "relevance": {
+    "score": 0.97,
+    "verdict": "publish",
+    "kind": "benchmark_or_comparison",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-24T04:57:03.020Z"
+  }
+}
