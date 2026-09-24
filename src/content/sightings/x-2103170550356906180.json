@@ -1,0 +1,23 @@
+{
+  "url": "https://x.com/eSaadster/status/2103170550356906180",
+  "headline": "Inspired by Codex effort routers powered by Jev, I built this for Claude Code.",
+  "category": "Agents",
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Saad",
+    "handle": "eSaadster",
+    "url": "https://x.com/eSaadster"
+  },
+  "postedAt": "2026-09-24T17:11:48.881Z",
+  "text": "Inspired by Codex effort routers powered by Jev, I built this for Claude Code.\n\nFor each prompt, it sets effort to low, medium, high, or xhigh. Routine work goes down. Hard or production work goes up. If Jev errors or times out, effort stays unchanged.",
+  "relevance": {
+    "score": 0.924,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-24T17:15:13.043Z"
+  }
+}
