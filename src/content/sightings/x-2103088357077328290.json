@@ -1,0 +1,28 @@
+{
+  "url": "https://x.com/jetwaniavinash/status/2103088357077328290",
+  "headline": "First thing I built on Jev: a memory gate for Claude Code.",
+  "category": "Developer tools",
+  "media": {
+    "type": "video",
+    "thumbnail": "https://pbs.twimg.com/amplify_video_thumb/2103088252538232834/img/QWjK_w205nRkSWwv.jpg",
+    "alt": "Video from the post by Jetwani Avinash"
+  },
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Jetwani Avinash",
+    "handle": "jetwaniavinash",
+    "url": "https://x.com/jetwaniavinash"
+  },
+  "postedAt": "2026-09-24T11:45:12.476Z",
+  "text": "First thing I built on Jev: a memory gate for Claude Code.\n\nEvery message gets one question: is this worth remembering? 0.3s later it's either skipped or saved as one line in JEVMEM.md in the repo.\n\nOpen source, link in my pinned post.",
+  "relevance": {
+    "score": 0.916,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-24T11:51:45.479Z"
+  }
+}
