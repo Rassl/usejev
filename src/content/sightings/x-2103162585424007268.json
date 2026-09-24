@@ -1,0 +1,28 @@
+{
+  "url": "https://x.com/dev_brok/status/2103162585424007268",
+  "headline": "I ran an experiment where it uses Stockfish to play a game of chess, and it turns out to work incredibly fast.",
+  "category": "Games",
+  "media": {
+    "type": "video",
+    "thumbnail": "https://pbs.twimg.com/amplify_video_thumb/2103162359493574656/img/MngX00dnq68XoHzn.jpg",
+    "alt": "Video from the post by brok"
+  },
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "brok",
+    "handle": "dev_brok",
+    "url": "https://x.com/dev_brok"
+  },
+  "postedAt": "2026-09-24T16:40:09.893Z",
+  "text": "The new Jev model  by @typesafeai  is actually incredible. I ran an experiment where it uses Stockfish to play a game of chess, and it turns out to work incredibly fast.\n\nThis is a game against stockfish level 5",
+  "relevance": {
+    "score": 0.913,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-24T17:15:12.339Z"
+  }
+}
