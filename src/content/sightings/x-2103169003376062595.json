@@ -1,0 +1,28 @@
+{
+  "url": "https://x.com/k0nOO/status/2103169003376062595",
+  "headline": "The judgments go to plain code that picks the next question and which box to name.",
+  "category": "Agents",
+  "media": {
+    "type": "video",
+    "thumbnail": "https://pbs.twimg.com/amplify_video_thumb/2103168757845626880/img/nB-gkhRH-wEkHn5G.jpg",
+    "alt": "Video from the post by k0n00"
+  },
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "k0n00",
+    "handle": "k0nOO",
+    "url": "https://x.com/k0nOO"
+  },
+  "postedAt": "2026-09-24T17:05:40.052Z",
+  "text": "My voice interviewer can't see the whiteboard; GPT-Live takes no images. The box I named \"Fastly\" is read as a CDN at 1.00, and my note \"sync or async transcode?\" as a question I still owe. Jev answers dozen of questions like that in under half a second. The voice never hears…",
+  "relevance": {
+    "score": 0.971,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-24T17:15:11.317Z"
+  }
+}
