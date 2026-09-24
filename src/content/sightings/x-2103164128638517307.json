@@ -1,0 +1,28 @@
+{
+  "url": "https://x.com/GiladShips/status/2103164128638517307",
+  "headline": "I used Codex to connect the new JEV model from TypeSafe, 10 calls a second, to play the game.",
+  "category": "Games",
+  "media": {
+    "type": "video",
+    "thumbnail": "https://pbs.twimg.com/amplify_video_thumb/2103163679625658368/img/XkqUPakAWatBOyrm.jpg",
+    "alt": "Video from the post by ロネン・ギラッド"
+  },
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "ロネン・ギラッド",
+    "handle": "GiladShips",
+    "url": "https://x.com/GiladShips"
+  },
+  "postedAt": "2026-09-24T16:46:17.824Z",
+  "text": "I gave Chrome’s offline dinosaur an online AI brain. 🦖\n\nI used Codex to connect the new JEV model from TypeSafe, 10 calls a second, to play the game.\n\n12 minutes and more than 13,000 points until I stopped it because it looked like it would go on forever.\n\nGood use for AI? Maybe…",
+  "relevance": {
+    "score": 0.924,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-24T17:15:12.233Z"
+  }
+}
