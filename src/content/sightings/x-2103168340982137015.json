@@ -1,0 +1,28 @@
+{
+  "url": "https://x.com/SiddhitSanghavi/status/2103168340982137015",
+  "headline": "Here, I do a walkthrough of a 100 questions with Jev versus Haiku and show why and when I'd use it.",
+  "category": "Benchmarks",
+  "media": {
+    "type": "video",
+    "thumbnail": "https://pbs.twimg.com/amplify_video_thumb/2103167656476004352/img/qxg1gPDCAV5QUsVv.jpg",
+    "alt": "Video from the post by Sid Sanghavi"
+  },
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Sid Sanghavi",
+    "handle": "SiddhitSanghavi",
+    "url": "https://x.com/SiddhitSanghavi"
+  },
+  "postedAt": "2026-09-24T17:03:02.125Z",
+  "text": "Here's a simple demo of why and when you'd use #Jev from @typesafeai.\n\nIt doesn't generate text. It doesn't mean it can't hallucinate but if you know you have certain classification paths, it can classify with lightning speed and low cost and onward a query to the step where a…",
+  "relevance": {
+    "score": 0.932,
+    "verdict": "publish",
+    "kind": "benchmark_or_comparison",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-24T17:15:11.585Z"
+  }
+}
