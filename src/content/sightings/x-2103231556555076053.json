@@ -1,0 +1,22 @@
+{
+  "url": "https://x.com/jstnwst/status/2103231556555076053",
+  "headline": "This last step used to take a few minutes and was \"decent\" - it's now a few seconds and relatively flawless.",
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Justin",
+    "handle": "jstnwst",
+    "url": "https://x.com/jstnwst"
+  },
+  "postedAt": "2026-09-24T21:14:13.892Z",
+  "text": "loving this use-case for @typesafeai's jev:\n\nWe have a web design service that allows our clients to fill out a form then within 2 minutes we:\n\n→ we generate multi-page copy for their site according to our standards (via OpenAI API)\n\n→ then we populate 4 unique website…",
+  "relevance": {
+    "score": 0.948,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-24T21:33:45.766Z"
+  }
+}
