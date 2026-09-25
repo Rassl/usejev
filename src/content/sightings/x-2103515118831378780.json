@@ -1,0 +1,30 @@
+{
+  "url": "https://x.com/ag2oss/status/2103515118831378780",
+  "headline": "We've built it into AG2 natively, so a decision agent looks like any other agent.",
+  "category": "Agents",
+  "media": {
+    "type": "image",
+    "thumbnail": "https://pbs.twimg.com/media/HTBRI5nbYAAztl5.jpg",
+    "alt": "Image from the post by AG2"
+  },
+  "useCases": [
+    "support-ticket-routing"
+  ],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "AG2",
+    "handle": "ag2oss",
+    "url": "https://x.com/ag2oss"
+  },
+  "postedAt": "2026-09-25T16:01:00.407Z",
+  "text": "AG2 1.1.0 adds support for a different kind of model, TypeSafe's Jev.\n\nJev doesn't do your typical text generation. You send it state and a question, and it answers: yes or no, which option, what score. TypeSafe calls it a System One model which means fast, structured judgment of…",
+  "relevance": {
+    "score": 0.957,
+    "verdict": "publish",
+    "kind": "tool_or_library",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-25T17:15:44.723Z"
+  }
+}
