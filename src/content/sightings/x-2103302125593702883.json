@@ -1,0 +1,23 @@
+{
+  "url": "https://x.com/gastronomy/status/2103302125593702883",
+  "headline": "Jev matches the reference scorer's agreement with human labels, surfaces label defects in existing benchmarks, and costs 63x less than LLM-judge scorers.",
+  "category": "Benchmarks",
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Tanat Tonguthaisri",
+    "handle": "gastronomy",
+    "url": "https://x.com/gastronomy"
+  },
+  "postedAt": "2026-09-25T01:54:38.862Z",
+  "text": "Just Ask Jev: Reinforcement Learning for Calibrated Decisions as a Zero-Shot Detector of AI Alignment Failures: Detectors of alignment failures screen deployed language models and score alignment benchmarks. Most are generative judges that spend a decoding pass on every…",
+  "relevance": {
+    "score": 0.921,
+    "verdict": "publish",
+    "kind": "benchmark_or_comparison",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-25T05:02:02.587Z"
+  }
+}
