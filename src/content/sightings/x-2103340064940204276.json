@@ -1,0 +1,28 @@
+{
+  "url": "https://x.com/paperplaneflyr/status/2103340064940204276",
+  "headline": "It scores what the notes actually demonstrate, using @typesafeai's Jev.",
+  "category": "Productivity",
+  "media": {
+    "type": "video",
+    "thumbnail": "https://pbs.twimg.com/amplify_video_thumb/2103339920454733824/img/k0GkLAIiLYWW5k3g.jpg",
+    "alt": "Video from the post by Paperplaneflyr"
+  },
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Paperplaneflyr",
+    "handle": "paperplaneflyr",
+    "url": "https://x.com/paperplaneflyr"
+  },
+  "postedAt": "2026-09-25T04:25:24.307Z",
+  "text": "Long notes scored 82. I deleted most of the notes and the same topic scored 50, with 99% confidence. \n\nThat is the point of Knowledge Signal. It does not grade you. It scores what the notes actually demonstrate, using @typesafeai's Jev.\n\nFive lenses: conceptual depth, accuracy,…",
+  "relevance": {
+    "score": 0.9,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-25T05:01:58.090Z"
+  }
+}
