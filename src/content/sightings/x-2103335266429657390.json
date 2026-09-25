@@ -1,0 +1,25 @@
+{
+  "url": "https://x.com/davidaragundy/status/2103335266429657390",
+  "headline": "@typesafeai jev is the bouncer: reads every post in ~280ms and blurs the mean ones",
+  "category": "Moderation and safety",
+  "useCases": [
+    "content-moderation-prompt-injection-screening"
+  ],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "David Aragundy",
+    "handle": "davidaragundy",
+    "url": "https://x.com/davidaragundy"
+  },
+  "postedAt": "2026-09-25T04:06:20.253Z",
+  "text": "made twitter but with amnesia. everything dies in 24h@upstash is the timer@typesafeai jev is the bouncer: reads every post in ~280ms and blurs the mean ones\n\n24k posts moderated for $1.",
+  "relevance": {
+    "score": 0.901,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-25T05:01:58.564Z"
+  }
+}
