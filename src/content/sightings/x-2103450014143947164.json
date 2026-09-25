@@ -1,0 +1,28 @@
+{
+  "url": "https://x.com/filip_hric/status/2103450014143947164",
+  "headline": "With Jev, I hand it a snapshot from Playwright CLI and let it decide which element to interact with.",
+  "category": "Benchmarks",
+  "media": {
+    "type": "video",
+    "thumbnail": "https://pbs.twimg.com/amplify_video_thumb/2103449793053732864/img/i4orsG4coZ7kX-7Z.jpg",
+    "alt": "Video from the post by Filip Hric"
+  },
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Filip Hric",
+    "handle": "filip_hric",
+    "url": "https://x.com/filip_hric"
+  },
+  "postedAt": "2026-09-25T11:42:18.240Z",
+  "text": "Playwright CLI + Jev is 98% cheaper and TWICE as fast compared Playwright MCP\n\nDecided to test out Jev by TypeSafe AI and hook it up to Playwright CLI. I compared the results with Playwright MCP to see how both workflows handle a fuzzy instruction such as: \"Create new board, list…",
+  "relevance": {
+    "score": 0.953,
+    "verdict": "publish",
+    "kind": "benchmark_or_comparison",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-25T11:55:21.221Z"
+  }
+}
