@@ -1,0 +1,30 @@
+{
+  "url": "https://x.com/LakshOnline/status/2103339098589241783",
+  "headline": "so i wired typesafe's jev into a real pipeline and pointed it at the real api.",
+  "category": "Agents",
+  "media": {
+    "type": "video",
+    "thumbnail": "https://pbs.twimg.com/amplify_video_thumb/2103337875488333824/img/PdfB8kwHv2bqjqMk.jpg",
+    "alt": "Video from the post by Lakshmi narayana"
+  },
+  "useCases": [],
+  "primitives": [
+    "Noul"
+  ],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Lakshmi narayana",
+    "handle": "LakshOnline",
+    "url": "https://x.com/LakshOnline"
+  },
+  "postedAt": "2026-09-25T04:21:33.911Z",
+  "text": "most jev demos i've seen are mockups with illustrative numbers. so i wired typesafe's jev into a real pipeline and pointed it at the real api.\n\nfrom an actual benchmark run: 7 of 9 items never reached an expensive stage.\n\n→ one call per item returns category, relevance (0-2) and…",
+  "relevance": {
+    "score": 0.966,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-25T05:02:01.935Z"
+  }
+}
