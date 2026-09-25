@@ -1,0 +1,23 @@
+{
+  "url": "https://x.com/Nitinnennn/status/2103341532233203740",
+  "headline": "i let @typesafeai's jev judge every old tool call, kept every message word for word, and got it to 379k.",
+  "category": "Agents",
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Nitin Chaudhary",
+    "handle": "Nitinnennn",
+    "url": "https://x.com/Nitinnennn"
+  },
+  "postedAt": "2026-09-25T04:31:14.137Z",
+  "text": "one agent session got stuck at 992k tokens. i let @typesafeai's jev judge every old tool call, kept every message word for word, and got it to 379k. it picked up where it left off.",
+  "relevance": {
+    "score": 0.926,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-25T05:01:57.680Z"
+  }
+}
