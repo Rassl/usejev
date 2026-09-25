@@ -1,0 +1,23 @@
+{
+  "url": "https://x.com/dneelamana/status/2103590836319428921",
+  "headline": "Laya (open weights, Mac mini) and Jev (TypeSafe, hosted) graded 1,719 student answers, untrained on the data.",
+  "category": "Benchmarks",
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Dhanesh Neela Mana",
+    "handle": "dneelamana",
+    "url": "https://x.com/dneelamana"
+  },
+  "postedAt": "2026-09-25T21:01:52.863Z",
+  "text": "Laya (open weights, Mac mini) and Jev (TypeSafe, hosted) graded 1,719 student answers, untrained on the data. Alone: QWK 0.31 and 0.58 against a human 0.91. With a 70% confidence gate: 17% of answers at QWK 0.61, 37% at 0.77. The rest go to a teacher.",
+  "relevance": {
+    "score": 0.944,
+    "verdict": "publish",
+    "kind": "benchmark_or_comparison",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-25T21:38:48.799Z"
+  }
+}
