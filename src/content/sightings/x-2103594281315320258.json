@@ -1,0 +1,32 @@
+{
+  "url": "https://x.com/dealerdefi/status/2103594281315320258",
+  "headline": "the 11 are the reason it exists: nine skills, mcp server, claude code hook, zero dependencies, mit.",
+  "category": "Agents",
+  "media": {
+    "type": "video",
+    "thumbnail": "https://pbs.twimg.com/amplify_video_thumb/2103594221533880320/img/ed5vY9spWXFVR3gx.jpg",
+    "alt": "Video from the post by dealer.eth"
+  },
+  "useCases": [
+    "llm-output-qa-agent-run-review"
+  ],
+  "primitives": [
+    "Score"
+  ],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "dealer.eth",
+    "handle": "dealerdefi",
+    "url": "https://x.com/dealerdefi"
+  },
+  "postedAt": "2026-09-25T21:15:34.214Z",
+  "text": "jev + jevmind is the setup i'd be annoyed at myself for not trying sooner.\n\nagents don't fail at writing code, they fail at the small decisions nobody logs, which file to open, which hunk matters, run it or don't, done or not done.\n\nall of it comes back as prose you have to…",
+  "relevance": {
+    "score": 0.906,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-25T21:38:48.585Z"
+  }
+}
