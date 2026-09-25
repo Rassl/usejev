@@ -1,0 +1,23 @@
+{
+  "url": "https://x.com/TheHBrand/status/2103453217690366342",
+  "headline": "@typesafeai just got Jev to 100% accuracy on the 3rd aspect of my tech stack.",
+  "category": "Agents",
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "TheHBrand",
+    "handle": "TheHBrand",
+    "url": "https://x.com/TheHBrand"
+  },
+  "postedAt": "2026-09-25T11:55:02.025Z",
+  "text": "@typesafeai just got Jev to 100% accuracy on the 3rd aspect of my tech stack. sorting voicemails, DNCing requests, Blocking non-biz calls, scheduling callbacks (generally) for those and notifying the team members mentioned if it's a known customer.",
+  "relevance": {
+    "score": 0.925,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-25T11:55:20.654Z"
+  }
+}
