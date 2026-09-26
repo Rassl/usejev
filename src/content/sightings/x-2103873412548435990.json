@@ -1,0 +1,30 @@
+{
+  "url": "https://x.com/_untreu/status/2103873412548435990",
+  "headline": "If I reply, Jev decides what I meant:",
+  "category": "Agents",
+  "media": {
+    "type": "image",
+    "thumbnail": "https://pbs.twimg.com/media/HTJ1tc5WoAAJRid.jpg",
+    "alt": "Image from the post by emir yorulmaz"
+  },
+  "useCases": [
+    "intent-routing-chatbots-agents"
+  ],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "emir yorulmaz",
+    "handle": "_untreu",
+    "url": "https://x.com/_untreu"
+  },
+  "postedAt": "2026-09-26T15:44:44.286Z",
+  "text": "I'm getting crazy results with @typesafeai's Jev.\n\nThe flow in Altair: I say \"I had two eggs and toast\" and a card pops up: \"Two eggs and toast, about 220 calories.\" If I say nothing, it saves itself after 5 seconds. If I reply, Jev decides what I meant:\n\n\"Sure, save it\" → saved…",
+  "relevance": {
+    "score": 0.951,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-26T16:27:14.536Z"
+  }
+}
