@@ -1,0 +1,27 @@
+{
+  "url": "https://x.com/ghumare64/status/2103708946565636373",
+  "category": "Benchmarks",
+  "media": {
+    "type": "image",
+    "thumbnail": "https://pbs.twimg.com/media/HTHgInSbAAACnAN.jpg",
+    "alt": "Image from the post by Rohit Ghumare"
+  },
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Rohit Ghumare",
+    "handle": "ghumare64",
+    "url": "https://x.com/ghumare64"
+  },
+  "postedAt": "2026-09-26T04:51:12.540Z",
+  "text": "Ran open System 1 models, on my laptop CPU: 45 ms per question.\n\nOn 30 hand-labeled tickets it scored 70%, and 6 of its 9 errors came at 0.98+ confidence. It sent \"I do not want to cancel my account\" to cancel_account.\n\nWrite-up on Laya and Jev by @typesafeai below 👇",
+  "relevance": {
+    "score": 0.944,
+    "verdict": "publish",
+    "kind": "benchmark_or_comparison",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-26T05:04:19.308Z"
+  }
+}
