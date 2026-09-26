@@ -1,0 +1,28 @@
+{
+  "url": "https://x.com/satya5614/status/2103807044818206882",
+  "headline": "I built a directory of projects built with Jev.",
+  "category": "Search and data",
+  "media": {
+    "type": "video",
+    "thumbnail": "https://pbs.twimg.com/amplify_video_thumb/2103804949562056704/img/sQVFXqyww1HjFxpW.jpg",
+    "alt": "Video from the post by Satya"
+  },
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Satya",
+    "handle": "satya5614",
+    "url": "https://x.com/satya5614"
+  },
+  "postedAt": "2026-09-26T11:21:00.986Z",
+  "text": "I built [link] a directory of projects built with Jev.\n\nI don't pick what goes on it. Every 6 hours a cron pulls candidates from GitHub and HN, and Jev judges each one.\n\n1,151 judged so far. 500 made it in.",
+  "relevance": {
+    "score": 0.926,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-26T11:29:26.586Z"
+  }
+}
