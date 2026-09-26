@@ -1,0 +1,28 @@
+{
+  "url": "https://x.com/martpintos/status/2103682660325339644",
+  "headline": "been playing with @typesafeai's Jev and built a fragrance finder",
+  "category": "Search and data",
+  "media": {
+    "type": "video",
+    "thumbnail": "https://pbs.twimg.com/amplify_video_thumb/2103682394721050624/img/ljEE8baLMZTIrdpH.jpg",
+    "alt": "Video from the post by Martin"
+  },
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Martin",
+    "handle": "martpintos",
+    "url": "https://x.com/martpintos"
+  },
+  "postedAt": "2026-09-26T03:06:45.412Z",
+  "text": "been playing with @typesafeai's Jev and built a fragrance finder\n\nno notes or accords, just describe what you want in plain english\n\n\"sunset aperitivo on the Amalfi coast, linen shirt, a bit of salt in the air\" → Acqua di Giò, 95%\n\nturns out it's pretty good at picking perfume",
+  "relevance": {
+    "score": 0.948,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-26T05:04:20.156Z"
+  }
+}
