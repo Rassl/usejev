@@ -1,0 +1,27 @@
+{
+  "url": "https://x.com/TheRickyDotNet/status/2103951051548176874",
+  "headline": "Non standard file cols are now matched at light-speed and we get a confidence level for each, for us to decide to prompt the user or not confirmation.",
+  "media": {
+    "type": "video",
+    "thumbnail": "https://pbs.twimg.com/tweet_video_thumb/HTK8PqAWwAAP-yZ.jpg",
+    "alt": "Video from the post by Ricardo Velasquez"
+  },
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Ricardo Velasquez",
+    "handle": "TheRickyDotNet",
+    "url": "https://x.com/TheRickyDotNet"
+  },
+  "postedAt": "2026-09-26T20:53:14.866Z",
+  "text": "What took 30+ secs with a Gemini Flash model now takes less than 1 with Jev. \n\nNon standard file cols are now matched at light-speed and we get a confidence level for each, for us to decide to prompt the user or not confirmation.\n\nTypeSafe AI cooked!\n\nKudos to @juantrujillodev",
+  "relevance": {
+    "score": 0.937,
+    "verdict": "publish",
+    "kind": "benchmark_or_comparison",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-26T21:13:52.780Z"
+  }
+}
