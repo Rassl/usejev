@@ -1,0 +1,25 @@
+{
+  "url": "https://x.com/lilpeepestavivo/status/2103688055504933076",
+  "headline": "built JevGuard with Jev (@typesafeai)",
+  "category": "Moderation and safety",
+  "useCases": [
+    "llm-output-qa-agent-run-review"
+  ],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Ikigai",
+    "handle": "lilpeepestavivo",
+    "url": "https://x.com/lilpeepestavivo"
+  },
+  "postedAt": "2026-09-26T03:28:11.723Z",
+  "text": "built JevGuard with Jev (@typesafeai)\n\nhooks into @opencode, reviews each turn against .jev/ rules\n\nJev gives the odds a rule was broken; code decides PASS/WARN/FAIL\n\non FAIL it drafts a fix, never edits code\n\na bundled skill writes your rules.md",
+  "relevance": {
+    "score": 0.936,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-26T05:04:19.857Z"
+  }
+}
