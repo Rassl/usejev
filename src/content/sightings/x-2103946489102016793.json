@@ -1,0 +1,23 @@
+{
+  "url": "https://x.com/suryxnshsingh/status/2103946489102016793",
+  "headline": "Just POC'd Jev by @typesafeai on one of our live services and the results are crazy",
+  "category": "Benchmarks",
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Suryansh Singh",
+    "handle": "suryxnshsingh",
+    "url": "https://x.com/suryxnshsingh"
+  },
+  "postedAt": "2026-09-26T20:35:07.094Z",
+  "text": "Just POC'd Jev by @typesafeai on one of our live services and the results are crazy \n\n - 88% vs 76% accuracy\n - 5× faster\n - ~15× cheaper\n\nvs the GPT setup we run in prod. Not an LLM, and it doesn't need to be.",
+  "relevance": {
+    "score": 0.936,
+    "verdict": "publish",
+    "kind": "benchmark_or_comparison",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-26T21:13:53.153Z"
+  }
+}
