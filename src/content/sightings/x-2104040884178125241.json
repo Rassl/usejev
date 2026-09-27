@@ -1,0 +1,28 @@
+{
+  "url": "https://x.com/Shivamds99/status/2104040884178125241",
+  "headline": "find the best trail according to the Current state: temperature, wind, and every candidate route’s metadata like distance, estimated time, etc using Jev",
+  "category": "Search and data",
+  "media": {
+    "type": "video",
+    "thumbnail": "https://pbs.twimg.com/amplify_video_thumb/2104040642812796928/img/NJ03XTx1dRwUUq8R.jpg",
+    "alt": "Video from the post by Shivam"
+  },
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Shivam",
+    "handle": "Shivamds99",
+    "url": "https://x.com/Shivamds99"
+  },
+  "postedAt": "2026-09-27T02:50:12.634Z",
+  "text": "Introducing ProbablyThisWay 🏔️ built with @typesafeai 's Jev Model.\n\n> you can search the trails in any area on earth\n> find the best trail according to the Current state: temperature, wind, and every candidate route’s metadata like distance, estimated time, etc using Jev",
+  "relevance": {
+    "score": 0.902,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-27T05:22:45.445Z"
+  }
+}
