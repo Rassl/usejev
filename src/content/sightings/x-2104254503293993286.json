@@ -1,0 +1,30 @@
+{
+  "url": "https://x.com/heyy_hemanth/status/2104254503293993286",
+  "headline": "We built our own version to find out, with TypeSafe's Jev in the player's seat.",
+  "category": "Games",
+  "media": {
+    "type": "video",
+    "thumbnail": "https://pbs.twimg.com/amplify_video_thumb/2104253677410328576/img/MsPtJp2KzhvDmGGG.jpg",
+    "alt": "Video from the post by Hemanth"
+  },
+  "useCases": [],
+  "primitives": [
+    "Choice"
+  ],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Hemanth",
+    "handle": "heyy_hemanth",
+    "url": "https://x.com/heyy_hemanth"
+  },
+  "postedAt": "2026-09-27T16:59:03.400Z",
+  "text": "Jev Playing the Dino Game\n\nCan a model play the dinosaur game in real time?\n\nWe built our own version to find out, with TypeSafe's Jev in the player's seat.\nThe rule we followed: code does what code is good at, and the model makes one narrow decision.\n\n→ Code runs the physics…",
+  "relevance": {
+    "score": 0.958,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-27T17:00:48.889Z"
+  }
+}
