@@ -1,0 +1,28 @@
+{
+  "url": "https://x.com/SyedAmmar69/status/2104251198597697840",
+  "headline": "I used it to replace Ctrl+F: ask any page in plain words → the exact sentence gets highlighted.",
+  "category": "Search and data",
+  "media": {
+    "type": "video",
+    "thumbnail": "https://pbs.twimg.com/amplify_video_thumb/2104251078904840194/img/rESVJOaGOqSFzoN8.jpg",
+    "alt": "Video from the post by Ammar Hussain"
+  },
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Ammar Hussain",
+    "handle": "SyedAmmar69",
+    "url": "https://x.com/SyedAmmar69"
+  },
+  "postedAt": "2026-09-27T16:45:55.499Z",
+  "text": "Right now everyone's wiring @typesafeai's Jev into chatbots.\n\nI used it to replace Ctrl+F: ask any page in plain words → the exact sentence gets highlighted. 107 passages, exactly 1 match, 1.5 seconds. Every answer quoted from the page.\n\nOpen source ↓",
+  "relevance": {
+    "score": 0.914,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-27T17:00:46.738Z"
+  }
+}
