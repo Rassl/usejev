@@ -1,0 +1,28 @@
+{
+  "url": "https://x.com/AdamyaNagpal/status/2104056930062745743",
+  "headline": "I used Jev, @typesafeai System 1 model, to train a tiny Snake player.",
+  "category": "Games",
+  "media": {
+    "type": "video",
+    "thumbnail": "https://pbs.twimg.com/amplify_video_thumb/2104056897384972288/img/B22jCXWxxKI-bKRt.jpg",
+    "alt": "Video from the post by Adamya"
+  },
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Adamya",
+    "handle": "AdamyaNagpal",
+    "url": "https://x.com/AdamyaNagpal"
+  },
+  "postedAt": "2026-09-27T03:53:58.271Z",
+  "text": "I used Jev, @typesafeai System 1 model, to train a tiny Snake player.\n\nIt agrees with Jev 93% of the time, runs 800× faster on a laptop, and costs $0 per call.\n\nThen I spent that speed on looking ahead. It scored 5× higher than the model it learned from.",
+  "relevance": {
+    "score": 0.955,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-27T05:22:44.480Z"
+  }
+}
