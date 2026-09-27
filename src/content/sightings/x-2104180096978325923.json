@@ -1,0 +1,28 @@
+{
+  "url": "https://x.com/Rodon111/status/2104180096978325923",
+  "headline": "an agent that actually has a body.",
+  "category": "Agents",
+  "media": {
+    "type": "video",
+    "thumbnail": "https://pbs.twimg.com/amplify_video_thumb/2104179480143028225/img/VoJ5VR3r5JzhwK85.jpg",
+    "alt": "Video from the post by rodon"
+  },
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "rodon",
+    "handle": "Rodon111",
+    "url": "https://x.com/Rodon111"
+  },
+  "postedAt": "2026-09-27T12:03:23.552Z",
+  "text": "MY 2 STANFORD FRIENDS F*CKING HELPED ME BUILD THIS AND I STILL CAN'T STOP WATCHING IT\n\nit's my ai agent. cut open like a living cell.\n\nthe orange core is opus 5.5. it's the only part that writes. the whole run it woke up 3 times.\n\neverything else is jev by @typesafeai:\npink…",
+  "relevance": {
+    "score": 0.95,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-27T12:08:02.754Z"
+  }
+}
