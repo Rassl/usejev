@@ -1,0 +1,23 @@
+{
+  "url": "https://x.com/prompt48/status/2104437317301940672",
+  "headline": "I fine-tuned my own Jev for $3 with Unsloth, then benchmarked it against TypeSafe's Jev on 747 questions.",
+  "category": "Benchmarks",
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Prompt Engineer",
+    "handle": "prompt48",
+    "url": "https://x.com/prompt48"
+  },
+  "postedAt": "2026-09-28T05:05:29.656Z",
+  "text": "I fine-tuned my own Jev for $3 with Unsloth, then benchmarked it against TypeSafe's Jev on 747 questions. It won on one suite and lost overall. Full breakdown, model and code 👇",
+  "relevance": {
+    "score": 0.928,
+    "verdict": "publish",
+    "kind": "benchmark_or_comparison",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-28T05:29:16.103Z"
+  }
+}
