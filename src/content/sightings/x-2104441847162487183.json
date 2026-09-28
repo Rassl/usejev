@@ -1,0 +1,30 @@
+{
+  "url": "https://x.com/brainstormity/status/2104441847162487183",
+  "headline": "Only sends actual anomalies & suspicious payloads to @typesafeai's JEV to classify in real time",
+  "category": "Moderation and safety",
+  "media": {
+    "type": "image",
+    "thumbnail": "https://pbs.twimg.com/media/HTR4qkVXIAAhGKn.jpg",
+    "alt": "Image from the post by brainstormity"
+  },
+  "useCases": [
+    "log-anomaly-classification"
+  ],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "brainstormity",
+    "handle": "brainstormity",
+    "url": "https://x.com/brainstormity"
+  },
+  "postedAt": "2026-09-28T05:23:29.659Z",
+  "text": "As promised..\nThe REAL-TIME network packet analyzer is officially open source!\n\n- Passively listens to your Wi-Fi, pre-filters out 99% of normal traffic\n- Only sends actual anomalies & suspicious payloads to @typesafeai's JEV to classify in real time\n- Buffers high-speed packet…",
+  "relevance": {
+    "score": 0.936,
+    "verdict": "publish",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-28T05:29:15.638Z"
+  }
+}
