@@ -1,0 +1,23 @@
+{
+  "url": "https://x.com/danmartuszewski/status/2104422059581268353",
+  "headline": "Swapped @claudeai Haiku for @typesafeai Jev as the judge in the pipeline that tags sentences.",
+  "category": "Benchmarks",
+  "useCases": [],
+  "primitives": [],
+  "draft": false,
+  "source": "x",
+  "author": {
+    "name": "Dan Martuszewski",
+    "handle": "danmartuszewski",
+    "url": "https://x.com/danmartuszewski"
+  },
+  "postedAt": "2026-09-28T04:04:51.932Z",
+  "text": "Swapped @claudeai  Haiku for @typesafeai Jev as the judge in the pipeline that tags sentences.\n\n8x faster: 3.4s → 0.42s per sentence\n16x cheaper: $0.0084 → $0.0005 per sentence\n\nResults are no worse.",
+  "relevance": {
+    "score": 0.962,
+    "verdict": "publish",
+    "kind": "benchmark_or_comparison",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-09-28T05:29:16.548Z"
+  }
+}
