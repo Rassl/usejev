@@ -1,0 +1,12 @@
+{
+  "source": "other",
+  "url": "https://example.com",
+  "author": {
+    "name": "TODO"
+  },
+  "postedAt": "2026-10-04T17:36:53.605Z",
+  "text": "TODO: short verbatim excerpt",
+  "useCases": [],
+  "primitives": [],
+  "draft": true
+}
