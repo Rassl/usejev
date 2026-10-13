@@ -1,0 +1,21 @@
+{
+  "source": "x",
+  "url": "https://x.com/kj4dh4v/status/2100863245351539185",
+  "author": {
+    "name": "Kausthub Jadhav",
+    "handle": "kj4dh4v",
+    "url": "https://x.com/kj4dh4v"
+  },
+  "postedAt": "2026-09-18T08:23:24.500Z",
+  "text": "made a Naruto-themed street fighter game and played against @typesafeai’s Jev\n\nit made ~130 decisions in a 50s fight, barely registered any usage, and came very close to beating me. very impressed by its reaction time and use of special move (substitution jutsu).",
+  "useCases": [],
+  "primitives": [],
+  "draft": true,
+  "relevance": {
+    "score": 0.832,
+    "verdict": "review",
+    "kind": "project_demo",
+    "model": "jev-1.13.0",
+    "checkedAt": "2026-10-13T10:17:19.500Z"
+  }
+}
